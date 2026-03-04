@@ -1,6 +1,6 @@
-# Builder Workflow Template for Claude Code
+# Claude Code Workflow
 
-A battle-tested workflow system for Claude Code, built from months of daily 8h+ usage across multiple projects.
+A battle-tested workflow template for Claude Code — memory management, context engineering, and task routing from 3 months of daily usage across multiple projects.
 
 **Not a tutorial. Not a toy config. A production workflow that actually ships.**
 
@@ -38,7 +38,7 @@ Claude Code is powerful out of the box, but without structure it becomes a smart
 ## What's Inside
 
 ```
-builder-workflow-template/
+claude-code-workflow/
 ├── CLAUDE.md                     # Entry point — Claude reads this first
 ├── README.md                     # You are here
 │
@@ -86,14 +86,14 @@ builder-workflow-template/
 
 ```bash
 # Clone the template
-git clone https://github.com/runesleo/builder-workflow-template.git
+git clone https://github.com/runesleo/claude-code-workflow.git
 
 # Copy to your Claude Code config directory
-cp -r builder-workflow-template/* ~/.claude/
+cp -r claude-code-workflow/* ~/.claude/
 
 # Or symlink if you want to keep it as a git repo
-ln -sf ~/builder-workflow-template/rules ~/.claude/rules
-ln -sf ~/builder-workflow-template/docs ~/.claude/docs
+ln -sf ~/claude-code-workflow/rules ~/.claude/rules
+ln -sf ~/claude-code-workflow/docs ~/.claude/docs
 # ... etc
 ```
 
