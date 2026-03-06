@@ -21,15 +21,16 @@ All integrations are defined in `core/integrations/` as YAML configuration files
 - Claude Code: `/plugin marketplace add obra/superpowers-marketplace` then `/plugin install superpowers@superpowers-marketplace`
 - Cursor: `/plugin-add superpowers`
 - Manual: Clone and symlink to your tool's skills directory
+**Portable skill IDs exposed by this workflow**:
+- `superpowers/brainstorm` - Structured brainstorming and ideation sessions
+- `superpowers/tdd` - Test-driven development workflow with red-green-refactor
+- `superpowers/refactor` - Systematic refactoring guidance
+- `superpowers/debug` - Advanced debugging workflow
+- `superpowers/architect` - Architecture design and documentation
+- `superpowers/review` - Code review workflow
+- `superpowers/optimize` - Performance optimization guidance
 
-**Skills Provided**:
-- `brainstorming` - Design refinement and feature exploration
-- `writing-plans` - Implementation planning for complex changes
-- `test-driven-development` - TDD enforcement
-- `systematic-debugging` - Root cause analysis
-- `subagent-driven-development` - Parallel task execution
-- `using-git-worktrees` - Branch isolation
-- `requesting-code-review` - Code review preparation
+The installed Superpowers pack may use different native skill names such as `brainstorming` or `test-driven-development`. Generated target files use the portable IDs from `core/skills/registry.yaml` as the SSOT.
 
 **Configuration**: `core/integrations/superpowers.yaml`
 
@@ -48,6 +49,11 @@ rtk init --global
 ```
 
 This configures a hook in `~/.claude/settings.json` to transparently intercept commands.
+
+**Verification states**:
+- **Ready** - RTK binary is installed and the Claude hook is configured
+- **Installed, hook not configured** - RTK is present, but `rtk init --global` still needs to run
+- **Hook configured, binary not found** - a stale hook exists in `~/.claude/settings.json`, but the RTK binary is not currently available
 
 **Benefits**:
 - 60-90% token reduction on command outputs
@@ -68,9 +74,10 @@ core/integrations/
 Detection & Installation Flow:
 1. bin/vibe init        # User runs initialization
 2. Detect installed tools
-3. Ask user to install missing tools
-4. Configure hooks/symlinks
-5. Verify installation
+3. Distinguish installed vs ready state
+4. Ask user to install or finish configuration
+5. Configure hooks/symlinks
+6. Verify installation
 ```
 
 ## Adding a New Integration
@@ -215,7 +222,8 @@ When `bin/vibe init` is run:
 4. **Prompt**: Ask user if they want to install missing tools
 5. **Install**: Execute installation commands (with user confirmation)
 6. **Configure**: Set up hooks, symlinks, or config files
-7. **Verify**: Confirm successful installation
+7. **Differentiate**: Report whether each integration is merely installed or fully ready
+8. **Verify**: Confirm successful installation
 
 ## User Experience
 
@@ -250,6 +258,18 @@ Checking external integrations...
 Configuration complete! 🎉
 ```
 
+If RTK is present but not fully configured, the setup flow now reports that explicitly instead of marking it ready:
+
+```bash
+$ bin/vibe init
+
+[2/2] RTK (Token Optimizer)
+   Status: Installed, hook not configured
+   Binary: /opt/homebrew/bin/rtk
+   Hook: Not configured
+   Configure RTK hook in ~/.claude/settings.json? [Y/n]:
+```
+
 ### Verification
 
 ```bash
@@ -271,19 +291,37 @@ Verifying integrations...
 All integrations verified! 🎉
 ```
 
+Partial RTK states are also surfaced during verification:
+
+```bash
+$ bin/vibe init --verify
+
+[!] RTK
+    Binary: Not found
+    Hook: Configured
+    Status: Hook configured, but RTK binary was not found
+```
+
 ## Troubleshooting
 
 ### Superpowers Not Detected
 
 1. Check installation: `ls ~/.claude/plugins/superpowers`
-2. Verify in Claude Code: Try invoking `/brainstorming`
-3. Reinstall: Follow installation commands again
+2. Check generated docs/manifest: Superpowers portable IDs only appear after detection succeeds
+3. Verify in Claude Code: Try invoking the pack-native command for your installation
+4. Reinstall: Follow installation commands again
 
 ### RTK Hook Not Working
 
 1. Check settings: `cat ~/.claude/settings.json | grep bashCommandPrepare`
 2. Reinitialize: `rtk init --global`
 3. Restart Claude Code
+
+### RTK Reports Hook Configured But Binary Missing
+
+1. Check whether RTK is still installed: `which rtk`
+2. If missing, reinstall RTK using Homebrew, the install script, or Cargo
+3. Re-run `bin/vibe init --verify` to confirm the state returns to Ready
 
 ### Integration Conflicts
 

@@ -207,8 +207,16 @@ bin/vibe init --verify
 - Claude Code: `/plugin marketplace add obra/superpowers-marketplace`
 - Cursor: `/plugin-add superpowers`
 - 手动: 克隆并符号链接到 `~/.claude/skills/`
+**本工作流暴露的可移植技能 ID**：
+- `superpowers/tdd`
+- `superpowers/brainstorm`
+- `superpowers/refactor`
+- `superpowers/debug`
+- `superpowers/architect`
+- `superpowers/review`
+- `superpowers/optimize`
 
-**技能**: tdd, brainstorm, refactor, debug, architect, review, optimize
+安装后的 Superpowers 技能包可能使用不同的原生命名。`core/skills/registry.yaml` 仍然是 `bin/vibe` 渲染这些可移植 ID 时的单一事实来源。
 
 **来源**: [obra/superpowers](https://github.com/obra/superpowers)
 
@@ -230,10 +238,16 @@ rtk init --global
 
 **来源**: [rtk-ai/rtk](https://github.com/rtk-ai/rtk)
 
+**验证状态**：
+- **Ready**：RTK 二进制已安装，且 Claude hook 已配置完成
+- **Installed, hook not configured**：RTK 已安装，但还需要执行 `rtk init --global`
+- **Hook configured, binary not found**：Claude 配置里残留了 hook，但当前并未找到 RTK 二进制
+
 ### 集成行为
 
 - **条件性**: 所有集成都是可选的。工作流在没有它们的情况下正常运行。
-- **动态检测**: 当安装 Superpowers 时，skill-triggers.md 会自动包含 Superpowers 技能引用。
+- **动态检测**: 只有在检测到已安装 Superpowers 时，相关技能才会出现在生成的 manifest 和文档中。
+- **可移植 SSOT**: 生成产物中的 Superpowers 引用使用 `core/skills/registry.yaml` 中的可移植 ID，而不是技能包自身的命名。
 - **安全性**: 外部技能在注册到 `core/skills/registry.yaml` 之前会经过安全审查。
 
 详细集成文档请参阅 `docs/integrations.md`。

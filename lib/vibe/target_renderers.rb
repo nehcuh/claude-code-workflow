@@ -44,8 +44,8 @@ module Vibe
           content = File.read(skill_triggers_source)
 
           # Append Superpowers integration section
-          superpowers_section = generate_superpowers_section(superpowers_status)
-          enhanced_content = content + "\n" + superpowers_section
+          superpowers_section = generate_superpowers_section(superpowers_status, manifest)
+          enhanced_content = superpowers_section.empty? ? content : content + "\n" + superpowers_section
 
           File.write(skill_triggers_dest, enhanced_content)
         end
@@ -276,11 +276,10 @@ module Vibe
 
     private
 
-    def generate_superpowers_section(status)
-      config = load_integration_config("superpowers")
-      return "" unless config
+    def generate_superpowers_section(status, manifest)
+      manifest_skills = Array(manifest["skills"]).select { |skill| skill["namespace"] == "superpowers" }
+      return "" if manifest_skills.empty?
 
-      skills = config.dig("skills") || []
       location = case status
                  when :claude_plugin then "~/.claude/plugins/superpowers"
                  when :skills_symlink then "~/.claude/skills/superpowers-*"
@@ -289,31 +288,31 @@ module Vibe
                  else "Unknown"
                  end
 
-      <<~MD
+      header = <<~MD
 
         ## Superpowers Skill Pack Integration
 
         **Status**: ✅ Installed (#{location})
 
-        The following Superpowers skills are available for on-demand invocation:
+        The following portable Superpowers skills are available for on-demand invocation:
 
-        | Skill | Trigger | Description |
-        |-------|---------|-------------|
+        | Portable skill | Trigger mode | Description |
+        |----------------|--------------|-------------|
       MD
-        .concat(
-          skills.map do |skill|
-            "| `#{skill['id']}` | #{skill['trigger'] || 'Manual'} | #{skill['description']} |"
-          end.join("\n")
-        )
-        .concat(<<~MD
+      rows = manifest_skills.map do |skill|
+        "| `#{skill['id']}` | `#{skill['trigger_mode']}` | #{skill['intent']} |"
+      end.join("\n")
+
+      footer = <<~MD
 
 
-          **Usage**: Invoke skills using `/skill <skill-id>` or let automatic triggers activate them.
+        **Usage**: `core/skills/registry.yaml` is the SSOT for portable skill IDs. The installed Superpowers pack may expose different native skill names.
 
-          **Security**: All Superpowers skills have been reviewed and are considered safe for use.
-          See `core/integrations/superpowers.yaml` for full skill definitions.
-        MD
-        )
+        **Security**: All Superpowers skills have been reviewed and are considered safe for use.
+        See `core/integrations/superpowers.yaml` for full skill definitions.
+      MD
+
+      header + rows + footer
     end
   end
 end

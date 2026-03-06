@@ -216,8 +216,16 @@ Advanced skill pack providing design refinement, TDD enforcement, systematic deb
 - Claude Code: `/plugin marketplace add obra/superpowers-marketplace`
 - Cursor: `/plugin-add superpowers`
 - Manual: Clone and symlink to `~/.claude/skills/`
+**Portable skill IDs exposed by this workflow**:
+- `superpowers/tdd`
+- `superpowers/brainstorm`
+- `superpowers/refactor`
+- `superpowers/debug`
+- `superpowers/architect`
+- `superpowers/review`
+- `superpowers/optimize`
 
-**Skills**: tdd, brainstorm, refactor, debug, architect, review, optimize
+The installed Superpowers pack may use different native skill names. `core/skills/registry.yaml` remains the SSOT for the portable IDs rendered by `bin/vibe`.
 
 **Source**: [obra/superpowers](https://github.com/obra/superpowers)
 
@@ -239,10 +247,16 @@ rtk init --global
 
 **Source**: [rtk-ai/rtk](https://github.com/rtk-ai/rtk)
 
+**Verification states**:
+- **Ready**: RTK binary is installed and the Claude hook is configured
+- **Installed, hook not configured**: RTK is present but `rtk init --global` still needs to run
+- **Hook configured, binary not found**: stale Claude hook exists, but RTK is not currently installed
+
 ### Integration Behavior
 
 - **Conditional**: All integrations are optional. The workflow operates normally without them.
-- **Dynamic Detection**: When Superpowers is installed, skill-triggers.md automatically includes Superpowers skill references.
+- **Dynamic Detection**: Superpowers skills only appear in generated manifests/docs when the pack is actually installed.
+- **Portable SSOT**: Generated Superpowers references use the portable IDs from `core/skills/registry.yaml`, not pack-specific command names.
 - **Security**: External skills undergo security review before registration in `core/skills/registry.yaml`.
 
 See `docs/integrations.md` for detailed integration documentation.

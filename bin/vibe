@@ -421,16 +421,7 @@ class VibeCLI
           "avoid_when" => tier["avoid_when"] || []
         }
       end,
-      "skills" => @skills_doc.fetch("skills").map do |skill|
-        {
-          "id" => skill["id"],
-          "namespace" => skill["namespace"],
-          "intent" => skill["intent"],
-          "trigger_mode" => skill["trigger_mode"],
-          "priority" => skill["priority"],
-          "target_support" => skill.fetch("supported_targets", {})[target]
-        }
-      end,
+      "skills" => manifest_skills(target),
       "policies" => policies,
       "security" => {
         "severity_levels" => @security_doc.fetch("severity_levels"),
@@ -439,6 +430,33 @@ class VibeCLI
         "target_actions" => @security_doc.fetch("actions_by_target")[target]
       }
     }
+  end
+
+  def manifest_skills(target)
+    @skills_doc.fetch("skills").select do |skill|
+      include_skill_in_manifest?(skill)
+    end.map do |skill|
+      {
+        "id" => skill["id"],
+        "namespace" => skill["namespace"],
+        "intent" => skill["intent"],
+        "trigger_mode" => skill["trigger_mode"],
+        "priority" => skill["priority"],
+        "target_support" => skill.fetch("supported_targets", {})[target]
+      }
+    end
+  end
+
+  def include_skill_in_manifest?(skill)
+    condition = skill["conditional"]
+    return true if condition.nil? || condition.to_s.strip.empty?
+
+    case condition
+    when "superpowers_installed"
+      detect_superpowers != :not_installed
+    else
+      false
+    end
   end
 
   def inspect_payload(target:, overlay:)
@@ -480,6 +498,7 @@ class VibeCLI
     }
   end
 end
-
-repo_root = File.expand_path("..", __dir__)
-VibeCLI.new(repo_root).run(ARGV)
+if __FILE__ == $PROGRAM_NAME
+  repo_root = File.expand_path("..", __dir__)
+  VibeCLI.new(repo_root).run(ARGV)
+end

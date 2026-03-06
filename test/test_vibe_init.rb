@@ -4,6 +4,7 @@
 require "minitest/autorun"
 require "tmpdir"
 require "fileutils"
+require "json"
 require_relative "../lib/vibe/external_tools"
 require_relative "../lib/vibe/init_support"
 
@@ -88,6 +89,20 @@ class TestVibeInit < Minitest::Test
     assert_equal :not_installed, status
   end
 
+  def test_detect_rtk_hook_configured_without_binary
+    claude_dir = File.join(@test_home, ".claude")
+    FileUtils.mkdir_p(claude_dir)
+    File.write(File.join(claude_dir, "settings.json"), JSON.generate({
+      "hooks" => {
+        "bashCommandPrepare" => "rtk rewrite"
+      }
+    }))
+
+    self.stub(:system, ->(_command) { false }) do
+      assert_equal :hook_configured, detect_rtk
+    end
+  end
+
   def test_verify_superpowers_not_installed
     result = verify_superpowers
     refute result[:installed]
@@ -96,6 +111,24 @@ class TestVibeInit < Minitest::Test
   def test_verify_rtk_not_installed
     result = verify_rtk
     refute result[:installed]
+  end
+
+  def test_verify_rtk_hook_configured_without_binary_is_not_ready
+    claude_dir = File.join(@test_home, ".claude")
+    FileUtils.mkdir_p(claude_dir)
+    File.write(File.join(claude_dir, "settings.json"), JSON.generate({
+      "hooks" => {
+        "bashCommandPrepare" => "rtk rewrite"
+      }
+    }))
+
+    self.stub(:system, ->(_command) { false }) do
+      result = verify_rtk
+      refute result[:installed]
+      refute result[:ready]
+      assert_equal :hook_configured, result[:status]
+      assert result[:hook_configured]
+    end
   end
 
   def test_integration_status

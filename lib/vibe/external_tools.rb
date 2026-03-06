@@ -88,16 +88,7 @@ module Vibe
       return :installed if system("which rtk > /dev/null 2>&1")
 
       # Method 2: Check Claude settings.json for hook
-      settings_path = File.expand_path("~/.claude/settings.json")
-      if File.exist?(settings_path)
-        begin
-          settings = JSON.parse(File.read(settings_path))
-          hook = settings.dig("hooks", "bashCommandPrepare")
-          return :hook_configured if hook&.include?("rtk")
-        rescue JSON::ParserError
-          # Ignore malformed settings.json
-        end
-      end
+      return :hook_configured if rtk_hook_configured?
 
       :not_installed
     end
@@ -157,6 +148,7 @@ module Vibe
 
       {
         installed: true,
+        ready: true,
         method: status,
         location: superpowers_location,
         skills_count: superpowers_skills_count
@@ -165,13 +157,16 @@ module Vibe
 
     def verify_rtk
       status = detect_rtk
-      return { installed: false } if status == :not_installed
+      hook_configured = rtk_hook_configured?
+      binary_installed = (status == :installed)
 
       {
-        installed: true,
-        binary: rtk_binary_path,
-        version: rtk_version,
-        hook_configured: rtk_hook_configured?
+        installed: binary_installed,
+        ready: binary_installed && hook_configured,
+        status: status,
+        binary: binary_installed ? rtk_binary_path : nil,
+        version: binary_installed ? rtk_version : nil,
+        hook_configured: hook_configured
       }
     end
 
@@ -192,6 +187,16 @@ module Vibe
     def missing_integrations
       status = integration_status
       status.select { |_name, s| !s[:installed] }.keys
+    end
+
+    def pending_integrations
+      status = integration_status
+      status.select { |_name, s| !s[:ready] }.keys
+    end
+
+    def all_integrations_ready?
+      status = integration_status
+      status.values.all? { |s| s[:ready] }
     end
   end
 end

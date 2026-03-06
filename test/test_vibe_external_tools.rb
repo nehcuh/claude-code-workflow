@@ -136,4 +136,33 @@ class TestVibeExternalTools < Minitest::Test
       refute rtk_hook_configured?
     end
   end
+
+  def test_verify_rtk_hook_only_reports_not_installed
+    settings_path = File.join(@test_dir, "settings.json")
+    File.write(settings_path, JSON.generate({
+      "hooks" => {
+        "bashCommandPrepare" => "rtk rewrite"
+      }
+    }))
+
+    stub_expand_path = lambda do |path|
+      return settings_path if path == "~/.claude/settings.json"
+
+      path
+    end
+
+    self.stub(:system, ->(_command) { false }) do
+      File.stub :expand_path, stub_expand_path do
+        assert_equal :hook_configured, detect_rtk
+
+        result = verify_rtk
+        refute result[:installed]
+        refute result[:ready]
+        assert_equal :hook_configured, result[:status]
+        assert result[:hook_configured]
+        assert_nil result[:binary]
+        assert_nil result[:version]
+      end
+    end
+  end
 end

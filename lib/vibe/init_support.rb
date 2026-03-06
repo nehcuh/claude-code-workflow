@@ -71,7 +71,7 @@ module Vibe
 
       puts
       puts "Next steps:"
-      if missing_integrations.any?
+      if pending_integrations.any?
         puts "1. Complete the installation steps above"
         puts "2. Run: bin/vibe init --verify"
       else
@@ -93,41 +93,83 @@ module Vibe
         return
       end
 
-      status = send("detect_#{name}")
+      info = send("verify_#{name}")
+      puts "   Status: #{setup_status_message(name, info)}"
 
-      if status == :not_installed
-        puts "   Status: Not installed"
+      if info[:ready]
         puts
-        display_integration_description(config)
-        puts
+        return
+      end
 
-        if ask_yes_no("   Would you like to install #{label}?")
-          install_integration(name, config)
-        else
-          puts "   Skipped."
-        end
-      else
-        puts "   Status: Already installed (#{status})"
+      if info[:installed]
+        puts
+        complete_integration_setup(name, info)
+        puts
+        return
       end
 
       puts
+      display_integration_description(config)
+      puts
+
+      if ask_yes_no("   Would you like to install #{label}?")
+        install_integration(name, config)
+      else
+        puts "   Skipped."
+      end
+
+      puts
+    end
+
+    def setup_status_message(name, info)
+      case name
+      when "superpowers"
+        return "Already installed (#{info[:method]})" if info[:ready]
+      when "rtk"
+        return "Already installed (binary + hook configured)" if info[:ready]
+        return "Installed, hook not configured" if info[:installed]
+        return "Hook configured, but RTK binary was not found" if info[:hook_configured]
+      end
+
+      "Not installed"
+    end
+
+    def complete_integration_setup(name, info)
+      case name
+      when "rtk"
+        puts "   Binary: #{info[:binary]}" if info[:binary]
+        puts "   Hook: #{info[:hook_configured] ? 'Configured' : 'Not configured'}"
+        return if info[:hook_configured]
+
+        if ask_yes_no("   Configure RTK hook in ~/.claude/settings.json?")
+          if configure_rtk_hook
+            puts "   ✓ Hook configured successfully"
+          else
+            puts "   ✗ Hook configuration failed"
+            puts "   You can manually run: rtk init --global"
+          end
+        else
+          puts "   Skipped hook configuration."
+          puts "   You can manually run: rtk init --global"
+        end
+      end
     end
 
     def display_integration_description(config)
       puts "   #{config['description']}"
       puts
 
-      if config['type'] == 'skill_pack' && config['skills']
+      if config["type"] == "skill_pack" && config["skills"]
         puts "   Skills provided:"
-        config['skills'].first(3).each do |skill|
+        config["skills"].first(3).each do |skill|
           puts "   - #{skill['id']}: #{skill['intent']}"
         end
-        if config['skills'].size > 3
+        if config["skills"].size > 3
           puts "   - ... and #{config['skills'].size - 3} more"
         end
-      elsif config['benefits']
+      elsif config["benefits"]
         puts "   Benefits:"
-        config['benefits'].first(3).each do |benefit|
+        config["benefits"].first(3).each do |benefit|
           puts "   - #{benefit}"
         end
       end
@@ -189,7 +231,7 @@ module Vibe
       puts "   After installation, run: bin/vibe init --verify"
     end
 
-    def install_rtk(config)
+    def install_rtk(_config)
       puts
       puts "   Installation method:"
       puts "   1) Homebrew (macOS/Linux)"
@@ -274,11 +316,11 @@ module Vibe
       end
 
       puts
-      if all_integrations_installed?
+      if all_integrations_ready?
         puts "All integrations verified successfully! 🎉"
       else
-        puts "Some integrations are not installed."
-        puts "Run: bin/vibe init (without --verify) to install them."
+        puts "Some integrations still need installation or configuration."
+        puts "Run: bin/vibe init (without --verify) to finish setup."
       end
       puts
     end
@@ -290,7 +332,7 @@ module Vibe
               else name.to_s.capitalize
               end
 
-      if info[:installed]
+      if info[:ready]
         puts "[✓] #{label}"
         case name
         when :superpowers
@@ -302,6 +344,17 @@ module Vibe
           puts "    Hook: #{info[:hook_configured] ? 'Configured' : 'Not configured'}"
         end
         puts "    Status: Ready"
+      elsif name == :rtk && info[:installed]
+        puts "[!] #{label}"
+        puts "    Binary: #{info[:binary]}"
+        puts "    Version: #{info[:version]}"
+        puts "    Hook: Not configured"
+        puts "    Status: Installed, hook not configured"
+      elsif name == :rtk && info[:hook_configured]
+        puts "[!] #{label}"
+        puts "    Binary: Not found"
+        puts "    Hook: Configured"
+        puts "    Status: Hook configured, but RTK binary was not found"
       else
         puts "[✗] #{label}"
         puts "    Status: Not installed"
@@ -319,8 +372,12 @@ module Vibe
                 else name.to_s.capitalize
                 end
 
-        if info[:installed]
-          puts "✓ #{label}: Installed"
+        if info[:ready]
+          puts "✓ #{label}: Ready"
+        elsif name == :rtk && info[:installed]
+          puts "⚠ #{label}: Installed but hook not configured"
+        elsif name == :rtk && info[:hook_configured]
+          puts "⚠ #{label}: Hook configured but binary not found"
         else
           puts "⚠ #{label}: Installation instructions provided"
         end
