@@ -1,0 +1,126 @@
+# frozen_string_literal: true
+
+module Vibe
+  # Output path safety guards, destination conflict checks, file tree
+  # copying, and marker file management.
+  #
+  # Host requirements:
+  #   @repo_root [String] — absolute path to the workflow repository root
+  #
+  # Depends on methods from:
+  #   Vibe::Utils — write_json, display_path
+  module PathSafety
+    UNSAFE_OUTPUT_PATHS = ["/", "/tmp", "/var", "/etc", "/usr"].freeze
+
+    def ensure_safe_output_path!(output_root)
+      expanded = File.expand_path(output_root)
+      home = File.expand_path(Dir.home)
+      repo = File.expand_path(@repo_root)
+
+      UNSAFE_OUTPUT_PATHS.each do |unsafe|
+        abort "Refusing to use #{expanded} as output root: overlaps with #{unsafe}" if expanded == File.expand_path(unsafe)
+      end
+
+      abort "Refusing to use #{expanded} as output root: overlaps with $HOME (#{home})" if expanded == home
+
+      if expanded == repo || (expanded.start_with?("#{repo}/") && !expanded.start_with?("#{repo}/generated/"))
+        abort "Refusing to use #{expanded} as output root: overlaps with source repo (#{repo}).\nUse a path under generated/ or an external directory."
+      end
+
+      if repo.start_with?("#{expanded}/")
+        abort "Refusing to use #{expanded} as output root: source repo is inside it."
+      end
+
+      parts = expanded.split("/").reject(&:empty?)
+      if parts.length < 2
+        abort "Refusing to use #{expanded} as output root: path is too shallow (need at least 2 levels)."
+      end
+    end
+
+    def ensure_no_path_overlap!(output_root, destination_root)
+      out = File.expand_path(output_root)
+      dest = File.expand_path(destination_root)
+
+      if out == dest
+        abort "Output root and destination root are the same path: #{out}\nUse separate directories."
+      end
+
+      if dest.start_with?("#{out}/") || out.start_with?("#{dest}/")
+        abort "Output root (#{out}) and destination root (#{dest}) overlap.\nUse non-overlapping directories."
+      end
+    end
+
+    def enforce_safe_destination!(staging_root, destination_root, force)
+      return if force
+
+      conflicts = staged_file_paths(staging_root).select do |relative_path|
+        File.exist?(File.join(destination_root, relative_path))
+      end
+
+      return if conflicts.empty?
+
+      sample = conflicts.first(5).map { |path| "  - #{path}" }.join("\n")
+      abort <<~TEXT
+        Destination already contains #{conflicts.length} generated path(s).
+        Re-run with --force to overwrite them.
+
+        Sample conflicts:
+        #{sample}
+      TEXT
+    end
+
+    def write_marker(path, destination_root:, manifest:, output_root:, mode:)
+      write_json(
+        path,
+        {
+          "schema_version" => 5,
+          "mode" => mode,
+          "source_repo" => ".",
+          "destination_root" => display_path(destination_root),
+          "generated_output" => display_path(File.expand_path(output_root)),
+          "target" => manifest["target"],
+          "profile" => manifest["profile"],
+          "profile_mapping" => manifest["profile_mapping"],
+          "overlay" => manifest["overlay"],
+          "effective_policy_count" => manifest["policies"].length,
+          "applied_at" => Time.now.utc.iso8601
+        }
+      )
+    end
+
+    def staged_file_paths(root, prefix = nil)
+      entries = Dir.glob(File.join(root, "*"), File::FNM_DOTMATCH).reject do |path|
+        [".", ".."].include?(File.basename(path))
+      end
+
+      entries.flat_map do |entry|
+        relative = [prefix, File.basename(entry)].compact.join("/")
+
+        if File.directory?(entry)
+          staged_file_paths(entry, relative)
+        else
+          relative
+        end
+      end
+    end
+
+    def copy_tree_contents(source_root, destination_root)
+      entries = Dir.glob(File.join(source_root, "*"), File::FNM_DOTMATCH).reject do |path|
+        [".", ".."].include?(File.basename(path))
+      end
+
+      entries.each do |entry|
+        destination = File.join(destination_root, File.basename(entry))
+
+        if File.directory?(entry)
+          FileUtils.mkdir_p(destination)
+          copy_tree_contents(entry, destination)
+        else
+          FileUtils.mkdir_p(File.dirname(destination))
+          FileUtils.cp(entry, destination)
+        end
+      end
+    end
+
+  end
+end

@@ -3,9 +3,19 @@ name: vibe-smoke
 on:
   pull_request:
     paths:
+      - "CLAUDE.md"
       - "bin/vibe"
       - "bin/vibe-smoke"
+      - "lib/**"
+      - "test/**"
       - "core/**"
+      - "rules/**"
+      - "docs/**"
+      - "skills/**"
+      - "agents/**"
+      - "commands/**"
+      - "memory/**"
+      - "patterns.md"
       - "examples/**"
       - "README.md"
       - ".github/workflows/vibe-smoke.yml"
@@ -13,9 +23,19 @@ on:
     branches:
       - main
     paths:
+      - "CLAUDE.md"
       - "bin/vibe"
       - "bin/vibe-smoke"
+      - "lib/**"
+      - "test/**"
       - "core/**"
+      - "rules/**"
+      - "docs/**"
+      - "skills/**"
+      - "agents/**"
+      - "commands/**"
+      - "memory/**"
+      - "patterns.md"
       - "examples/**"
       - "README.md"
       - ".github/workflows/vibe-smoke.yml"

@@ -5,7 +5,18 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
+# --- Unit tests ---
+for test_file in "${REPO_ROOT}"/test/test_vibe_*.rb; do
+  ruby "${test_file}" || { echo "FAIL: unit test ${test_file}"; exit 1; }
+done
+
 TARGETS=(claude-code codex-cli cursor opencode warp)
+
+"${REPO_ROOT}/bin/vibe" help >/dev/null
+TARGET_OUTPUT="$("${REPO_ROOT}/bin/vibe" targets)"
+for target in "${TARGETS[@]}"; do
+  grep -qx "${target}" <<< "${TARGET_OUTPUT}" || { echo "FAIL: missing target ${target} from bin/vibe targets"; exit 1; }
+done
 
 for target in "${TARGETS[@]}"; do
   "${REPO_ROOT}/bin/vibe" build "${target}" --output "${TMP_DIR}/generated/${target}" >/dev/null

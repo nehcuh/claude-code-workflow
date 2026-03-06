@@ -1,5 +1,7 @@
 # Claude Code Workflow
 
+**English** | [中文](README.zh-CN.md)
+
 A battle-tested workflow foundation for Claude Code today, evolving into a portable vibe coding config base for Claude Code, Codex CLI, OpenCode, Cursor, Warp, and similar agentic tools.
 
 **Not a tutorial. Not a toy config. A production workflow that actually ships — now with a provider-neutral core spec in phase 1.**
