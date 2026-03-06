@@ -59,7 +59,8 @@ claude-code-workflow/
 ├── README.md                     # You are here
 │
 ├── bin/
-│   └── vibe                      # Phase-6 generator CLI (build/use/inspect/overlay-aware targets)
+│   ├── vibe                      # Phase-6 generator CLI (build/use/inspect/overlay-aware targets)
+│   └── vibe-smoke                # Smoke test for generator target builds + overlays
 │
 ├── core/                         # Portable SSOT (phase 1)
 │   ├── README.md                 # Portable architecture + migration rules
@@ -104,10 +105,14 @@ claude-code-workflow/
 │   └── task-routing.md           # Model tier routing + target profiles
 │
 ├── memory/                       # Layer 2: Your working state (templates)
+│   ├── infra.md                  # Infrastructure SSOT template
 │   ├── today.md                  # Daily session log
 │   ├── projects.md               # Cross-project status overview
 │   ├── goals.md                  # Week/month/quarter goals
+│   ├── sunday-backlog.md         # System optimization backlog template
 │   └── active-tasks.json         # Cross-session task registry
+│
+├── patterns.md                   # Cross-project reusable patterns and pitfalls
 │
 ├── skills/                       # Reusable skill definitions
 │   ├── session-end/SKILL.md              # Auto wrap-up: save progress + commit + record
@@ -180,6 +185,7 @@ bin/vibe build --target cursor
 bin/vibe build --target opencode
 bin/vibe build --target warp
 bin/vibe inspect
+bin/vibe-smoke
 ```
 
 By default, each build goes to `generated/<target>/`.
@@ -220,6 +226,9 @@ bin/vibe inspect --overlay examples/project-overlay.yaml
 # Build or apply with a project overlay
 bin/vibe build cursor --overlay examples/project-overlay.yaml
 bin/vibe use --target opencode --destination /path/to/project --overlay /path/to/project/.vibe/overlay.yaml
+
+# Run smoke checks (all targets + overlay builds)
+bin/vibe-smoke
 ```
 
 Current phase-6 behavior:
