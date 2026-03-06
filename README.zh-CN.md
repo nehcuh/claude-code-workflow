@@ -173,6 +173,12 @@ targets:
 然后构建时会自动发现并应用：
 
 ```bash
+bin/vibe switch cursor  # 自动应用 .vibe/overlay.yaml
+```
+
+**路径安全机制**：使用 `use` 或 `switch` 命令时，如果默认输出目录（`generated/<target>/`）与目标目录重叠，工具会自动使用外部暂存目录 `~/.vibe-generated/<目标名>-<哈希>/<target>/` 来避免冲突。这确保了即使将配置应用到仓库根目录也能安全操作。
+
+```bash
 bin/vibe build cursor                   # 自动发现 .vibe/overlay.yaml
 bin/vibe build warp --overlay my.yaml   # 或显式指定
 ```

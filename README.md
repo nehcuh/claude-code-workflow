@@ -327,6 +327,8 @@ Current phase-6 behavior:
 - `warp` → materializes `WARP.md` plus generated behavior / routing / safety / workflow support docs under `.vibe/warp/`
 - `inspect` → can preview overlay-aware profile resolution and generated target state
 - `use` / `switch` → auto-discover `.vibe/overlay.yaml` in the destination project when present
+
+**Path Safety**: When using `use` or `switch`, if the default output directory (`generated/<target>/`) would overlap with the destination directory, the tool automatically uses an external staging directory at `~/.vibe-generated/<destination-name>-<hash>/<target>/` to prevent conflicts. This ensures safe operation even when applying configurations to the repository root.
 - overlays → let a consuming repo remap capability tiers, add behavior deltas, patch native target config, and encode stack preferences like `uv` or `nvm` without editing `core/`
 
 `bin/vibe` is intentionally conservative: it only renders the parts that are already modeled in `core/` and documented in `targets/`.

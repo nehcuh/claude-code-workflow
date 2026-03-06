@@ -49,6 +49,29 @@ class TestPathSafety < Minitest::Test
     end
   end
 
+  def test_paths_overlap_symlink_with_nonexistent_descendant
+    # This is the critical edge case GPT identified:
+    # One side is an existing symlink, other side is a nonexistent descendant
+    # of the real path
+    Dir.mktmpdir do |tmp|
+      real_dir = File.join(tmp, "real")
+      link_dir = File.join(tmp, "link")
+      nonexistent_child = File.join(real_dir, "child", "grandchild")
+
+      FileUtils.mkdir_p(real_dir)
+      File.symlink(real_dir, link_dir)
+
+      # link -> real, comparing with real/child/grandchild (doesn't exist yet)
+      # Should detect overlap because link resolves to real
+      assert paths_overlap?(link_dir, nonexistent_child),
+        "Failed to detect overlap: symlink (#{link_dir}) vs nonexistent descendant (#{nonexistent_child})"
+
+      # Reverse direction should also work
+      assert paths_overlap?(nonexistent_child, link_dir),
+        "Failed to detect overlap: nonexistent descendant (#{nonexistent_child}) vs symlink (#{link_dir})"
+    end
+  end
+
   def test_paths_overlap_with_nonexistent_paths
     Dir.mktmpdir do |tmp|
       nonexistent1 = File.join(tmp, "nonexistent1")

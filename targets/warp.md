@@ -20,6 +20,7 @@ Warp should render the portable workflow through project rules rooted in `WARP.m
 
 - `bin/vibe build --target warp` generates `WARP.md` and `.vibe/warp/*` support docs.
 - `bin/vibe switch warp` applies Warp-oriented files into the current repo root by default.
+- **Path Safety**: If the default output directory would overlap with the destination (e.g., when switching into the repo root), the tool automatically uses an external staging directory at `~/.vibe-generated/<repo-name>-<hash>/warp/` to prevent conflicts.
 - Project overlays can inject stack-specific preferences such as `uv` or `nvm` into the rendered Warp rule set without changing shared defaults.
 
 ## Notes

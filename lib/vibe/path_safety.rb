@@ -86,17 +86,37 @@ module Vibe
     end
 
     def paths_overlap?(left, right)
-      # Resolve symlinks to detect real path overlaps
-      begin
-        left_root = File.realpath(File.expand_path(left))
-        right_root = File.realpath(File.expand_path(right))
-      rescue Errno::ENOENT
-        # If paths don't exist yet, fall back to string comparison
-        left_root = File.expand_path(left)
-        right_root = File.expand_path(right)
-      end
+      # Normalize each path independently to handle symlinks correctly
+      left_root = normalize_path(left)
+      right_root = normalize_path(right)
 
       left_root.start_with?("#{right_root}/") || right_root.start_with?("#{left_root}/")
+    end
+
+    private
+
+    def normalize_path(path)
+      # Expand path first to handle relative paths
+      expanded = File.expand_path(path)
+
+      # Try to resolve symlinks if path exists
+      begin
+        return File.realpath(expanded)
+      rescue Errno::ENOENT
+        # Path doesn't exist, try to resolve parent directories
+        # This handles cases like: symlink -> real, comparing with real/nonexistent/child
+        parent = File.dirname(expanded)
+        basename = File.basename(expanded)
+
+        # Recursively normalize parent if it's not root
+        if parent != expanded && parent != "/"
+          normalized_parent = normalize_path(parent)
+          return File.join(normalized_parent, basename)
+        end
+
+        # Parent is root or same as current, return as-is
+        return expanded
+      end
     end
 
     def enforce_safe_destination!(staging_root, destination_root, force)
