@@ -12,6 +12,8 @@ require_relative "../lib/vibe/native_configs"
 require_relative "../lib/vibe/overlay_support"
 require_relative "../lib/vibe/path_safety"
 require_relative "../lib/vibe/target_renderers"
+require_relative "../lib/vibe/external_tools"
+require_relative "../lib/vibe/init_support"
 
 class VibeCLI
   include Vibe::Utils
@@ -20,6 +22,8 @@ class VibeCLI
   include Vibe::OverlaySupport
   include Vibe::PathSafety
   include Vibe::TargetRenderers
+  include Vibe::ExternalTools
+  include Vibe::InitSupport
 
   TARGET_ALIASES = {
     "claude" => "claude-code",
@@ -55,6 +59,8 @@ class VibeCLI
       run_use(argv, switch_mode: true)
     when "inspect"
       run_inspect(argv)
+    when "init"
+      run_init_command(argv)
     when "targets"
       puts SUPPORTED_TARGETS.join("
 ")
@@ -76,6 +82,7 @@ class VibeCLI
         bin/vibe use TARGET DESTINATION [--profile PROFILE] [--output DIR] [--overlay FILE] [--force]
         bin/vibe switch TARGET [--profile PROFILE] [--output DIR] [--overlay FILE] [--force]
         bin/vibe inspect [TARGET] [--overlay FILE] [--json]
+        bin/vibe init [--verify]
         bin/vibe targets
 
       Overlay discovery:
@@ -200,6 +207,35 @@ class VibeCLI
     else
       puts render_inspect(payload)
     end
+  end
+
+  def run_init_command(argv)
+    verify_only = false
+
+    argv.each do |arg|
+      case arg
+      when "--verify"
+        verify_only = true
+      when "--help", "-h"
+        puts <<~HELP
+          Usage: bin/vibe init [--verify]
+
+          Initialize external integrations for Claude Code Workflow.
+
+          Options:
+            --verify    Only verify existing integrations without installing
+
+          Integrations:
+            - Superpowers: Skill pack with advanced capabilities
+            - RTK: Token optimizer reducing LLM costs by 60-90%
+        HELP
+        return
+      else
+        abort "Unknown option: #{arg}\n\nRun 'bin/vibe init --help' for usage."
+      end
+    end
+
+    run_init(verify_only: verify_only)
   end
 
   def parse_common_options(argv, banner:)

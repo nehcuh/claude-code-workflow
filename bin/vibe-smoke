@@ -10,6 +10,10 @@ for test_file in "${REPO_ROOT}"/test/test_vibe_*.rb; do
   ruby "${test_file}" || { echo "FAIL: unit test ${test_file}"; exit 1; }
 done
 
+# --- Init command tests ---
+"${REPO_ROOT}/bin/vibe" init --help >/dev/null || { echo "FAIL: init --help"; exit 1; }
+"${REPO_ROOT}/bin/vibe" init --verify >/dev/null || { echo "FAIL: init --verify"; exit 1; }
+
 TARGETS=(claude-code codex-cli cursor opencode warp)
 
 "${REPO_ROOT}/bin/vibe" help >/dev/null
@@ -72,4 +76,4 @@ if "${REPO_ROOT}/bin/vibe" build warp --output "${REPO_ROOT}" 2>/dev/null; then
   exit 1
 fi
 
-echo "vibe smoke passed: ${TARGETS[*]} + overlay builds + warp skill support + content verification"
+echo "vibe smoke passed: ${TARGETS[*]} + overlay builds + warp skill support + content verification + init commands"
