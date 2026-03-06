@@ -27,7 +27,8 @@ module Vibe
     end
 
     def deep_copy(value)
-      Marshal.load(Marshal.dump(value))
+      return value if value.nil? || value == true || value == false || value.is_a?(Numeric)
+      JSON.parse(JSON.generate(value))
     end
 
     def blankish?(value)

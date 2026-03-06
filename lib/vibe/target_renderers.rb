@@ -18,6 +18,11 @@ module Vibe
     def render_claude(output_root, manifest)
       COPY_RUNTIME_ENTRIES.each do |entry|
         source = File.join(@repo_root, entry)
+        unless File.exist?(source)
+          $stderr.puts "Warning: skipping missing runtime entry: #{entry}"
+          next
+        end
+
         destination = File.join(output_root, entry)
 
         if File.directory?(source)

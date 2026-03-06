@@ -323,6 +323,8 @@ class VibeCLI
 
 
   def build_target(target:, profile_name:, profile:, output_root:, overlay:)
+    ensure_safe_output_path!(output_root)
+
     manifest = build_manifest(
       target: target,
       profile_name: profile_name,
@@ -331,7 +333,6 @@ class VibeCLI
       overlay: overlay
     )
 
-    ensure_safe_output_path!(output_root)
     FileUtils.rm_rf(output_root)
     FileUtils.mkdir_p(output_root)
 

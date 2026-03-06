@@ -11,14 +11,50 @@ module Vibe
   #   Vibe::Utils — write_json, display_path
   module PathSafety
     UNSAFE_OUTPUT_PATHS = ["/", "/tmp", "/var", "/etc", "/usr"].freeze
+    # macOS temp directories under /var are safe
+    SAFE_VAR_PREFIXES = ["/var/folders/"].freeze
+
+    # Normalize a path by resolving symlinks in existing parent directories.
+    # For /tmp/foo/bar where /tmp exists but foo/bar don't:
+    # - Resolve /tmp to /private/tmp (on macOS)
+    # - Append /foo/bar to get /private/tmp/foo/bar
+    def normalize_path(path)
+      expanded = File.expand_path(path)
+      return File.realpath(expanded) if File.exist?(expanded)
+
+      # Find the first existing parent
+      parts = expanded.split("/").reject(&:empty?)
+      (parts.length - 1).downto(0) do |i|
+        parent = "/" + parts[0..i].join("/")
+        if File.exist?(parent)
+          real_parent = File.realpath(parent)
+          suffix = parts[(i + 1)..-1]
+          return suffix.empty? ? real_parent : File.join(real_parent, *suffix)
+        end
+      end
+
+      # No existing parent found (shouldn't happen for absolute paths)
+      expanded
+    end
 
     def ensure_safe_output_path!(output_root)
-      expanded = File.expand_path(output_root)
+      expanded = normalize_path(output_root)
       home = File.expand_path(Dir.home)
       repo = File.expand_path(@repo_root)
 
+      # Check if path is under a safe /var prefix (e.g., /var/folders/ on macOS)
+      is_safe_var = SAFE_VAR_PREFIXES.any? { |prefix|
+        normalized_prefix = normalize_path(prefix)
+        expanded.start_with?(normalized_prefix)
+      }
+
       UNSAFE_OUTPUT_PATHS.each do |unsafe|
-        abort "Refusing to use #{expanded} as output root: overlaps with #{unsafe}" if expanded == File.expand_path(unsafe)
+        unsafe_expanded = normalize_path(unsafe)
+        if expanded == unsafe_expanded || expanded.start_with?("#{unsafe_expanded}/")
+          # Allow if it's under a safe /var prefix
+          next if unsafe == "/var" && is_safe_var
+          abort "Refusing to use #{expanded} as output root: overlaps with #{unsafe}"
+        end
       end
 
       abort "Refusing to use #{expanded} as output root: overlaps with $HOME (#{home})" if expanded == home

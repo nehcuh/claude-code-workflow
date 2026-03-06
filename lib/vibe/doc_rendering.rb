@@ -347,7 +347,7 @@ module Vibe
       [
         "- Name: `#{overlay["name"]}`",
         "- Path: `#{overlay["display_path"]}`",
-        "- Profile mapping overrides: #{format_backtick_list(overlay["profile_mapping_overrides"].keys.sort)}",
+        "- Profile mapping overrides: #{format_backtick_list((overlay["profile_mapping_overrides"] || {}).keys.sort)}",
         "- Extra profile notes: `#{overlay["profile_note_append_count"]}`",
         "- Policy patches: `#{overlay["policy_patch_count"]}`",
         "- Native patch keys: #{format_backtick_list(patch_keys)}"

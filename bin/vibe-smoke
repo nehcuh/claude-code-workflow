@@ -54,10 +54,11 @@ abort("manifest source_repo should be relative, got: #{manifest["source_repo"]}"
 ' "${TMP_DIR}/generated/warp/.vibe/manifest.json"
 
 # inspect --json schema_version must be 5
-ruby -rjson -e '
+inspect_json="$("${REPO_ROOT}/bin/vibe" inspect --json)"
+echo "${inspect_json}" | ruby -rjson -e '
 payload = JSON.parse(STDIN.read)
 abort("inspect schema_version should be 5, got: #{payload["schema_version"]}") unless payload["schema_version"] == 5
-' < <("${REPO_ROOT}/bin/vibe" inspect --json)
+'
 
 # Overlay build must record overlay in manifest
 ruby -rjson -e '

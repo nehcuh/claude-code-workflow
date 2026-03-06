@@ -46,8 +46,11 @@ class TestVibePathSafety < Minitest::Test
     @host.ensure_safe_output_path!("/fake/repo/generated/warp")
   end
 
-  def test_allows_external_deep_path
-    @host.ensure_safe_output_path!("/tmp/vibe-test/output")
+  def test_refuses_unsafe_path_children
+    # After security fix, children of unsafe paths are also blocked
+    assert_aborts { @host.ensure_safe_output_path!("/tmp/vibe-test/output") }
+    assert_aborts { @host.ensure_safe_output_path!("/etc/foo") }
+    assert_aborts { @host.ensure_safe_output_path!("/var/lib/x") }
   end
 
   def test_refuses_shallow_path

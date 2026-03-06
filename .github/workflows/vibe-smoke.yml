@@ -41,6 +41,9 @@ on:
       - ".github/workflows/vibe-smoke.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   smoke:
     runs-on: ubuntu-latest
