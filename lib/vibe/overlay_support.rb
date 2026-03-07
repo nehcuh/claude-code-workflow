@@ -25,6 +25,26 @@ module Vibe
       doc = read_yaml_abs(path) || {}
       raise ValidationError, "Overlay file must contain a YAML mapping: #{path}" unless doc.is_a?(Hash)
 
+      # Validate schema version
+      schema_version = doc["schema_version"]
+      if schema_version && !schema_version.is_a?(Integer)
+        raise ValidationError, "Overlay schema_version must be an integer: #{path}"
+      end
+      if schema_version && (schema_version < 1 || schema_version > 10)
+        raise ValidationError, "Overlay schema_version out of range (1-10): #{path}"
+      end
+
+      # Validate structure types
+      if doc["profile"] && !doc["profile"].is_a?(Hash)
+        raise ValidationError, "Overlay 'profile' must be a mapping: #{path}"
+      end
+      if doc["policies"] && !doc["policies"].is_a?(Hash)
+        raise ValidationError, "Overlay 'policies' must be a mapping: #{path}"
+      end
+      if doc["targets"] && !doc["targets"].is_a?(Hash)
+        raise ValidationError, "Overlay 'targets' must be a mapping: #{path}"
+      end
+
       known_keys = %w[schema_version name description profile policies targets]
       unknown_keys = doc.keys - known_keys
       unless unknown_keys.empty?
