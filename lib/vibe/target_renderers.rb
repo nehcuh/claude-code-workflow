@@ -376,6 +376,13 @@ module Vibe
       FileUtils.mkdir_p(kimi_skills_dir)
       FileUtils.mkdir_p(kimi_support_dir)
 
+      # Check integration status
+      superpowers_status = detect_superpowers
+      rtk_status = verify_rtk
+
+      # Generate integration section
+      integrations_section = generate_kimi_integrations_section(superpowers_status, rtk_status)
+
       # Generate KIMI.md project entrypoint
       File.write(File.join(output_root, "KIMI.md"), <<~MD)
         # Vibe workflow for Kimi Code
@@ -413,6 +420,8 @@ module Vibe
         - `.vibe/kimi-code/skills.md` — Portable skill registry reference
         - `.vibe/kimi-code/task-routing.md` — Task complexity classification
         - `.vibe/kimi-code/test-standards.md` — Test coverage requirements
+
+        #{integrations_section}
       MD
 
       # Generate supporting documentation
@@ -479,6 +488,109 @@ module Vibe
 
         #{manifest.fetch("skills", []).select { |s| s["trigger_mode"] == "mandatory" }.map { |s| "- `#{s['id']}` — #{s['intent']}" }.join("\n")}
       MD
+    end
+
+    def generate_kimi_integrations_section(superpowers_status, rtk_status)
+      sections = []
+
+      # Superpowers section
+      if superpowers_status == :not_installed
+        sections << <<~SP
+          ## Optional: Superpowers Skill Pack
+
+          **Status**: ❌ Not installed
+
+          Superpowers provides advanced skills for design refinement, TDD, debugging, and more.
+
+          **Installation**:
+          ```bash
+          # Option 1: Manual clone
+          git clone https://github.com/obra/superpowers ~/superpowers
+          
+          # Then create symlinks to your skills directory
+          ln -s ~/superpowers/skills/* ~/.kimi/skills/  # Adjust path as needed
+          ```
+
+          **Available skills after installation**:
+          - `superpowers/tdd` — Test-driven development workflow
+          - `superpowers/brainstorm` — Structured brainstorming
+          - `superpowers/refactor` — Systematic refactoring
+          - `superpowers/debug` — Advanced debugging
+          - `superpowers/architect` — Architecture design
+          - `superpowers/review` — Code review workflow
+          - `superpowers/optimize` — Performance optimization
+
+          See `core/integrations/superpowers.yaml` for full details.
+        SP
+      else
+        location = case superpowers_status
+                   when :claude_plugin then "~/.claude/plugins/superpowers"
+                   when :skills_symlink then "~/.claude/skills/superpowers-*"
+                   when :local_clone then "~/superpowers"
+                   when :cursor_plugin then "~/.cursor/plugins/superpowers"
+                   else "Installed"
+                   end
+        sections << <<~SP
+          ## Superpowers Skill Pack Integration
+
+          **Status**: ✅ Installed (#{location})
+
+          The following Superpowers skills are available:
+          - `superpowers/tdd` — Test-driven development workflow
+          - `superpowers/brainstorm` — Structured brainstorming
+          - `superpowers/refactor` — Systematic refactoring
+          - `superpowers/debug` — Advanced debugging
+          - `superpowers/architect` — Architecture design
+          - `superpowers/review` — Code review workflow
+          - `superpowers/optimize` — Performance optimization
+        SP
+      end
+
+      # RTK section
+      rtk_info = rtk_status
+      if rtk_info[:installed]
+        hook_status = rtk_info[:hook_configured] ? "✅ Configured" : "⚠️ Not configured"
+        sections << <<~RTK
+          ## RTK Token Optimizer
+
+          **Status**: ✅ Installed
+          **Hook**: #{hook_status}
+          **Version**: #{rtk_info[:version] || "Unknown"}
+
+          RTK reduces token consumption by 60-90% on common commands.
+
+          #{rtk_info[:hook_configured] ? "" : "**To configure**: Run `rtk init --global`"}
+        RTK
+      else
+        sections << <<~RTK
+          ## Optional: RTK Token Optimizer
+
+          **Status**: ❌ Not installed
+
+          RTK is a CLI proxy that reduces LLM token consumption by 60-90% on common development commands (git, npm, pytest, etc.).
+
+          **Installation**:
+          ```bash
+          # macOS/Linux with Homebrew
+          brew install rtk
+
+          # Or build from source with Cargo
+          cargo install --git https://github.com/rtk-ai/rtk
+
+          # Then configure the hook
+          rtk init --global
+          ```
+
+          **Benefits**:
+          - 60-90% token reduction on command outputs
+          - Less than 10ms overhead per command
+          - Works transparently via hooks
+
+          See `core/integrations/rtk.yaml` for full details.
+        RTK
+      end
+
+      sections.join("\n")
     end
 
     private
