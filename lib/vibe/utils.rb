@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "tmpdir"
 require_relative "errors"
 
 module Vibe
@@ -101,7 +102,7 @@ module Vibe
     MAX_PATH_LENGTH = 4096
 
     # Validate and sanitize a file path input
-    # Raises ValidationError if path contains dangerous characters
+    # Raises ValidationError if path contains dangerous characters or unsafe traversal
     def validate_path!(path, context: "path")
       raise ValidationError, "#{context} cannot be nil" if path.nil?
       raise ValidationError, "#{context} cannot be empty" if path.to_s.strip.empty?
@@ -110,6 +111,18 @@ module Vibe
       raise ValidationError, "#{context} exceeds maximum length (#{MAX_PATH_LENGTH})" if path_str.length > MAX_PATH_LENGTH
       raise ValidationError, "#{context} contains null byte" if path_str.include?("\0")
       raise ValidationError, "#{context} contains control characters" if path_str.match?(/[\x00-\x1f\x7f]/)
+
+      # Path traversal protection: prevent escaping from safe directories
+      if path_str.include?("..")
+        expanded = File.expand_path(path_str)
+        # Allow paths within: repo root, current directory, or system temp directory
+        allowed_roots = [@repo_root, Dir.pwd, Dir.tmpdir].map { |root| File.expand_path(root) }
+        safe = allowed_roots.any? { |root| expanded.start_with?(root) }
+
+        unless safe
+          raise ValidationError, "#{context} contains unsafe path traversal: #{path_str}"
+        end
+      end
 
       path_str
     end

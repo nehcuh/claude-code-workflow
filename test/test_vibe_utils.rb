@@ -127,4 +127,71 @@ class TestVibeUtils < Minitest::Test
   def test_read_json_if_exists_missing
     assert_nil @host.read_json_if_exists("/nonexistent/file.json")
   end
+
+  # --- validate_path! ---
+
+  def test_validate_path_rejects_nil
+    error = assert_raises(Vibe::ValidationError) do
+      @host.validate_path!(nil, context: "test path")
+    end
+    assert_match(/cannot be nil/, error.message)
+  end
+
+  def test_validate_path_rejects_empty
+    error = assert_raises(Vibe::ValidationError) do
+      @host.validate_path!("", context: "test path")
+    end
+    assert_match(/cannot be empty/, error.message)
+  end
+
+  def test_validate_path_rejects_null_byte
+    error = assert_raises(Vibe::ValidationError) do
+      @host.validate_path!("path\0with\0null", context: "test path")
+    end
+    assert_match(/null byte/, error.message)
+  end
+
+  def test_validate_path_rejects_control_characters
+    error = assert_raises(Vibe::ValidationError) do
+      @host.validate_path!("path\x01with\x1fcontrol", context: "test path")
+    end
+    assert_match(/control characters/, error.message)
+  end
+
+  def test_validate_path_rejects_unsafe_traversal_to_parent
+    error = assert_raises(Vibe::ValidationError) do
+      @host.validate_path!("../../../etc/passwd", context: "output")
+    end
+    assert_match(/unsafe path traversal/, error.message)
+  end
+
+  def test_validate_path_rejects_traversal_outside_repo
+    error = assert_raises(Vibe::ValidationError) do
+      @host.validate_path!("../outside-repo", context: "output")
+    end
+    assert_match(/unsafe path traversal/, error.message)
+  end
+
+  def test_validate_path_allows_safe_relative_paths
+    # Paths without .. are always safe
+    assert_equal "generated/claude-code", @host.validate_path!("generated/claude-code")
+    assert_equal "tmp/output", @host.validate_path!("tmp/output")
+    assert_equal "src/main.rb", @host.validate_path!("src/main.rb")
+  end
+
+  def test_validate_path_allows_safe_paths_within_repo
+    # Create a real temp directory to test with
+    Dir.mktmpdir do |tmpdir|
+      host = UtilsHost.new(tmpdir)
+      # Path with .. that stays within repo
+      safe_path = File.join(tmpdir, "subdir", "..", "file.txt")
+      assert_equal safe_path, host.validate_path!(safe_path)
+    end
+  end
+
+  def test_validate_path_allows_absolute_paths_in_tmp
+    # Absolute paths in system temp directory are allowed
+    tmp_path = File.join(Dir.tmpdir, "vibe-output")
+    assert_equal tmp_path, @host.validate_path!(tmp_path)
+  end
 end
