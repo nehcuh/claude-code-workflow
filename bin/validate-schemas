@@ -98,7 +98,7 @@ rescue => e
 end
 
 def validate_file(yaml_path, schema)
-  data = YAML.load_file(yaml_path)
+  data = YAML.safe_load(File.read(yaml_path), aliases: true)
   validator = SimpleSchemaValidator.new(schema)
   errors = validator.validate(data)
 

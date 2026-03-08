@@ -124,7 +124,7 @@ module Vibe
       begin
         settings = JSON.parse(File.read(settings_path))
         hook = settings.dig("hooks", "bashCommandPrepare")
-        !hook.nil? && hook.include?("rtk")
+        hook.is_a?(String) && hook.include?("rtk")
       rescue JSON::ParserError
         false
       end

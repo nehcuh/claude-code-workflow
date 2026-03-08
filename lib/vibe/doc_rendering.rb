@@ -556,9 +556,9 @@ module Vibe
           ```json
           {
             "models": {
-              "primary": "claude-opus-4",
-              "coder": "claude-sonnet-4",
-              "fast": "claude-haiku-4"
+              "primary": "claude-opus-4-6",
+              "coder": "claude-sonnet-4-6",
+              "fast": "claude-haiku-4-5"
             }
           }
           ```

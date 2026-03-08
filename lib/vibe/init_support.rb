@@ -9,6 +9,10 @@ module Vibe
   #
   # Host requirements:
   #   @repo_root [String] — absolute path to the workflow repository root
+  #
+  # Cross-module dependencies:
+  #   - Vibe::ValidationError (from errors.rb) — raised on validation failures
+  #   - JSON, YAML (stdlib) — for parsing configuration files
   module InitSupport
     # Main initialization flow
     def run_init(verify_only: false)

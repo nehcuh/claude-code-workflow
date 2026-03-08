@@ -769,7 +769,7 @@ make test
 MIT — 随意使用、fork、改造。
 
 原始作品版权所有 (c) 2024 runes_leo
-修改作品版权所有 (c) 2025 nehcuh
+修改作品版权所有 (c) 2026 nehcuh
 
 ---
 

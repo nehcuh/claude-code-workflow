@@ -10,6 +10,10 @@ validate:
 	@ruby -ryaml -e "Dir.glob('core/**/*.yaml').each { |f| begin; YAML.load_file(f); rescue => e; puts \"Invalid YAML: #{f}\"; exit 1; end }"
 	@echo "✅ Core YAML files are well-formed."
 	@bin/vibe inspect --json > /dev/null && echo "✅ Vibe inspect succeeded." || (echo "❌ Vibe inspect failed." && exit 1)
+	@echo "🔍 Checking skill entrypoint paths..."
+	@ruby -ryaml -e "registry = YAML.load_file('core/skills/registry.yaml'); registry['skills'].select { |s| s['builtin'] }.each { |s| path = s['entrypoint']; abort(\"Missing entrypoint: #{path}\") unless File.exist?(path) }; puts '✅ All builtin skill entrypoints exist.'"
+	@echo "🔍 Checking document cross-references..."
+	@ruby -e "content = File.read('rules/behaviors.md'); refs = content.scan(/Read (docs\/[^\s\)]+)/); refs.each { |ref| path = ref[0]; abort(\"Missing doc: #{path}\") unless File.exist?(path) }; puts '✅ All doc references exist.'"
 	@echo "✅ Validation complete."
 
 schema:

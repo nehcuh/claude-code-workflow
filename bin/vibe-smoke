@@ -14,7 +14,7 @@ done
 "${REPO_ROOT}/bin/vibe" init --help >/dev/null || { echo "FAIL: init --help"; exit 1; }
 "${REPO_ROOT}/bin/vibe" init --verify >/dev/null || { echo "FAIL: init --verify"; exit 1; }
 
-TARGETS=(antigravity claude-code codex-cli cursor opencode vscode warp)
+TARGETS=(antigravity claude-code codex-cli cursor kimi-code opencode vscode warp)
 
 "${REPO_ROOT}/bin/vibe" help >/dev/null
 TARGET_OUTPUT="$("${REPO_ROOT}/bin/vibe" targets)"

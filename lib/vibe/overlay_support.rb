@@ -14,6 +14,8 @@ module Vibe
   # Depends on methods from:
   #   Vibe::Utils — deep_merge, deep_copy, blankish?, display_path, read_yaml_abs
   module OverlaySupport
+    MAX_OVERLAY_SCHEMA_VERSION = 10
+
     OVERLAY_CANDIDATES = [
       File.join(".vibe", "overlay.yaml"),
       File.join(".vibe", "overlay.yml")
@@ -32,8 +34,8 @@ module Vibe
       if schema_version && !schema_version.is_a?(Integer)
         raise ValidationError, "Overlay schema_version must be an integer: #{path}"
       end
-      if schema_version && (schema_version < 1 || schema_version > 10)
-        raise ValidationError, "Overlay schema_version out of range (1-10): #{path}"
+      if schema_version && (schema_version < 1 || schema_version > MAX_OVERLAY_SCHEMA_VERSION)
+        raise ValidationError, "Overlay schema_version out of range (1-#{MAX_OVERLAY_SCHEMA_VERSION}): #{path}"
       end
 
       # Validate structure types

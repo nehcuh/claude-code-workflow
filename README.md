@@ -759,7 +759,7 @@ This project builds upon the excellent foundation laid by [@runes_leo](https://x
 MIT — Use it, fork it, make it yours.
 
 Original work Copyright (c) 2024 runes_leo
-Modified work Copyright (c) 2025 nehcuh
+Modified work Copyright (c) 2026 nehcuh
 
 ---
 
