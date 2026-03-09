@@ -182,7 +182,10 @@ module Vibe
         "- `#{skill["id"]}` (`#{skill["namespace"]}`, `#{skill["priority"]}`, `#{skill["trigger_mode"]}`, support: `#{support}`) — #{skill["intent"]}"
       end.join("\n")
 
-      <<~MD
+      # Generate trigger scenarios table for suggest-mode external skills
+      trigger_section = generate_skill_trigger_table(manifest)
+
+      result = <<~MD
         # Portable skills
 
         Generated target: `#{manifest["target"]}`
@@ -190,6 +193,52 @@ module Vibe
 
         #{skill_lines}
       MD
+
+      # Only append trigger section if it's not empty
+      result += trigger_section unless trigger_section.empty?
+      result
+    end
+
+    def generate_skill_trigger_table(manifest)
+      # Filter for suggest-mode external skills
+      suggest_skills = manifest["skills"].select do |skill|
+        skill["trigger_mode"] == "suggest" && skill["namespace"] != "builtin"
+      end
+
+      return "" if suggest_skills.empty?
+
+      # Load trigger contexts from integration configs
+      trigger_contexts = {}
+
+      # Load superpowers config if available
+      superpowers_path = File.join(@repo_root, "core", "integrations", "superpowers.yaml")
+      if File.exist?(superpowers_path)
+        superpowers_config = YAML.load_file(superpowers_path)
+        Array(superpowers_config["skills"]).each do |skill|
+          key = skill["registry_id"] || skill["id"]
+          trigger_contexts[key] = skill["trigger_context"] if skill["trigger_context"]
+        end
+      end
+
+      # Build trigger table rows
+      rows = suggest_skills.map do |skill|
+        context = trigger_contexts[skill["id"]] || "See documentation"
+        "| #{context} | `#{skill['id']}` | Auto-suggested when applicable |"
+      end
+
+      return "" if rows.empty?
+
+      <<~TABLE
+
+
+        ## When to Use External Skills
+
+        The following external skills are automatically suggested in relevant scenarios:
+
+        | Scenario | Skill | Notes |
+        |----------|-------|-------|
+        #{rows.join("\n")}
+      TABLE
     end
 
     def render_safety_doc(manifest)
