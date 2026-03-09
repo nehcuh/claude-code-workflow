@@ -166,6 +166,9 @@ bin/vibe init --setup
 
 # 验证已安装的集成
 bin/vibe init --verify
+
+# 指定目标平台（claude-code, cursor, opencode, codex-cli, warp）
+bin/vibe init --suggest --platform=opencode
 ```
 
 **推荐的集成：**

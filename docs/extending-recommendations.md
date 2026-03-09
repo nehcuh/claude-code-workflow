@@ -17,6 +17,7 @@ bin/vibe init --install    # Automatically install recommended tools
 bin/vibe init --install -y # Install without confirmation (for CI/automation)
 bin/vibe init --verify     # Verify what's already installed
 bin/vibe init --setup      # Interactive setup (default)
+bin/vibe init --platform=opencode --suggest  # Platform-specific recommendations
 ```
 
 ## Adding a New Integration
@@ -106,6 +107,9 @@ bin/vibe init --verify
 
 # Test interactive setup
 bin/vibe init --setup
+
+# Test with a specific platform
+bin/vibe init --suggest --platform=opencode
 ```
 
 ## Adding a New Category

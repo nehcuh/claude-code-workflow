@@ -31,7 +31,7 @@ installation_methods:
 
   manual:
     steps:
-      - Clone repository to ~/superpowers or preferred location
+      - Clone repository to ~/.config/skills/superpowers or preferred location
       - Symlink skills directory to target tool's skills path
       - Register namespace in core/skills/registry.yaml
     notes: Universal fallback method for any tool
@@ -41,6 +41,7 @@ detection:
     - ~/.claude/plugins/superpowers
     - ~/.claude/skills/superpowers-*
     - ~/.cursor/plugins/superpowers
+    - ~/.config/skills/superpowers
     - ~/superpowers
 
   verification:

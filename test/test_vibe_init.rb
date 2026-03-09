@@ -100,6 +100,30 @@ class TestVibeInit < Minitest::Test
     assert_equal :local_clone, status
   end
 
+  def test_detect_superpowers_shared_clone
+    shared_dir = File.join(@test_home, ".config", "skills", "superpowers")
+    FileUtils.mkdir_p(shared_dir)
+    File.write(File.join(shared_dir, "README.md"), "test")
+
+    status = detect_superpowers
+    assert_equal :shared_clone, status
+  end
+
+  def test_detect_superpowers_shared_clone_priority_over_local
+    # Create both shared and local
+    shared_dir = File.join(@test_home, ".config", "skills", "superpowers")
+    FileUtils.mkdir_p(shared_dir)
+    File.write(File.join(shared_dir, "README.md"), "test")
+
+    local_dir = File.join(@test_home, "superpowers")
+    FileUtils.mkdir_p(local_dir)
+    File.write(File.join(local_dir, "README.md"), "test")
+
+    status = detect_superpowers
+    # Shared should be detected before local
+    assert_equal :shared_clone, status
+  end
+
   def test_detect_rtk_not_installed
     self.stub(:system, false) do
       status = detect_rtk
@@ -258,6 +282,107 @@ class TestVibeInit < Minitest::Test
       assert_includes stdout, "https://github.com/rtk-ai/rtk/releases"
       refute_includes stdout, "Install script"
     end
+  end
+
+  def test_normalize_platform_with_valid_platforms
+    assert_equal "claude-code", normalize_platform("claude-code")
+    assert_equal "cursor", normalize_platform("cursor")
+    assert_equal "opencode", normalize_platform("opencode")
+    assert_equal "codex-cli", normalize_platform("codex-cli")
+    assert_equal "warp", normalize_platform("warp")
+    assert_equal "kimi-code", normalize_platform("kimi-code")
+    assert_equal "vscode", normalize_platform("vscode")
+    assert_equal "antigravity", normalize_platform("antigravity")
+  end
+
+  def test_normalize_platform_with_underscores
+    assert_equal "claude-code", normalize_platform("claude_code")
+    assert_equal "codex-cli", normalize_platform("codex_cli")
+  end
+
+  def test_normalize_platform_with_nil_detects_current
+    # Should detect based on directory existence
+    platform = normalize_platform(nil)
+    assert_includes %w[claude-code cursor opencode codex-cli], platform
+  end
+
+  def test_normalize_platform_raises_on_invalid
+    error = assert_raises(Vibe::ValidationError) do
+      normalize_platform("invalid-platform")
+    end
+    assert_includes error.message, "Unsupported platform"
+  end
+
+  def test_detect_current_platform_claude_code
+    FileUtils.mkdir_p(File.join(@test_home, ".claude"))
+    assert_equal "claude-code", detect_current_platform
+  end
+
+  def test_detect_current_platform_cursor
+    FileUtils.mkdir_p(File.join(@test_home, ".cursor"))
+    assert_equal "cursor", detect_current_platform
+  end
+
+  def test_detect_current_platform_opencode
+    FileUtils.mkdir_p(File.join(@test_home, ".opencode"))
+    assert_equal "opencode", detect_current_platform
+  end
+
+  def test_detect_current_platform_defaults_to_claude_code
+    # No platform directories exist
+    assert_equal "claude-code", detect_current_platform
+  end
+
+  def test_platform_label
+    assert_equal "Claude Code", platform_label("claude-code")
+    assert_equal "Cursor", platform_label("cursor")
+    assert_equal "OpenCode", platform_label("opencode")
+    assert_equal "Codex CLI", platform_label("codex-cli")
+    assert_equal "Warp", platform_label("warp")
+    assert_equal "Kimi Code", platform_label("kimi-code")
+    assert_equal "VS Code", platform_label("vscode")
+    assert_equal "Antigravity", platform_label("antigravity")
+  end
+
+  def test_platform_command
+    assert_equal "claude", platform_command("claude-code")
+    assert_equal "cursor", platform_command("cursor")
+    assert_equal "opencode", platform_command("opencode")
+    assert_equal "codex", platform_command("codex-cli")
+    assert_equal "warp", platform_command("warp")
+    assert_equal "kimi", platform_command("kimi-code")
+    assert_equal "code", platform_command("vscode")
+    assert_equal "antigravity", platform_command("antigravity")
+  end
+
+  def test_bin_vibe_init_with_platform_flag
+    output, status = Open3.capture2e(
+      { "HOME" => @test_home },
+      File.join(@repo_root, "bin", "vibe"),
+      "init",
+      "--verify",
+      "--platform=cursor",
+      stdin_data: "",
+      chdir: @repo_root
+    )
+
+    assert status.success?
+    assert_includes output, "Target platform: Cursor"
+  end
+
+  def test_bin_vibe_init_with_platform_equals_syntax
+    output, status = Open3.capture2e(
+      { "HOME" => @test_home },
+      File.join(@repo_root, "bin", "vibe"),
+      "init",
+      "--verify",
+      "--platform=opencode",
+      stdin_data: "",
+      chdir: @repo_root
+    )
+
+    assert status.success?
+    assert_includes output, "Target platform: OpenCode"
   end
 
   private

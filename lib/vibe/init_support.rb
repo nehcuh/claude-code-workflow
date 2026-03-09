@@ -15,7 +15,9 @@ module Vibe
   #   - JSON, YAML (stdlib) — for parsing configuration files
   module InitSupport
     # Main initialization flow
-    def run_init(mode: :setup, auto_yes: false)
+    def run_init(mode: :setup, auto_yes: false, platform: nil)
+      @target_platform = platform || "claude-code"
+      
       puts "\n🚀 Claude Code Workflow Initialization"
       puts "=" * 50
       puts
@@ -109,6 +111,9 @@ module Vibe
     def check_environment
       puts "Checking your environment..."
       puts
+
+      # Show target platform
+      puts "✓ Target platform: #{platform_label(@target_platform)}"
 
       # Check Claude Code
       claude_dir = File.expand_path("~/.claude")
@@ -764,6 +769,57 @@ module Vibe
       when "superpowers" then "Superpowers Skill Pack"
       when "rtk" then "RTK (Token Optimizer)"
       else name.to_s.split("_").map(&:capitalize).join(" ")
+      end
+    end
+
+    private
+
+    def normalize_platform(platform)
+      return "claude-code" if platform.nil?
+
+      normalized = platform.to_s.downcase.gsub("_", "-")
+      valid_platforms = %w[antigravity claude-code codex-cli cursor kimi-code opencode vscode warp]
+
+      unless valid_platforms.include?(normalized)
+        raise ValidationError, "Unsupported platform: #{platform}. Valid options: #{valid_platforms.join(', ')}"
+      end
+
+      normalized
+    end
+
+    def detect_current_platform
+      return "claude-code" if Dir.exist?(File.expand_path("~/.claude"))
+      return "cursor" if Dir.exist?(File.expand_path("~/.cursor"))
+      return "opencode" if Dir.exist?(File.expand_path("~/.opencode"))
+      return "codex-cli" if Dir.exist?(File.expand_path("~/.codex"))
+      "claude-code"
+    end
+
+    def platform_label(platform)
+      case platform
+      when "antigravity" then "Antigravity"
+      when "claude-code" then "Claude Code"
+      when "codex-cli" then "Codex CLI"
+      when "cursor" then "Cursor"
+      when "kimi-code" then "Kimi Code"
+      when "opencode" then "OpenCode"
+      when "vscode" then "VS Code"
+      when "warp" then "Warp"
+      else platform.to_s.split("-").map(&:capitalize).join(" ")
+      end
+    end
+
+    def platform_command(platform)
+      case platform
+      when "antigravity" then "antigravity"
+      when "claude-code" then "claude"
+      when "codex-cli" then "codex"
+      when "cursor" then "cursor"
+      when "kimi-code" then "kimi"
+      when "opencode" then "opencode"
+      when "vscode" then "code"
+      when "warp" then "warp"
+      else platform
       end
     end
   end

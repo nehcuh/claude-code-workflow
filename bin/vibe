@@ -119,7 +119,7 @@ class VibeCLI
         bin/vibe use TARGET DESTINATION [--profile PROFILE] [--output DIR] [--overlay FILE] [--force]
         bin/vibe switch TARGET [--profile PROFILE] [--output DIR] [--overlay FILE] [--force]
         bin/vibe inspect [TARGET] [--overlay FILE] [--json]
-        bin/vibe init [--verify]
+        bin/vibe init [--verify|--suggest|--install] [--platform PLATFORM] [-y]
         bin/vibe targets
 
       Commands:
@@ -282,8 +282,11 @@ class VibeCLI
   def run_init_command(argv)
     mode = :setup  # Default: interactive setup
     auto_yes = false
+    platform = nil
 
-    argv.each do |arg|
+    i = 0
+    while i < argv.length
+      arg = argv[i]
       case arg
       when "--verify"
         mode = :verify
@@ -295,6 +298,14 @@ class VibeCLI
         mode = :install
       when "-y", "--yes"
         auto_yes = true
+      when /^--platform=(.+)$/
+        platform = $1
+      when "--platform"
+        i += 1
+        if i >= argv.length
+          raise Vibe::ValidationError, "--platform requires a value\n\nRun 'bin/vibe init --help' for usage."
+        end
+        platform = argv[i]
       when "--help", "-h"
         puts <<~HELP
           Usage: bin/vibe init [options]
@@ -302,20 +313,33 @@ class VibeCLI
           Initialize and manage external integrations for Claude Code Workflow.
 
           Options:
-            (none)      Interactive setup to install integrations (default)
-            --verify    Verify existing integrations without installing
-            --suggest   Show recommendations for uninstalled integrations
-            --install   Automatically install recommended integrations
-            --setup     Same as default, explicitly run interactive setup
-            -y, --yes   Skip confirmation prompts (use with --install)
-            --help      Show this help message
+            (none)        Interactive setup to install integrations (default)
+            --verify      Verify existing integrations without installing
+            --suggest     Show recommendations for uninstalled integrations
+            --install     Automatically install recommended integrations
+            --setup       Same as default, explicitly run interactive setup
+            --platform P  Target platform (claude-code, cursor, opencode, codex-cli, warp)
+            -y, --yes     Skip confirmation prompts (use with --install)
+            --help        Show this help message
 
           Examples:
-            bin/vibe init              # Interactive setup (asks to install)
-            bin/vibe init --verify     # Check what's installed
-            bin/vibe init --suggest    # See what's recommended
-            bin/vibe init --install    # Install recommended integrations
-            bin/vibe init --install -y # Install without confirmation
+            bin/vibe init                           # Interactive setup (asks to install)
+            bin/vibe init --verify                  # Check what's installed
+            bin/vibe init --suggest                 # See what's recommended
+            bin/vibe init --install                 # Install recommended integrations
+            bin/vibe init --install -y              # Install without confirmation
+            bin/vibe init --platform=cursor         # Setup for Cursor
+            bin/vibe init --suggest --platform=opencode  # Show OpenCode recommendations
+
+          Supported platforms:
+            - claude-code (default): Claude Code CLI
+            - cursor: Cursor IDE
+            - opencode: OpenCode
+            - codex-cli: Codex CLI
+            - warp: Warp terminal
+            - kimi-code: Kimi Code
+            - vscode: VS Code
+            - antigravity: Antigravity
 
           Integrations:
             - Superpowers: Skill pack with advanced capabilities
@@ -325,9 +349,10 @@ class VibeCLI
       else
         raise Vibe::ValidationError, "Unknown option: #{arg}\n\nRun 'bin/vibe init --help' for usage."
       end
+      i += 1
     end
 
-    run_init(mode: mode, auto_yes: auto_yes)
+    run_init(mode: mode, auto_yes: auto_yes, platform: platform)
   end
 
   def parse_common_options(argv, banner:)

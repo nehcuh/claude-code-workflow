@@ -10,11 +10,11 @@ Superpowers provides advanced skills for design refinement, TDD, debugging, and 
 
 **Installation for VS Code**:
 ```bash
-Clone the repository
-git clone https://github.com/obra/superpowers ~/superpowers
+# Clone the repository
+git clone https://github.com/obra/superpowers ~/.config/skills/superpowers
 
 # For VS Code, manually register the skills in your tool's skill system
-# or use the skill files from ~/superpowers/skills/
+# or use the skill files from ~/.config/skills/superpowers/skills/
 ```
 
 **Available skills**:

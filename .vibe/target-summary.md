@@ -1,16 +1,16 @@
 # Generated target summary
 
-- Target: `opencode`
-- Profile: `opencode-default`
-- Profile maturity: `planned`
-- Generated at: `2026-03-09T03:02:08Z`
+- Target: `claude-code`
+- Profile: `claude-code-default`
+- Profile maturity: `active`
+- Generated at: `2026-03-09T10:58:35Z`
 - Applied overlay: `none`
 
 ## Capability mapping
 
-- `critical_reasoner` → `configured.primary-high-reasoning`
-- `workhorse_coder` → `configured.primary-coder`
-- `fast_router` → `configured.fast-agent`
+- `critical_reasoner` → `claude.opus-class`
+- `workhorse_coder` → `claude.sonnet-class`
+- `fast_router` → `claude.haiku-class`
 - `independent_verifier` → `second-model.cross-family`
 - `cheap_local` → `local.ollama-class`
 

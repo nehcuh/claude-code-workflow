@@ -1,19 +1,19 @@
 {
   "schema_version": 5,
-  "generated_at": "2026-03-09T03:02:08Z",
+  "generated_at": "2026-03-09T10:58:35Z",
   "source_repo": ".",
-  "output_root": "/Users/huchen/.vibe-generated/claude-code-workflow-653a9fb4dbb6/opencode",
-  "target": "opencode",
-  "profile": "opencode-default",
-  "profile_maturity": "planned",
+  "output_root": "/Users/huchen/.vibe-generated/claude-code-workflow-653a9fb4dbb6/claude-code",
+  "target": "claude-code",
+  "profile": "claude-code-default",
+  "profile_maturity": "active",
   "profile_notes": [
-    "Prefer native OpenCode rules and permissions where possible.",
-    "OpenCode can often reuse AGENTS.md and Claude-style skill assets with light adaptation."
+    "Current repository files are optimized for this profile.",
+    "Keep the verifier in a different model family when possible."
   ],
   "profile_mapping": {
-    "critical_reasoner": "configured.primary-high-reasoning",
-    "workhorse_coder": "configured.primary-coder",
-    "fast_router": "configured.fast-agent",
+    "critical_reasoner": "claude.opus-class",
+    "workhorse_coder": "claude.sonnet-class",
+    "fast_router": "claude.haiku-class",
     "independent_verifier": "second-model.cross-family",
     "cheap_local": "local.ollama-class"
   },
@@ -386,9 +386,9 @@
       "obfuscation_or_evasion"
     ],
     "target_actions": {
-      "P0": "Prefer native permission rules or wrapper deny.",
-      "P1": "Ask through configured permission flow.",
-      "P2": "Warn and continue."
+      "P0": "Prefer hooks or permissions deny; otherwise stop with an explicit block message.",
+      "P1": "Prefer hook-mediated confirmation or manual approval.",
+      "P2": "Warn in output and continue with traceable reasoning."
     }
   }
 }

@@ -13,7 +13,7 @@ module Vibe
   #   Vibe::OverlaySupport — overlay_sentence
   #   Vibe::PathSafety     — copy_tree_contents
   module TargetRenderers
-    COPY_RUNTIME_ENTRIES = %w[CLAUDE.md rules docs skills agents commands memory patterns.md].freeze
+    COPY_RUNTIME_ENTRIES = %w[rules docs skills agents commands memory patterns.md].freeze
 
     def write_target_docs(output_dir, manifest, doc_types)
       doc_types.each do |type|
@@ -103,6 +103,9 @@ module Vibe
         Generated summary: `.vibe/target-summary.md`
       MD
       write_target_docs(claude_dir, manifest, %i[behavior safety task_routing test_standards])
+
+      # Auto-generate CLAUDE.md for project-level usage
+      File.write(File.join(output_root, "CLAUDE.md"), render_target_entrypoint_md("Claude Code", manifest))
     end
 
     def render_codex(output_root, manifest)

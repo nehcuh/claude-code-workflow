@@ -16,7 +16,7 @@ module Vibe
       config_path = File.join(@repo_root, "core/integrations/#{tool_name}.yaml")
       return nil unless File.exist?(config_path)
 
-      YAML.load_file(config_path)
+      YAML.safe_load(File.read(config_path), aliases: true)
     rescue StandardError => e
       warn "Failed to load integration config for #{tool_name}: #{e.message}"
       nil
@@ -34,25 +34,75 @@ module Vibe
 
     # --- Superpowers Detection ---
 
+    # Platform-specific superpowers paths
+    SUPERPOWERS_PLATFORM_PATHS = {
+      "claude-code" => {
+        plugin: "~/.claude/plugins/superpowers",
+        skills: "~/.claude/skills",
+        skills_glob: "superpowers-*"
+      },
+      "cursor" => {
+        plugin: "~/.cursor/plugins/superpowers"
+      },
+      "opencode" => {
+        plugin: "~/.config/opencode/plugins/superpowers.js",
+        skills: "~/.config/opencode/skills/superpowers"
+      },
+      "kimi-code" => {
+        plugin: "~/.kimi/plugins/superpowers",
+        skills: "~/.kimi/skills",
+        skills_glob: "superpowers-*"
+      },
+      "codex-cli" => {
+        skills: "~/.codex/skills/superpowers"
+      }
+    }.freeze
+
     def detect_superpowers
       return :not_installed if @skip_integrations
 
-      # Method 1: Check Claude Code plugin directory
+      platform = defined?(@target_platform) ? @target_platform : nil
+
+      # Platform-specific detection
+      if platform && SUPERPOWERS_PLATFORM_PATHS[platform]
+        paths = SUPERPOWERS_PLATFORM_PATHS[platform]
+
+        if paths[:plugin]
+          expanded = File.expand_path(paths[:plugin])
+          return :platform_plugin if File.exist?(expanded) || Dir.exist?(expanded)
+        end
+
+        if paths[:skills]
+          expanded = File.expand_path(paths[:skills])
+          if paths[:skills_glob]
+            # Glob pattern (e.g. claude-code's superpowers-* symlinks)
+            if Dir.exist?(expanded)
+              matches = Dir.glob(File.join(expanded, paths[:skills_glob]))
+              return :platform_skills if matches.any?
+            end
+          else
+            return :platform_skills if File.exist?(expanded) || Dir.exist?(expanded)
+          end
+        end
+      end
+
+      # Cross-platform fallback: check common locations
       claude_plugins = File.expand_path("~/.claude/plugins/superpowers")
       return :claude_plugin if Dir.exist?(claude_plugins)
 
-      # Method 2: Check Claude Code skills directory for superpowers symlinks
       claude_skills = File.expand_path("~/.claude/skills")
       if Dir.exist?(claude_skills)
         superpowers_skills = Dir.glob(File.join(claude_skills, "superpowers-*"))
         return :skills_symlink if superpowers_skills.any?
       end
 
-      # Method 3: Check for local clone
+      # Check XDG-compliant shared location
+      shared_clone = File.expand_path("~/.config/skills/superpowers")
+      return :shared_clone if Dir.exist?(shared_clone)
+
       local_clone = File.expand_path("~/superpowers")
       return :local_clone if Dir.exist?(local_clone)
 
-      # Method 4: Check Cursor plugin directory
       cursor_plugins = File.expand_path("~/.cursor/plugins/superpowers")
       return :cursor_plugin if Dir.exist?(cursor_plugins)
 
@@ -61,11 +111,22 @@ module Vibe
 
     def superpowers_location
       case detect_superpowers
+      when :platform_plugin
+        platform = defined?(@target_platform) ? @target_platform : nil
+        paths = SUPERPOWERS_PLATFORM_PATHS[platform]
+        File.expand_path(paths[:plugin]) if paths
+      when :platform_skills
+        platform = defined?(@target_platform) ? @target_platform : nil
+        paths = SUPERPOWERS_PLATFORM_PATHS[platform]
+        # Return the skills directory itself, not a glob match
+        File.expand_path(paths[:skills]) if paths
       when :claude_plugin
         File.expand_path("~/.claude/plugins/superpowers")
       when :skills_symlink
         skills = Dir.glob(File.expand_path("~/.claude/skills/superpowers-*"))
         skills.first
+      when :shared_clone
+        File.expand_path("~/.config/skills/superpowers")
       when :local_clone
         File.expand_path("~/superpowers")
       when :cursor_plugin
@@ -76,13 +137,45 @@ module Vibe
     end
 
     def superpowers_skills_count
+      # Try platform-specific skills path first
+      platform = defined?(@target_platform) ? @target_platform : nil
+      if platform && SUPERPOWERS_PLATFORM_PATHS[platform]
+        paths = SUPERPOWERS_PLATFORM_PATHS[platform]
+        if paths[:skills]
+          expanded = File.expand_path(paths[:skills])
+          if paths[:skills_glob]
+            # Glob-based (e.g. claude-code)
+            Dir.glob(File.join(expanded, paths[:skills_glob])).each do |skill_dir|
+              count = Dir.glob(File.join(skill_dir, "*/SKILL.md")).count
+              return count if count > 0
+            end
+          elsif Dir.exist?(expanded)
+            count = Dir.glob(File.join(expanded, "*/SKILL.md")).count
+            return count if count > 0
+          end
+        end
+      end
+
+      # Fallback to location-based detection
       location = superpowers_location
       return 0 unless location
 
-      skills_dir = File.join(location, "skills")
-      return 0 unless Dir.exist?(skills_dir)
+      # If location is a file (e.g. plugin .js), try to find skills nearby
+      if File.file?(location)
+        # Try sibling skills directory or parent's skills
+        base = File.dirname(File.dirname(location))
+        skills_dir = File.join(base, "skills")
+        if Dir.exist?(skills_dir)
+          return Dir.glob(File.join(skills_dir, "*/SKILL.md")).count
+        end
+        return 0
+      end
 
-      Dir.glob(File.join(skills_dir, "*/SKILL.md")).count
+      skills_dir = File.join(location, "skills")
+      return Dir.glob(File.join(skills_dir, "*/SKILL.md")).count if Dir.exist?(skills_dir)
+
+      # Location itself might be a skills directory
+      Dir.glob(File.join(location, "*/SKILL.md")).count
     end
 
     # --- RTK Detection ---
@@ -91,7 +184,7 @@ module Vibe
       return :not_installed if @skip_integrations
 
       # Method 1: Check if rtk binary is in PATH
-      return :installed if system(["which", "which"], "rtk", out: File::NULL, err: File::NULL)
+      return :installed if system("which", "rtk", out: File::NULL, err: File::NULL)
 
       # Method 2: Check Claude settings.json for hook
       return :hook_configured if rtk_hook_configured?
@@ -123,6 +216,22 @@ module Vibe
 
       begin
         settings = JSON.parse(File.read(settings_path))
+        
+        # Check new PreToolUse hook format (RTK 0.27+)
+        pre_tool_use = settings.dig("hooks", "PreToolUse")
+        if pre_tool_use.is_a?(Array)
+          pre_tool_use.each do |hook_config|
+            next unless hook_config["matcher"] == "Bash"
+            hooks = hook_config["hooks"]
+            if hooks.is_a?(Array)
+              hooks.each do |h|
+                return true if h["command"]&.include?("rtk")
+              end
+            end
+          end
+        end
+        
+        # Fallback: check old bashCommandPrepare format
         hook = settings.dig("hooks", "bashCommandPrepare")
         hook.is_a?(String) && hook.include?("rtk")
       rescue JSON::ParserError
@@ -133,10 +242,10 @@ module Vibe
     # --- Installation Helpers ---
 
     def install_rtk_via_homebrew
-      return false unless system(["which", "which"], "brew", out: File::NULL, err: File::NULL)
+      return false unless system("which", "brew", out: File::NULL, err: File::NULL)
 
       puts "Installing RTK via Homebrew..."
-      system(["brew", "brew"], "install", "rtk")
+      system("brew", "install", "rtk")
     end
 
 
@@ -144,7 +253,7 @@ module Vibe
       return false unless detect_rtk == :installed
 
       puts "Configuring RTK hook..."
-      system(["rtk", "rtk"], "init", "--global")
+      system("rtk", "init", "--global")
     end
 
     # --- Verification ---
@@ -153,12 +262,43 @@ module Vibe
       status = detect_superpowers
       return { installed: false } if status == :not_installed
 
+      location = superpowers_location
+
+      # For platform-specific detection, it's both installed and ready
+      if status == :platform_plugin || status == :platform_skills
+        return {
+          installed: true,
+          ready: true,
+          method: status,
+          location: location,
+          skills_count: superpowers_skills_count
+        }
+      end
+
+      # For fallback detection (local_clone etc.), check if platform integration is configured
+      platform = defined?(@target_platform) ? @target_platform : nil
+      platform_ready = platform.nil? || platform == "claude-code" || !SUPERPOWERS_PLATFORM_PATHS.key?(platform)
+
+      # If platform has specific paths, check if they're configured
+      if platform && SUPERPOWERS_PLATFORM_PATHS.key?(platform) && !platform_ready
+        paths = SUPERPOWERS_PLATFORM_PATHS[platform]
+        if paths[:plugin]
+          expanded = File.expand_path(paths[:plugin])
+          platform_ready = true if File.exist?(expanded) || Dir.exist?(expanded)
+        end
+        if !platform_ready && paths[:skills]
+          expanded = File.expand_path(paths[:skills])
+          platform_ready = true if File.exist?(expanded) || Dir.exist?(expanded)
+        end
+      end
+
       {
         installed: true,
-        ready: true,
+        ready: platform_ready,
         method: status,
-        location: superpowers_location,
-        skills_count: superpowers_skills_count
+        location: location,
+        skills_count: superpowers_skills_count,
+        platform_configured: platform_ready
       }
     end
 
@@ -167,9 +307,13 @@ module Vibe
       hook_configured = rtk_hook_configured?
       binary_installed = (status == :installed)
 
+      # For non-claude-code platforms, hook is not required
+      rtk_needs_hook = !defined?(@target_platform) || @target_platform.nil? || @target_platform == "claude-code"
+      ready = binary_installed && (rtk_needs_hook ? hook_configured : true)
+
       {
         installed: binary_installed,
-        ready: binary_installed && hook_configured,
+        ready: ready,
         status: status,
         binary: binary_installed ? rtk_binary_path : nil,
         version: binary_installed ? rtk_version : nil,

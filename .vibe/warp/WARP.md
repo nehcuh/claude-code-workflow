@@ -10,8 +10,8 @@ Superpowers provides advanced skills for design refinement, TDD, debugging, and 
 
 **Installation for Warp**:
 ```bash
-Clone the repository
-git clone https://github.com/obra/superpowers ~/superpowers
+# Clone the repository
+git clone https://github.com/obra/superpowers ~/.config/skills/superpowers
 
 # In Warp, manually add the skill paths or use as reference
 ```

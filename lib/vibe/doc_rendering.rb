@@ -213,7 +213,7 @@ module Vibe
       # Load superpowers config if available
       superpowers_path = File.join(@repo_root, "core", "integrations", "superpowers.yaml")
       if File.exist?(superpowers_path)
-        superpowers_config = YAML.load_file(superpowers_path)
+        superpowers_config = YAML.safe_load(File.read(superpowers_path), aliases: true)
         Array(superpowers_config["skills"]).each do |skill|
           key = skill["registry_id"] || skill["id"]
           trigger_contexts[key] = skill["trigger_context"] if skill["trigger_context"]

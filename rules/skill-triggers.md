@@ -79,3 +79,34 @@ Target adapters decide whether a portable skill ID becomes a native skill, a rul
 
 Banned: Scenario matches but doesn't trigger / waiting for manual trigger / downgrading P0
 
+
+
+## Superpowers Skill Pack Integration
+
+**Status**: ✅ Installed (Unknown)
+
+The following portable Superpowers skills are available for on-demand invocation:
+
+| Portable skill | Trigger mode | Description |
+|----------------|--------------|-------------|
+| `superpowers/tdd` | `suggest` | Test-driven development workflow with red-green-refactor cycle. |
+| `superpowers/brainstorm` | `manual` | Structured brainstorming and ideation sessions. |
+| `superpowers/refactor` | `suggest` | Systematic code refactoring with safety checks. |
+| `superpowers/debug` | `suggest` | Advanced debugging workflows beyond systematic-debugging. |
+| `superpowers/architect` | `manual` | System architecture design and documentation. |
+| `superpowers/review` | `suggest` | Code review with comprehensive quality checks. |
+| `superpowers/optimize` | `manual` | Performance optimization and profiling guidance. |
+
+### When to Use Superpowers Skills
+
+| Scenario | Skill | Notes |
+|----------|-------|-------|
+| When implementing new functionality | `superpowers/tdd` | Auto-suggested when applicable |
+| When refactoring code for better structure or maintainability | `superpowers/refactor` | Auto-suggested when applicable |
+| When encountering bugs (note - builtin equivalent exists) | `superpowers/debug` | Auto-suggested when applicable |
+| Before creating pull requests | `superpowers/review` | Auto-suggested when applicable |
+
+**Usage**: `core/skills/registry.yaml` is the SSOT for portable skill IDs. The installed Superpowers pack may expose different native skill names.
+
+**Security**: All Superpowers skills have been reviewed and are considered safe for use.
+See `core/integrations/superpowers.yaml` for full skill definitions.

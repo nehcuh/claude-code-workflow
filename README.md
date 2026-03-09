@@ -222,92 +222,139 @@ Documentation is organized by purpose:
 
 ## Quick Start
 
-### 1. One-command setup (Recommended)
+Choose your scenario:
 
-The simplest way to get started is using the `quickstart` command, which automatically installs the workflow into your Claude Code configuration directory (`~/.claude`).
+### Scenario A: Configure a Global Tool (Recommended)
+
+**Use case**: You want to use a specific AI tool (Claude Code, Kimi Code, OpenCode, Cursor, etc.) with the Vibe workflow.
 
 ```bash
-# Clone the template
+# 1. Clone the workflow repository
 git clone https://github.com/nehcuh/claude-code-workflow.git
 cd claude-code-workflow
 
-# Run quickstart
-bin/vibe quickstart
+# 2. Generate configuration for your tool
+bin/vibe use kimi-code ~/.kimi        # For Kimi Code
+# OR
+bin/vibe use opencode ~/.opencode     # For OpenCode
+# OR
+bin/vibe quickstart                   # For Claude Code (shortcut)
+
+# 3. Install integrations (Superpowers, RTK)
+bin/vibe init --platform=kimi-code    # Replace with your tool name
+
+# 4. Start using your tool
+kimi   # or claude, opencode, cursor, etc.
 ```
 
-### 2. Customize CLAUDE.md
+### Scenario B: Add to a New Project
 
-Open `~/.claude/CLAUDE.md` and fill in:
-
-- **User Info**: Your name, project directory, social handles
-- **Sub-project Memory Routes**: Map your projects to memory paths
-- **SSOT Ownership Table**: Define where each type of info lives
-- **On-demand Loading Index**: Adjust doc paths if needed
-
-### 3. Start a session
+**Use case**: You have a project and want to apply the Vibe workflow to it.
 
 ```bash
-claude
+# 1. In your project directory
+cd /path/to/your/project
+
+# 2. Apply workflow configuration (creates .vibe/ and tool-specific files)
+bin/vibe switch kimi-code   # For Kimi Code
+# OR
+bin/vibe switch opencode    # For OpenCode
+# OR
+bin/vibe switch claude-code # For Claude Code
+
+# 3. (Optional) Customize with project overlay
+# Edit .vibe/overlay.yaml to add project-specific rules
+
+# 4. Start your AI tool in the project
+kimi   # Will automatically load project configuration
 ```
 
-Claude will automatically load your rules and start following the workflow.
+### Scenario C: Use Multiple Tools
+
+**Use case**: You work with multiple AI tools and want them all to follow the Vibe workflow.
+
+```bash
+# 1. Set up global configs for each tool
+bin/vibe use kimi-code ~/.kimi
+bin/vibe use opencode ~/.opencode
+bin/vibe use cursor ~/.cursor
+
+# 2. Each tool will automatically load project-level config when in a project
+cd /path/to/your/project
+bin/vibe switch kimi-code   # Project-level config
+
+# Both tools will use the same project rules
+kimi      # Loads ~/.kimi/KIMI.md + project .vibe/overlay.yaml
+opencode  # Loads ~/.opencode/AGENTS.md + project .vibe/overlay.yaml
+```
 
 ---
 
-### Advanced: Manual Installation
-
-If you prefer to maintain the workflow files in a specific location or use symlinks:
-
-```bash
-# Copy to your Claude Code config directory
-cp -r claude-code-workflow/* ~/.claude/
-
-# Or symlink to keep it as a git repo
-ln -sf ~/claude-code-workflow/rules ~/.claude/rules
-ln -sf ~/claude-code-workflow/docs ~/.claude/docs
-# ... etc
-```
-
-Claude will automatically load your rules and start following the workflow. Try:
-
-- Start coding and notice the **task routing** (`🔀 Route: bug fix → workhorse_coder (Sonnet-class)`)
-- Hit a bug and watch **systematic debugging** kick in
-- Say "that's all for now" and see **session-end** auto-save everything
-- Come back tomorrow and find your context preserved in `memory/session.md`
-
-Portable note: `core/` and `targets/` define the cross-tool contract, but Claude Code remains the directly runnable target in phase 1.
-
-### 4. Explore Recommended Integrations (Optional)
+## Install Integrations (Optional)
 
 Enhance your workflow with external tools and skill packs:
 
 ```bash
+# Check current status
+bin/vibe init --verify --platform=kimi-code
+
 # See what's recommended
-bin/vibe init --suggest
+bin/vibe init --suggest --platform=kimi-code
 
-# Install recommended integrations automatically
-bin/vibe init --install
+# Interactive installation
+bin/vibe init --platform=kimi-code
 
-# Install without confirmation prompts (for automation)
-bin/vibe init --install -y
-
-# Interactive setup to install integrations
-bin/vibe init --setup
-
-# Verify what's already installed
-bin/vibe init --verify
+# Auto-install without prompts
+bin/vibe init --install --platform=kimi-code -y
 ```
 
-**Recommended integrations:**
-- **Superpowers**: Advanced skill pack with TDD, brainstorming, code review workflows
-- **RTK**: Token optimizer that reduces LLM costs by 30-50%
+**Available integrations:**
+- **Superpowers** (P1): Advanced skill pack - TDD, brainstorming, code review, debugging
+- **RTK** (P2): Token optimizer - Reduces LLM costs by 60-90%
 
-**Auto-generated trigger contexts**: When you install external skill packs, the system automatically generates trigger rules that tell LLMs when to use these skills. For example:
-- "When implementing new functionality" → suggests `superpowers/tdd`
-- "Before creating pull requests" → suggests `superpowers/review`
-- "When refactoring code" → suggests `superpowers/refactor`
+See [docs/integrations.md](docs/integrations.md) for details.
 
-See [docs/integrations.md](docs/integrations.md) for details, [docs/extending-recommendations.md](docs/extending-recommendations.md) to add your own recommendations, and [docs/adding-external-skills.md](docs/adding-external-skills.md) to add new external skills.
+---
+
+## Next Steps
+
+### 1. Customize Your Configuration
+
+Open your tool's config file and personalize:
+
+| Tool | Config File |
+|------|------------|
+| Claude Code | `~/.claude/CLAUDE.md` |
+| Kimi Code | `~/.kimi/KIMI.md` |
+| OpenCode | `~/.opencode/AGENTS.md` |
+| Cursor | `~/.cursor/CURSOR.md` |
+
+Fill in user info, project paths, and preferences.
+
+### 2. Project-Level Customization
+
+Create `.vibe/overlay.yaml` in your project:
+
+```yaml
+profile: kimi-code-default
+behaviors:
+  - id: custom-rule
+    category: workflow
+    severity: recommended
+    description: "Project-specific rule"
+```
+
+See [docs/project-overlays.md](docs/project-overlays.md) for details.
+
+### 3. Try the Workflow
+
+Start your AI tool and observe:
+- **Task routing**: Watch complexity-based routing
+- **Systematic debugging**: Root cause investigation
+- **Session management**: Auto-save on wrap-up
+- **Context preservation**: Session state recovery
+
+---
 
 ## Model Configuration Guide
 
@@ -461,79 +508,71 @@ bin/vibe build claude-code --overlay .vibe/overlay.yaml
 
 See `docs/task-routing.md` for detailed routing guidelines.
 
-## External Tool Integrations
+---
 
-This workflow supports optional external tool integrations to enhance capabilities:
+## Command Reference
 
-### Initialize Integrations
+### Essential Commands
 
+| Command | Purpose | Example |
+|---------|---------|---------|
+| `bin/vibe use <target> <dir>` | Generate global config for a tool | `bin/vibe use kimi-code ~/.kimi` |
+| `bin/vibe switch <target>` | Apply workflow to current project | `bin/vibe switch kimi-code` |
+| `bin/vibe init --platform=<tool>` | Install integrations (Superpowers, RTK) | `bin/vibe init --platform=kimi-code` |
+| `bin/vibe quickstart` | One-command setup for Claude Code | `bin/vibe quickstart` |
+
+### When to Use What?
+
+**Setting up a tool for the first time:**
 ```bash
-# Interactive setup wizard
-bin/vibe init
-
-# Verify existing installations
-bin/vibe init --verify
+bin/vibe use <tool> <config-dir>
+bin/vibe init --platform=<tool>
 ```
 
-### Supported Integrations
-
-#### Superpowers Skill Pack
-
-Advanced skill pack providing design refinement, TDD enforcement, systematic debugging, and more.
-
-**Installation**:
-- Claude Code: `/plugin marketplace add obra/superpowers-marketplace`
-- Cursor: `/plugin-add superpowers`
-- Manual: Clone and symlink to `~/.claude/skills/`
-**Portable skill IDs exposed by this workflow**:
-- `superpowers/tdd`
-- `superpowers/brainstorm`
-- `superpowers/refactor`
-- `superpowers/debug`
-- `superpowers/architect`
-- `superpowers/review`
-- `superpowers/optimize`
-
-The installed Superpowers pack may use different native skill names. `core/skills/registry.yaml` remains the SSOT for the portable IDs rendered by `bin/vibe`.
-
-**Source**: [obra/superpowers](https://github.com/obra/superpowers)
-
-#### RTK (Token Optimizer)
-
-CLI agent tool that reduces LLM token consumption by 60-90% through intelligent context management.
-
-**Installation**:
+**Adding workflow to a project:**
 ```bash
-# Homebrew (macOS/Linux)
-brew install rtk
-
-# Cargo
-cargo install --git https://github.com/rtk-ai/rtk
-
-# Manual download
-# See GitHub releases: https://github.com/rtk-ai/rtk/releases
-
-# Initialize hook
-rtk init --global
+cd /path/to/project
+bin/vibe switch <tool>
 ```
 
-`bin/vibe init` only automates the Homebrew and Cargo paths and will show manual release instructions instead of executing a remote install script.
+**Checking integration status:**
+```bash
+bin/vibe init --verify --platform=<tool>
+```
 
-**Source**: [rtk-ai/rtk](https://github.com/rtk-ai/rtk)
+**Updating workflow:**
+```bash
+git pull
+bin/vibe use <tool> <config-dir> --force  # Regenerate configs
+```
 
-**Verification states**:
-- **Ready**: RTK binary is installed and the Claude hook is configured
-- **Installed, hook not configured**: RTK is present but `rtk init --global` still needs to run
-- **Hook configured, binary not found**: stale Claude hook exists, but RTK is not currently installed
+### All Commands
 
-### Integration Behavior
+<details>
+<summary>Click to see full command list</summary>
 
-- **Conditional**: All integrations are optional. The workflow operates normally without them.
-- **Dynamic Detection**: Superpowers skills only appear in generated manifests/docs when the pack is actually installed.
-- **Portable SSOT**: Generated Superpowers references use the portable IDs from `core/skills/registry.yaml`, not pack-specific command names.
-- **Security**: External skills undergo security review before registration in `core/skills/registry.yaml`.
+```bash
+# Generate configs
+bin/vibe build <target>              # Build to generated/<target>/
+bin/vibe use <target> <dir>          # Generate to specific directory
+bin/vibe switch <target>             # Apply to current directory or ~/.claude
+bin/vibe quickstart                  # Claude Code one-command setup
 
-See `docs/integrations.md` for detailed integration documentation.
+# Integrations
+bin/vibe init                        # Interactive setup
+bin/vibe init --verify               # Check what's installed
+bin/vibe init --suggest              # See recommendations
+bin/vibe init --install              # Auto-install recommended
+bin/vibe init --install -y           # No prompts
+
+# Inspection
+bin/vibe inspect [target]            # Preview resolved config
+bin/vibe targets                     # List supported tools
+```
+
+</details>
+
+---
 
 ## Phase 2-6: Build / Use / Inspect Generator
 

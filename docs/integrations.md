@@ -73,11 +73,11 @@ core/integrations/
 └── README.md           # This file
 
 Detection & Installation Flow:
-1. bin/vibe init        # User runs initialization
+1. bin/vibe init [--platform PLATFORM]  # User runs initialization
 2. Detect installed tools
-3. Distinguish installed vs ready state
+3. Distinguish installed vs ready state (platform-aware)
 4. Ask user to install or finish configuration
-5. Configure hooks/symlinks
+5. Configure hooks/symlinks (platform-specific)
 6. Verify installation
 ```
 
