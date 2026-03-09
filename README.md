@@ -285,6 +285,12 @@ Enhance your workflow with external tools and skill packs:
 # See what's recommended
 bin/vibe init --suggest
 
+# Install recommended integrations automatically
+bin/vibe init --install
+
+# Install without confirmation prompts (for automation)
+bin/vibe init --install -y
+
 # Interactive setup to install integrations
 bin/vibe init --setup
 

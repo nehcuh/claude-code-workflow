@@ -155,6 +155,12 @@ ln -sf ~/claude-code-workflow/docs ~/.claude/docs
 # 查看推荐的集成
 bin/vibe init --suggest
 
+# 自动安装推荐的集成
+bin/vibe init --install
+
+# 无需确认自动安装（用于自动化）
+bin/vibe init --install -y
+
 # 交互式安装集成
 bin/vibe init --setup
 

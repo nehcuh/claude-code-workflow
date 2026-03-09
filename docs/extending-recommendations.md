@@ -1,6 +1,6 @@
 # Extending Integration Recommendations
 
-This guide explains how to add new recommended integrations to the `bin/vibe init --suggest` system.
+This guide explains how to add new recommended integrations to the `bin/vibe init` system.
 
 ## Overview
 
@@ -8,6 +8,16 @@ The recommendation system is driven by `core/integrations/recommended.yaml`, whi
 - **Categories**: Groups of related integrations (skill_packs, system_tools, etc.)
 - **Priorities**: P1 (essential), P2 (recommended), P3 (optional)
 - **Display metadata**: Icons, labels, and descriptions for each category
+
+## Available Commands
+
+```bash
+bin/vibe init --suggest    # Show recommendations for uninstalled tools
+bin/vibe init --install    # Automatically install recommended tools
+bin/vibe init --install -y # Install without confirmation (for CI/automation)
+bin/vibe init --verify     # Verify what's already installed
+bin/vibe init --setup      # Interactive setup (default)
+```
 
 ## Adding a New Integration
 

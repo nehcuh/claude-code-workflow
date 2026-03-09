@@ -15,7 +15,7 @@ module Vibe
   #   - JSON, YAML (stdlib) — for parsing configuration files
   module InitSupport
     # Main initialization flow
-    def run_init(mode: :setup)
+    def run_init(mode: :setup, auto_yes: false)
       puts "\n🚀 Claude Code Workflow Initialization"
       puts "=" * 50
       puts
@@ -27,6 +27,8 @@ module Vibe
         verify_integrations
       when :suggest
         suggest_integrations
+      when :install
+        install_recommended(auto_yes: auto_yes)
       when :setup
         setup_integrations
       else
@@ -451,6 +453,106 @@ module Vibe
 
       puts
       puts "To install these integrations interactively, run: bin/vibe init --setup"
+      puts
+    end
+
+    def install_recommended(auto_yes: false)
+      puts "Installing recommended integrations..."
+      puts
+
+      recommended = load_recommended_integrations
+      unless recommended
+        puts "⚠ Could not load recommendations configuration"
+        return
+      end
+
+      # Collect integrations to install
+      to_install = []
+      category_order = recommended["category_order"] || recommended["categories"].keys
+
+      category_order.each do |category|
+        integrations = recommended.dig("categories", category) || []
+        next if integrations.empty?
+
+        integrations.each do |integration|
+          name = integration["name"]
+          info = send("verify_#{name}")
+          next if info[:ready]  # Skip already installed
+
+          to_install << {
+            name: name,
+            priority: integration["priority"],
+            reason: integration["reason"],
+            category: category,
+            info: info
+          }
+        end
+      end
+
+      if to_install.empty?
+        puts "✓ All recommended integrations are already installed."
+        puts
+        return
+      end
+
+      # Display what will be installed
+      puts "The following integrations will be installed:"
+      puts
+      to_install.each do |item|
+        label = item[:name].capitalize
+        puts "  • #{label} (#{item[:priority]})"
+        puts "    #{item[:reason]}"
+        puts
+      end
+
+      # Confirm installation
+      unless auto_yes
+        puts "This will guide you through the installation process."
+        unless $stdin.tty?
+          puts
+          puts "⚠ Non-interactive terminal detected."
+          puts "Use 'bin/vibe init --install -y' to skip confirmation, or run in an interactive terminal."
+          return
+        end
+        return unless ask_yes_no("Continue?")
+        puts
+      else
+        puts "Auto-installing (--yes flag provided)..."
+        puts
+      end
+
+      # Install each integration
+      installed_count = 0
+      to_install.each_with_index do |item, index|
+        name = item[:name]
+        label = name.capitalize
+
+        puts "[#{index + 1}/#{to_install.size}] Installing #{label}..."
+        puts
+
+        config = load_integration_config(name)
+        unless config
+          puts "   ⚠ Configuration not found for #{name}"
+          puts
+          next
+        end
+
+        install_integration(name, config)
+        installed_count += 1
+        puts
+      end
+
+      # Summary
+      puts "=" * 50
+      puts "Installation Summary"
+      puts "=" * 50
+      puts
+      puts "Attempted: #{to_install.size}"
+      puts "Completed: #{installed_count}"
+      puts
+      puts "Next steps:"
+      puts "1. Run: bin/vibe init --verify"
+      puts "2. Start using: claude"
       puts
     end
 

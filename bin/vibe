@@ -281,6 +281,7 @@ class VibeCLI
 
   def run_init_command(argv)
     mode = :setup  # Default: interactive setup
+    auto_yes = false
 
     argv.each do |arg|
       case arg
@@ -290,6 +291,10 @@ class VibeCLI
         mode = :suggest
       when "--setup"
         mode = :setup
+      when "--install"
+        mode = :install
+      when "-y", "--yes"
+        auto_yes = true
       when "--help", "-h"
         puts <<~HELP
           Usage: bin/vibe init [options]
@@ -300,13 +305,17 @@ class VibeCLI
             (none)      Interactive setup to install integrations (default)
             --verify    Verify existing integrations without installing
             --suggest   Show recommendations for uninstalled integrations
+            --install   Automatically install recommended integrations
             --setup     Same as default, explicitly run interactive setup
+            -y, --yes   Skip confirmation prompts (use with --install)
             --help      Show this help message
 
           Examples:
             bin/vibe init              # Interactive setup (asks to install)
             bin/vibe init --verify     # Check what's installed
             bin/vibe init --suggest    # See what's recommended
+            bin/vibe init --install    # Install recommended integrations
+            bin/vibe init --install -y # Install without confirmation
 
           Integrations:
             - Superpowers: Skill pack with advanced capabilities
@@ -318,7 +327,7 @@ class VibeCLI
       end
     end
 
-    run_init(mode: mode)
+    run_init(mode: mode, auto_yes: auto_yes)
   end
 
   def parse_common_options(argv, banner:)
