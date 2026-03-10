@@ -38,8 +38,11 @@ class TestVibeUtils < Minitest::Test
     assert_equal(%w[a b c d], result)
   end
 
-  def test_deep_merge_scalar_override
-    assert_equal("new", @host.deep_merge("old", "new"))
+  def test_deep_merge_scalar_override_raises_error
+    error = assert_raises(Vibe::ValidationError) do
+      @host.deep_merge("old", "new")
+    end
+    assert_includes error.message, "base must be a Hash, Array, or nil"
   end
 
   def test_deep_merge_nil_base
