@@ -5,6 +5,8 @@ require "yaml"
 require_relative "errors"
 require_relative "platform_utils"
 require_relative "user_interaction"
+require_relative "platform_verifier"
+require_relative "platform_installer"
 
 module Vibe
   # Initialization and setup support for global platform configuration.
@@ -16,10 +18,14 @@ module Vibe
   #   - Vibe::ValidationError (from errors.rb) — raised on validation failures
   #   - Vibe::PlatformUtils — platform-related utilities
   #   - Vibe::UserInteraction — user interaction utilities
+  #   - Vibe::PlatformVerifier — platform verification logic
+  #   - Vibe::PlatformInstaller — platform installation logic
   #   - JSON, YAML (stdlib) — for parsing configuration files
   module InitSupport
     include PlatformUtils
     include UserInteraction
+    include PlatformVerifier
+    include PlatformInstaller
     # Main initialization flow - installs global configuration
     def run_init(platform:, force: false, verify_only: false, suggest_only: false)
       @target_platform = platform
@@ -43,145 +49,8 @@ module Vibe
       install_global_config(platform: platform, force: force)
     end
 
-    def install_global_config(platform:, force:)
-      target = normalize_target(platform)
-      destination_root = default_global_destination(target)
-
-      is_update = Dir.exist?(destination_root)
-
-      puts "Target platform: #{platform_label(platform)}"
-      puts "Install location: #{destination_root}"
-      puts
-
-      if is_update && !force
-        puts "⚠️  Configuration already exists at #{destination_root}"
-        print "Overwrite? [y/N] "
-        response = $stdin.gets
-        if response.nil? || !["y", "yes"].include?(response.chomp.downcase)
-          puts "\nInstallation cancelled."
-          return
-        end
-      end
-
-      puts "Installing global configuration..."
-      puts
-
-      profile_name, profile = resolve_profile(target, nil)
-      output_root = resolve_output_root_for_use(
-        target: target,
-        destination_root: destination_root,
-        explicit_output: nil
-      )
-      overlay = resolve_overlay(explicit_path: nil, search_roots: [destination_root, @repo_root])
-
-      manifest = build_target(
-        target: target,
-        profile_name: profile_name,
-        profile: profile,
-        output_root: output_root,
-        overlay: overlay,
-        project_level: false  # Global mode
-      )
-
-      FileUtils.mkdir_p(destination_root)
-      copy_tree_contents(output_root, destination_root)
-
-      write_marker(
-        File.join(destination_root, ".vibe-target.json"),
-        destination_root: destination_root,
-        manifest: manifest,
-        output_root: output_root,
-        mode: "init"
-      )
-
-      puts "✅ Success! #{platform_label(platform)} global configuration has been #{is_update ? 'updated' : 'installed'}."
-      puts
-      puts "Configuration location: #{destination_root}"
-      puts
-
-      # Check and suggest optional integrations
-      check_and_suggest_integrations(platform)
-
-      puts "Next steps:"
-      puts "1. Review and customize #{File.join(destination_root, config_entrypoint(target))}"
-      puts "2. In your project directory, run: vibe switch --platform #{platform}"
-      puts
-    end
-
-    def verify_platform_installation(platform)
-      target = normalize_target(platform)
-      destination = default_global_destination(target)
-      
-      puts "Target platform: #{platform_label(platform)}"
-      puts
-
-      if Dir.exist?(destination)
-        puts "✅ #{platform_label(platform)} configuration found at #{destination}"
-
-        marker = File.join(destination, ".vibe-target.json")
-        if File.exist?(marker)
-          data = JSON.parse(File.read(marker))
-          puts "   Profile: #{data['profile']}"
-          puts "   Mode: #{data['mode']}"
-        end
-      else
-        puts "❌ #{platform_label(platform)} configuration not found"
-        puts "   Expected location: #{destination}"
-        puts "   Run: vibe init --platform #{platform}"
-      end
-    end
-
-    def suggest_platform_setup(platform)
-      target = normalize_target(platform)
-      destination = default_global_destination(target)
-
-      puts "Suggested setup for #{platform_label(platform)}:"
-      puts
-      puts "1. Install global configuration:"
-      puts "   vibe init --platform #{platform}"
-      puts
-      puts "2. Configuration will be installed to:"
-      puts "   #{destination}"
-      puts
-      puts "3. Then in your project directory:"
-      puts "   vibe switch --platform #{platform}"
-      puts
-    end
-
-    # Verify all supported platforms
-    def verify_all_platforms
-      puts
-      installed = []
-      not_installed = []
-
-      # Define supported targets here to avoid dependency on VibeCLI constant
-      supported_targets = %w[antigravity claude-code codex-cli cursor kimi-code opencode vscode warp]
-      supported_targets.each do |target|
-        destination = default_global_destination(target)
-        if Dir.exist?(destination)
-          installed << target
-        else
-          not_installed << target
-        end
-      end
-
-      if installed.any?
-        puts "✅ Installed platforms:"
-        installed.each do |target|
-          puts "   - #{platform_label(target)}"
-        end
-      end
-
-      if not_installed.any?
-        puts "❌ Not installed platforms:"
-        not_installed.each do |target|
-          puts "   - #{platform_label(target)}"
-        end
-      end
-
-      puts
-      puts "Run 'vibe init --platform PLATFORM' to install a platform."
-    end
+    # Note: install_global_config, verify_platform_installation, suggest_platform_setup,
+    # and verify_all_platforms are now defined in PlatformInstaller and PlatformVerifier modules
 
     # Check and suggest optional integrations after installation
     def check_and_suggest_integrations(platform)
