@@ -10,6 +10,7 @@ require_relative "platform_installer"
 require_relative "rtk_installer"
 require_relative "integration_manager"
 require_relative "quickstart_runner"
+require_relative "superpowers_installer"
 
 module Vibe
   # Initialization and setup support for global platform configuration.
@@ -26,6 +27,7 @@ module Vibe
   #   - Vibe::RtkInstaller — RTK installation logic
   #   - Vibe::IntegrationManager — integration detection and management
   #   - Vibe::QuickstartRunner — quickstart setup logic
+  #   - Vibe::SuperpowersInstaller — Superpowers installation logic
   #   - JSON, YAML (stdlib) — for parsing configuration files
   module InitSupport
     include PlatformUtils
@@ -35,6 +37,7 @@ module Vibe
     include RtkInstaller
     include IntegrationManager
     include QuickstartRunner
+    include SuperpowersInstaller
     # Main initialization flow - installs global configuration
     def run_init(platform:, force: false, verify_only: false, suggest_only: false)
       @target_platform = platform
@@ -211,51 +214,7 @@ module Vibe
       end
     end
 
-    def install_superpowers(config)
-      puts
-      puts "   Installation method:"
-      puts "   1) Claude Code plugin (recommended)"
-      puts "   2) Manual clone and symlink"
-      puts
-
-      choice = ask_choice("   Choose [1-2]", ["1", "2"])
-
-      case choice
-      when "1"
-        install_superpowers_plugin(config)
-      when "2"
-        install_superpowers_manual(config)
-      end
-    end
-
-    def install_superpowers_plugin(config)
-      puts
-      puts "   ℹ️  Run these commands in your Claude Code session:"
-      puts
-
-      commands = config.dig("installation_methods", "claude-code", "commands") || []
-      commands.each do |cmd|
-        puts "      #{cmd}"
-      end
-
-      puts
-      puts "   After installation, run: bin/vibe init --verify"
-    end
-
-    def install_superpowers_manual(config)
-      puts
-      puts "   Manual installation steps:"
-      puts
-
-      steps = config.dig("installation_methods", "manual", "steps") || []
-      steps.each_with_index do |step, i|
-        puts "   #{i + 1}. #{step}"
-      end
-
-      puts
-      puts "   After installation, run: bin/vibe init --verify"
-    end
-
+    # Note: Superpowers installation methods are now defined in SuperpowersInstaller module
     # Note: RTK installation methods are now defined in RtkInstaller module
 
     def suggest_integrations
