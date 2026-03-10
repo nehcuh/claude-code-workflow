@@ -4,7 +4,7 @@ Generated from the portable `core/` spec with profile `claude-code-default`.## O
 
 ### Superpowers Skill Pack
 
-**Status**: ✅ Installed (Installed)
+**Status**: ✅ Installed (~/.config/skills/superpowers)
 
 The following Superpowers skills are available:
 - `superpowers/brainstorming` — Design refinement and feature exploration
@@ -21,12 +21,10 @@ The following Superpowers skills are available:
 ### RTK Token Optimizer
 
 **Status**: ✅ Installed
-**Hook**: ⚠️ Not configured
+**Hook**: ✅ Configured
 **Version**: rtk 0.27.2
 
 RTK reduces token consumption by 60-90% on common commands.
-
-**To configure**: Run `rtk init --global`
 
 Applied overlay: `none`
 

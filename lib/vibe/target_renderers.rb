@@ -417,11 +417,11 @@ module Vibe
       if superpowers_status == :not_installed
         header = is_kimi ? "## Optional: Superpowers Skill Pack" : "## Optional Integrations\n\n### Superpowers Skill Pack"
         install_note = if is_kimi
-                         "Option 1: Manual clone\ngit clone https://github.com/obra/superpowers ~/superpowers\n\n# Then create symlinks to your skills directory\nln -s ~/superpowers/skills/* ~/.kimi/skills/  # Adjust path as needed"
+                         "# Clone the repository\ngit clone https://github.com/obra/superpowers ~/.config/skills/superpowers\n\n# Then create symlinks to your skills directory\nln -s ~/.config/skills/superpowers/skills/* ~/.kimi/skills/  # Adjust path as needed"
                        elsif is_warp
-                         "Clone the repository\ngit clone https://github.com/obra/superpowers ~/superpowers\n\n# In Warp, manually add the skill paths or use as reference"
+                         "# Clone the repository\ngit clone https://github.com/obra/superpowers ~/.config/skills/superpowers\n\n# In Warp, manually add the skill paths or use as reference"
                        else
-                         "Clone the repository\ngit clone https://github.com/obra/superpowers ~/superpowers\n\n# For #{target_name}, manually register the skills in your tool's skill system\n# or use the skill files from ~/superpowers/skills/"
+                         "# Clone the repository\ngit clone https://github.com/obra/superpowers ~/.config/skills/superpowers\n\n# For #{target_name}, manually register the skills in your tool's skill system\n# or use the skill files from ~/.config/skills/superpowers/skills/"
                        end
 
         sections << <<~SP
@@ -444,9 +444,12 @@ module Vibe
         location = case superpowers_status
                    when :claude_plugin then "~/.claude/plugins/superpowers"
                    when :skills_symlink then "~/.claude/skills/superpowers-*"
-                   when :local_clone then "~/superpowers"
-                   when :cursor_plugin then (target_name == "Cursor" ? "Installed" : "Cursor plugins")
-                   else "Installed"
+                   when :local_clone then "~/.config/skills/superpowers"
+                   when :cursor_plugin then (target_name == "Cursor" ? "~/.cursor/plugins/superpowers" : "Cursor plugins")
+                   when :platform_plugin then "~/.claude/plugins/superpowers"
+                   when :platform_skills then "~/.claude/skills"
+                   when :shared_clone then "~/.config/skills/superpowers"
+                   else "Unknown"
                    end
         header = is_kimi ? "## Superpowers Skill Pack Integration" : "## Optional Integrations\n\n### Superpowers Skill Pack"
         sections << <<~SP

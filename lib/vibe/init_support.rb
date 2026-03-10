@@ -17,8 +17,9 @@ module Vibe
     # Main initialization flow
     def run_init(mode: :setup, auto_yes: false, platform: nil)
       @target_platform = platform || "claude-code"
-      
-      puts "\n🚀 Claude Code Workflow Initialization"
+      platform_name = platform_label(@target_platform)
+
+      puts "\n🚀 #{platform_name} Workflow Initialization"
       puts "=" * 50
       puts
 
@@ -566,17 +567,30 @@ module Vibe
       puts
 
       status = integration_status
+      rtk_needs_hook = false
 
       status.each do |name, info|
         verify_integration_display(name, info)
+        rtk_needs_hook = true if name == :rtk && info[:installed] && !info[:hook_configured]
       end
 
       puts
       if all_integrations_ready?
         puts "All integrations verified successfully! 🎉"
+        puts
+        puts "Next steps:"
+        puts "1. Run: bin/vibe use #{@target_platform} --destination <your-project>"
+        puts "2. Or:  bin/vibe switch #{@target_platform} (to apply to current repo)"
+        puts "3. Start using: #{platform_command(@target_platform)}"
+      elsif rtk_needs_hook
+        puts "RTK is installed but hook is not configured."
+        puts "Run: rtk init --global"
+        puts
+        puts "After that, you can:"
+        puts "  bin/vibe use #{@target_platform} --destination <your-project>"
       else
         puts "Some integrations still need installation or configuration."
-        puts "Run: bin/vibe init (without --verify) to finish setup."
+        puts "Run: bin/vibe init --setup (without --verify) to finish setup."
       end
       puts
     end
