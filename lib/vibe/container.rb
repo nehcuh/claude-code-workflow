@@ -10,7 +10,35 @@ require_relative "target_renderers"
 require_relative "external_tools"
 require_relative "init_support"
 
- module Vibe
+module Vibe
+  # Simple dependency injection container for Vibe components.
+  #
+  # PURPOSE:
+  #   This container provides a foundation for future testability improvements.
+  #   Currently used minimally in VibeCLI for initialization, but can be
+  #   expanded for:
+  #   - Testing: Inject mock services (e.g., mock YAML loader)
+  #   - Configuration: Allow runtime service registration
+  #   - Modularity: Enable service replacement in different environments
+  #
+  # USAGE EXAMPLE (future):
+  #   # In tests
+  #   container = Vibe::Container.new(repo_root)
+  #   container.register(:yaml_loader, mock_yaml_loader)
+  #   cli = VibeCLI.new(repo_root, container: container)
+  #
+  # STATUS: OPTIONAL FEATURE (YAGNI consideration)
+  #   This is infrastructure for future improvements. If you don't need DI capabilities,
+  #   you the can safely ignore this class. It adds minimal overhead (~43 lines)
+  #   and no runtime cost unless used.
+  #
+  # TRADE-OFFS:
+  #   - PRO: Adds flexibility for testing and configuration
+  #   - CON: Not currently used extensively (could be considered over-engineering)
+  #   - ALTERNATIVE: Remove this class if DI is not needed
+  #
+  # For more details, see docs/architecture/dependency-injection.md (if created)
+  #
   class Container
     attr_reader :repo_root
 
