@@ -276,7 +276,7 @@ class TestVibeInit < Minitest::Test
     config = load_integration_config("rtk")
 
     self.stub(:ask_choice, "2") do
-      stdout, = capture_io { install_rtk(config) }
+      stdout, = capture_io { install_rtk_interactive(config) }
 
       assert_includes stdout, "Manual download (GitHub releases)"
       assert_includes stdout, "https://github.com/rtk-ai/rtk/releases"

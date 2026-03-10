@@ -10,7 +10,7 @@ require "yaml"
 require "thread"
 require_relative "../lib/vibe/errors"
 require_relative "../lib/vibe/utils"
-require_relative "../lib/vibe/container"
+require_relative "../lib/vibe/version"
 require_relative "../lib/vibe/doc_rendering"
 require_relative "../lib/vibe/native_configs"
 require_relative "../lib/vibe/overlay_support"
@@ -43,10 +43,10 @@ class VibeCLI
     "antigravity" => "antigravity",
     "kimi" => "kimi-code",
     "kimi-code" => "kimi-code"
-  }.freeze
+  }.freeze unless defined?(TARGET_ALIASES)
 
-  SUPPORTED_TARGETS = %w[antigravity claude-code codex-cli cursor kimi-code opencode vscode warp].freeze
-  MARKER_FILENAME = ".vibe-target.json"
+  SUPPORTED_TARGETS = %w[antigravity claude-code codex-cli cursor kimi-code opencode vscode warp].freeze unless defined?(SUPPORTED_TARGETS)
+  MARKER_FILENAME = ".vibe-target.json" unless defined?(MARKER_FILENAME)
 
   COMMAND_REGISTRY = {
     "build" => :run_build,
@@ -57,13 +57,12 @@ class VibeCLI
     "quickstart" => :run_quickstart_command,
     "targets" => :run_targets_command,
     "doctor" => :run_doctor_command
-  }.freeze
+  }.freeze unless defined?(COMMAND_REGISTRY)
 
-  def initialize(repo_root, container: nil)
+  def initialize(repo_root)
     @repo_root = repo_root
     @skip_integrations = false
     @yaml_mutex = Mutex.new
-    @container = container || Vibe::Container.new(repo_root)
   end
 
   # Lazy-loaded YAML documents with caching (thread-safe)
@@ -110,6 +109,12 @@ class VibeCLI
   end
 
   def run(argv)
+    # Handle version flag before command processing
+    if argv.include?("--version") || argv.include?("-v")
+      puts "vibe #{Vibe::VERSION}"
+      return
+    end
+
     command = argv.shift
 
     if COMMAND_REGISTRY.key?(command)
@@ -171,6 +176,11 @@ class VibeCLI
     end
 
     remaining = parser.parse(argv)
+
+    # Support both: vibe switch TARGET and vibe switch --platform TARGET
+    if options[:platform].nil? && !remaining.empty?
+      options[:platform] = remaining.shift
+    end
 
     unless remaining.empty?
       raise Vibe::ValidationError, "Unexpected arguments: #{remaining.join(' ')}\n\nRun 'vibe switch --help' for usage."
@@ -547,6 +557,17 @@ class VibeCLI
     end
 
     unless platform
+      # In verify mode without platform, check all installed platforms
+      if verify_only
+        puts "Verifying integrations..."
+        verify_all_platforms
+        return
+      end
+      
+      # Check if running in non-interactive mode
+      if !$stdin.respond_to?(:tty?) || !$stdin.tty?
+        raise Vibe::ValidationError, "bin/vibe init requires an interactive terminal when no --platform is specified. Re-run `bin/vibe init` in a terminal with `--platform PLATFORM`, use `bin/vibe init --verify --platform PLATFORM` to inspect current state, or follow `docs/integrations.md` for manual installation steps."
+      end
       raise Vibe::ValidationError, "Missing required --platform option\n\nRun 'vibe init --help' for usage."
     end
 

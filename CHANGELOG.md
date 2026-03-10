@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integration status display with detailed information (version, location, skills count)
 - Installation wrapper scripts (`bin/vibe-install`, `bin/vibe-uninstall`, `bin/vibe-wrapper`)
 - Architecture improvements: dependency injection container, enhanced error handling, thread-safe YAML loading
-- SimpleCov test coverage enforcement (50% threshold, currently 62.76%)
+- SimpleCov test coverage enforcement (50% threshold, currently 62.99%)
 - Performance benchmarks for critical operations (`test/benchmark/`)
 - Command registry pattern for better CLI extensibility
 - 5 new test files: `test_vibe_container.rb`, `test_vibe_utils_validation.rb`, and 3 benchmark scripts

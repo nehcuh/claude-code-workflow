@@ -60,9 +60,19 @@ class TestVibeCLI < Minitest::Test
   def test_switch_warp_uses_external_staging_when_repo_root_is_destination
     switch_repo_root = Dir.mktmpdir("vibe-switch-repo")
     FileUtils.cp_r(File.join(@repo_root, "core"), switch_repo_root)
+    
+    # Change to the switch repo directory so Dir.pwd returns the correct path
+    original_dir = Dir.pwd
+    Dir.chdir(switch_repo_root)
+    
+    # Create a fresh CLI instance with the switch repo as repo_root
+    # and set HOME to avoid conflicts with the actual home directory
+    original_home = ENV["HOME"]
+    ENV["HOME"] = @test_home
     cli = VibeCLI.new(switch_repo_root)
+    cli.skip_integrations = true
 
-    stdout, = capture_io { cli.run(["switch", "warp"]) }
+    stdout, = capture_io { cli.run(["switch", "warp", "--force"]) }
 
     assert_includes stdout, "Applied warp"
     assert File.exist?(File.join(switch_repo_root, "WARP.md"))
@@ -72,6 +82,8 @@ class TestVibeCLI < Minitest::Test
     assert_includes marker.fetch("generated_output"), ".vibe-generated"
     refute_equal "generated/warp", marker.fetch("generated_output")
   ensure
+    Dir.chdir(original_dir) if defined?(original_dir)
+    ENV["HOME"] = original_home if defined?(original_home)
     FileUtils.rm_rf(switch_repo_root) if switch_repo_root && File.exist?(switch_repo_root)
   end
 

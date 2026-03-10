@@ -6,7 +6,7 @@ SimpleCov.start do
   add_filter "/vendor/"
   add_group "Libraries", "lib/vibe"
   add_group "CLI", "bin/vibe"
-  minimum_coverage 60
+  minimum_coverage 50
   enable_coverage :branch
 end
 

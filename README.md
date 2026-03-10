@@ -13,10 +13,10 @@ This project is a fork of [runesleo/claude-code-workflow](https://github.com/run
 - **Original Author**: [@runes_leo](https://x.com/runes_leo)
 - **Fork Maintainer**: [@nehcuh](https://github.com/nehcuh)
 - **Major Changes**:
-  - Modularized CLI into 10 Ruby library modules (`lib/vibe/*.rb`)
+  - Modularized CLI into 9 Ruby library modules (`lib/vibe/*.rb`)
   - Added comprehensive unit test suite with 12 test files + benchmarks
   - Integrated SimpleCov for test coverage enforcement (62%+ coverage)
-  - Added dependency injection container for future testability
+  - Removed unused dependency injection container (YAGNI principle)
   - Enhanced error handling with context support
   - Thread-safe YAML loading with mutex protection
   - Command registry pattern for better extensibility

@@ -3,6 +3,8 @@
 require "json"
 require "yaml"
 require_relative "errors"
+require_relative "platform_utils"
+require_relative "user_interaction"
 
 module Vibe
   # Initialization and setup support for global platform configuration.
@@ -12,8 +14,12 @@ module Vibe
   #
   # Cross-module dependencies:
   #   - Vibe::ValidationError (from errors.rb) — raised on validation failures
+  #   - Vibe::PlatformUtils — platform-related utilities
+  #   - Vibe::UserInteraction — user interaction utilities
   #   - JSON, YAML (stdlib) — for parsing configuration files
   module InitSupport
+    include PlatformUtils
+    include UserInteraction
     # Main initialization flow - installs global configuration
     def run_init(platform:, force: false, verify_only: false, suggest_only: false)
       @target_platform = platform
@@ -102,39 +108,12 @@ module Vibe
       puts
     end
 
-    def default_global_destination(target)
-      case target
-      when "claude-code"
-        File.expand_path("~/.claude")
-      when "opencode"
-        File.expand_path("~/.opencode")
-      when "kimi-code"
-        File.expand_path("~/.kimi")
-      when "cursor"
-        File.expand_path("~/.cursor")
-      when "codex-cli"
-        File.expand_path("~/.codex")
-      else
-        File.expand_path("~/.#{target}")
-      end
-    end
-
-    def config_entrypoint(target)
-      case target
-      when "claude-code"
-        "CLAUDE.md"
-      when "opencode"
-        "opencode.json"
-      when "kimi-code"
-        "KIMI.md"
-      else
-        "config.md"
-      end
-    end
-
     def verify_platform_installation(platform)
       target = normalize_target(platform)
       destination = default_global_destination(target)
+      
+      puts "Target platform: #{platform_label(platform)}"
+      puts
 
       if Dir.exist?(destination)
         puts "✅ #{platform_label(platform)} configuration found at #{destination}"
@@ -167,6 +146,41 @@ module Vibe
       puts "3. Then in your project directory:"
       puts "   vibe switch --platform #{platform}"
       puts
+    end
+
+    # Verify all supported platforms
+    def verify_all_platforms
+      puts
+      installed = []
+      not_installed = []
+
+      # Define supported targets here to avoid dependency on VibeCLI constant
+      supported_targets = %w[antigravity claude-code codex-cli cursor kimi-code opencode vscode warp]
+      supported_targets.each do |target|
+        destination = default_global_destination(target)
+        if Dir.exist?(destination)
+          installed << target
+        else
+          not_installed << target
+        end
+      end
+
+      if installed.any?
+        puts "✅ Installed platforms:"
+        installed.each do |target|
+          puts "   - #{platform_label(target)}"
+        end
+      end
+
+      if not_installed.any?
+        puts "❌ Not installed platforms:"
+        not_installed.each do |target|
+          puts "   - #{platform_label(target)}"
+        end
+      end
+
+      puts
+      puts "Run 'vibe init --platform PLATFORM' to install a platform."
     end
 
     # Check and suggest optional integrations after installation
@@ -216,7 +230,7 @@ module Vibe
         puts
 
         if ask_yes_no("Would you like to install RTK now? (requires Homebrew)")
-          if install_rtk
+          if install_rtk_interactive
             # Refresh status after installation
             status = integration_status
             pending << :rtk if status[:rtk][:installed] && !status[:rtk][:ready]
@@ -241,7 +255,8 @@ module Vibe
       puts
     end
 
-    # Install RTK via Homebrew
+    # Install RTK via Homebrew (legacy method for backward compatibility)
+    # @deprecated Use {#install_rtk_interactive} instead
     def install_rtk
       puts
       puts "Installing RTK..."
@@ -253,52 +268,6 @@ module Vibe
         puts "   brew install rtk"
         puts "   or visit: https://github.com/runesleo/rtk"
         return false
-      end
-    end
-
-    # Open URL in default browser (cross-platform)
-    def open_url(url)
-      case RbConfig::CONFIG["host_os"]
-      when /darwin/
-        system("open", url)
-      when /linux/
-        system("xdg-open", url)
-      when /mswin|mingw|cygwin/
-        system("start", url)
-      else
-        puts "Please visit: #{url}"
-      end
-    end
-
-    # Ask yes/no question with default to no
-    def ask_yes_no(question)
-      print "#{question} [y/N] "
-      response = $stdin.gets
-      return false if response.nil?
-      ["y", "yes"].include?(response.chomp.downcase)
-    end
-
-    def normalize_target(platform)
-      # Map platform names to internal target names
-      case platform.to_s.downcase
-      when "claude-code", "claude"
-        "claude-code"
-      when "opencode"
-        "opencode"
-      when "kimi-code", "kimi"
-        "kimi-code"
-      when "cursor"
-        "cursor"
-      when "codex-cli", "codex"
-        "codex-cli"
-      when "vscode", "vs-code"
-        "vscode"
-      when "warp"
-        "warp"
-      when "antigravity"
-        "antigravity"
-      else
-        platform.to_s.downcase
       end
     end
 
@@ -358,8 +327,8 @@ module Vibe
         puts "\n✅ Success! Claude Code workflow has been #{is_update ? 'updated' : 'installed'}."
         puts
 
-        # Check and suggest optional integrations
-        check_and_suggest_integrations("claude-code")
+        # Check and suggest optional integrations (skip if @skip_integrations is set)
+        check_and_suggest_integrations("claude-code") unless @skip_integrations
 
         puts "Next steps:"
         puts "1. Open #{File.join(claude_home, 'CLAUDE.md')} and customize these sections:"
@@ -590,7 +559,10 @@ module Vibe
       puts "   After installation, run: bin/vibe init --verify"
     end
 
-    def install_rtk(config)
+    # Interactive RTK installation with multiple method choices
+    # @param config [Hash] Integration configuration (optional, for backward compatibility)
+    def install_rtk_interactive(config = nil)
+      config ||= load_integration_config("rtk")
       puts
       puts "   Installation method:"
       puts "   1) Homebrew (macOS/Linux)"
@@ -602,15 +574,19 @@ module Vibe
 
       case choice
       when "1"
-        install_rtk_homebrew
+        install_rtk_via_homebrew_interactive
       when "2"
-        install_rtk_manual(config)
+        install_rtk_manual_guide(config)
       when "3"
-        install_rtk_cargo
+        install_rtk_via_cargo_interactive
       end
     end
 
-    def install_rtk_homebrew
+    # Alias for backward compatibility
+    alias install_rtk_with_choice install_rtk_interactive
+
+    # Interactive Homebrew installation with user feedback
+    def install_rtk_via_homebrew_interactive
       puts
       if system(["which", "which"], "brew", out: File::NULL, err: File::NULL)
         if install_rtk_via_homebrew
@@ -624,7 +600,9 @@ module Vibe
       end
     end
 
-    def install_rtk_manual(config)
+    # Display manual installation instructions
+    # @param config [Hash] Integration configuration
+    def install_rtk_manual_guide(config)
       puts
       puts "   Manual installation steps:"
       puts
@@ -640,7 +618,8 @@ module Vibe
       puts "   After installation, run: bin/vibe init --verify"
     end
 
-    def install_rtk_cargo
+    # Interactive Cargo installation with user feedback
+    def install_rtk_via_cargo_interactive
       puts
       if system(["which", "which"], "cargo", out: File::NULL, err: File::NULL)
         puts "   Installing RTK via Cargo..."
@@ -921,46 +900,6 @@ module Vibe
       end
     end
 
-    # --- User Input Helpers ---
-
-    def ask_yes_no(prompt, default: true)
-      ensure_interactive_setup_available!(prompt)
-      suffix = default ? "[Y/n]" : "[y/N]"
-      print "#{prompt} #{suffix}: "
-      response = read_prompt_response!(prompt).strip.downcase
-
-      return default if response.empty?
-      response.start_with?("y")
-    end
-
-    def ask_choice(prompt, valid_choices)
-      ensure_interactive_setup_available!(prompt)
-      loop do
-        print "#{prompt}: "
-        choice = read_prompt_response!(prompt).strip
-
-        return choice if valid_choices.include?(choice)
-
-        puts "   Invalid choice. Please choose from: #{valid_choices.join(', ')}"
-      end
-    end
-
-    def ensure_interactive_setup_available!(prompt = nil)
-      return if $stdin.respond_to?(:tty?) && $stdin.tty?
-
-      detail = prompt ? " when prompting for '#{prompt}'" : ""
-      raise ValidationError,
-            "bin/vibe init requires an interactive terminal#{detail}. Re-run `bin/vibe init` in a terminal, use `bin/vibe init --verify` to inspect current state, or follow `docs/integrations.md` for manual installation steps."
-    end
-
-    def read_prompt_response!(prompt)
-      response = $stdin.gets
-      return response unless response.nil?
-
-      raise ValidationError,
-            "Input ended before a response was provided for '#{prompt}'. Re-run `bin/vibe init` in an interactive terminal, use `bin/vibe init --verify` to inspect current state, or follow `docs/integrations.md` for manual installation steps."
-    end
-
     # --- Recommendation System ---
 
     def load_recommended_integrations
@@ -1076,32 +1015,5 @@ module Vibe
       "claude-code"
     end
 
-    def platform_label(platform)
-      case platform
-      when "antigravity" then "Antigravity"
-      when "claude-code" then "Claude Code"
-      when "codex-cli" then "Codex CLI"
-      when "cursor" then "Cursor"
-      when "kimi-code" then "Kimi Code"
-      when "opencode" then "OpenCode"
-      when "vscode" then "VS Code"
-      when "warp" then "Warp"
-      else platform.to_s.split("-").map(&:capitalize).join(" ")
-      end
-    end
-
-    def platform_command(platform)
-      case platform
-      when "antigravity" then "antigravity"
-      when "claude-code" then "claude"
-      when "codex-cli" then "codex"
-      when "cursor" then "cursor"
-      when "kimi-code" then "kimi"
-      when "opencode" then "opencode"
-      when "vscode" then "code"
-      when "warp" then "warp"
-      else platform
-      end
-    end
   end
 end
