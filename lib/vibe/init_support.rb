@@ -13,6 +13,7 @@ require_relative "quickstart_runner"
 require_relative "superpowers_installer"
 require_relative "integration_setup"
 require_relative "integration_recommendations"
+require_relative "integration_verifier"
 
 module Vibe
   # Initialization and setup support for global platform configuration.
@@ -32,6 +33,7 @@ module Vibe
   #   - Vibe::SuperpowersInstaller — Superpowers installation logic
   #   - Vibe::IntegrationSetup — integration setup logic
   #   - Vibe::IntegrationRecommendations — integration recommendations
+  #   - Vibe::IntegrationVerifier — integration verification
   #   - JSON, YAML (stdlib) — for parsing configuration files
   module InitSupport
     include PlatformUtils
@@ -44,6 +46,7 @@ module Vibe
     include SuperpowersInstaller
     include IntegrationSetup
     include IntegrationRecommendations
+    include IntegrationVerifier
     # Main initialization flow - installs global configuration
     def run_init(platform:, force: false, verify_only: false, suggest_only: false)
       @target_platform = platform
@@ -74,12 +77,14 @@ module Vibe
     # Note: run_quickstart is now defined in QuickstartRunner module
     # Note: setup_integrations and related methods are now defined in IntegrationSetup module
     # Note: suggest_integrations, install_recommended, and related methods are now defined in IntegrationRecommendations module
+    # Note: verify_integrations and related methods are now defined in IntegrationVerifier module
 
     private
 
     # Note: check_environment is now defined in IntegrationManager module
     # Note: setup_integrations and related methods are now defined in IntegrationSetup module
     # Note: suggest_integrations, install_recommended, and related methods are now defined in IntegrationRecommendations module
+    # Note: verify_integrations and related methods are now defined in IntegrationVerifier module
 
     # Note: Superpowers installation methods are now defined in SuperpowersInstaller module
     # Note: RTK installation methods are now defined in RtkInstaller module
