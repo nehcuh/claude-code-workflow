@@ -54,7 +54,7 @@ Kimi Code uses Moonshot AI's models. The capability-tier routing system maps to 
 The default `kimi-code-default` profile maps capability tiers to Moonshot model classes:
 
 ```yaml
-critical_reasoner: kimi.k1.5-class         # Highest reasoning capability (e.g., k1.5)
+critical_reasoner: kimi.k2.5-class         # Highest reasoning capability (e.g., k2.5)
 workhorse_coder: kimi.default-class        # Balanced daily coding (e.g., moonshot-v1-8k)
 fast_router: kimi.fast-class               # Fast exploration (e.g., moonshot-v1-8k with fast mode)
 independent_verifier: second-model.cross-family  # Cross-model verification
@@ -80,7 +80,7 @@ export KIMI_MODEL=moonshot-v1-8k
 Skills can include model recommendations in their instructions:
 
 ```markdown
-For critical security review, prefer the k1.5-class model.
+For critical security review, prefer the k2.5-class model.
 For standard implementation, the default model is sufficient.
 For quick exploration, use the fast model option.
 ```
@@ -92,7 +92,7 @@ Use `.vibe/overlay.yaml` to specify project-specific model preferences:
 ```yaml
 profile:
   mapping:
-    critical_reasoner: kimi.k1.5-class
+    critical_reasoner: kimi.k2.5-class
     workhorse_coder: kimi.default-class
     fast_router: kimi.fast-class
 ```

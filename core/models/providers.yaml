@@ -167,7 +167,7 @@ profiles:
     target: kimi-code
     maturity: planned
     mapping:
-      critical_reasoner: kimi.k1.5-class
+      critical_reasoner: kimi.k2.5-class
       workhorse_coder: kimi.default-class
       fast_router: kimi.fast-class
       independent_verifier: second-model.or.manual-review
