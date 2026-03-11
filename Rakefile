@@ -15,21 +15,50 @@ end
 
 desc "Run all validation checks"
 task :validate do
-  puts "🔍 Running validation pipeline..."
-  
-  # Validate YAML files
   require "yaml"
+
+  puts "🔍 Running validation pipeline..."
+
+  # 1. Validate YAML files
   Dir.glob("core/**/*.yaml").each do |f|
     begin
       YAML.load_file(f)
       puts "✓ #{f}"
     rescue => e
-      puts "✗ #{f}: #{e.message}"
-      exit 1
+      abort "✗ #{f}: #{e.message}"
     end
   end
-  
-  puts "✅ Validation complete"
+  puts "✅ Core YAML files are well-formed."
+
+  # 2. Vibe inspect
+  unless system("bin/vibe inspect --json > /dev/null")
+    abort "❌ Vibe inspect failed."
+  end
+  puts "✅ Vibe inspect succeeded."
+
+  # 3. Skill entrypoint paths
+  puts "🔍 Checking skill entrypoint paths..."
+  registry = YAML.load_file("core/skills/registry.yaml")
+  registry["skills"].select { |s| s["builtin"] }.each do |s|
+    path = s["entrypoint"]
+    abort "Missing entrypoint: #{path}" unless File.exist?(path)
+  end
+  puts "✅ All builtin skill entrypoints exist."
+
+  # 4. Document cross-references
+  puts "🔍 Checking document cross-references..."
+  behaviors_path = "rules/behaviors.md"
+  if File.exist?(behaviors_path)
+    content = File.read(behaviors_path)
+    refs = content.scan(/Read (docs\/[^\s)]+)/)
+    refs.each do |ref|
+      path = ref[0]
+      abort "Missing doc: #{path}" unless File.exist?(path)
+    end
+  end
+  puts "✅ All doc references exist."
+
+  puts "✅ Validation complete."
 end
 
 desc "Run tests with coverage"

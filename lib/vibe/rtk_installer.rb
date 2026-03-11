@@ -14,22 +14,6 @@ module Vibe
   module RtkInstaller
     include UserInteraction
 
-    # Install RTK via Homebrew (legacy method for backward compatibility)
-    # @deprecated Use {#install_rtk_interactive} instead
-    def install_rtk
-      puts
-      puts "Installing RTK..."
-      if system("brew", "install", "rtk")
-        puts "✅ RTK installed successfully"
-        return true
-      else
-        puts "❌ Failed to install RTK. Please install manually:"
-        puts "   brew install rtk"
-        puts "   or visit: https://github.com/runesleo/rtk"
-        return false
-      end
-    end
-
     # Interactive RTK installation with multiple method choices
     # @param config [Hash] Integration configuration (optional, for backward compatibility)
     def install_rtk_interactive(config = nil)
@@ -53,14 +37,12 @@ module Vibe
       end
     end
 
-    # Alias for backward compatibility
-    alias install_rtk_with_choice install_rtk_interactive
-
     # Interactive Homebrew installation with user feedback
     def install_rtk_via_homebrew_interactive
       puts
       if system("which", "brew", out: File::NULL, err: File::NULL)
         if install_rtk_via_homebrew
+          reset_integration_status!
           puts "   ✓ RTK installed successfully"
           configure_rtk_after_install
         else
@@ -95,6 +77,7 @@ module Vibe
       if system("which", "cargo", out: File::NULL, err: File::NULL)
         puts "   Installing RTK via Cargo..."
         if system("cargo", "install", "--git", "https://github.com/runesleo/rtk")
+          reset_integration_status!
           puts "   ✓ RTK installed successfully"
           configure_rtk_after_install
         else
@@ -110,6 +93,7 @@ module Vibe
       puts
       if ask_yes_no("   Configure RTK hook in ~/.claude/settings.json?")
         if configure_rtk_hook
+          reset_integration_status!
           puts "   ✓ Hook configured successfully"
         else
           puts "   ✗ Hook configuration failed"

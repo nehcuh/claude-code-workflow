@@ -13,7 +13,7 @@ module Vibe
   #   Vibe::OverlaySupport — overlay_sentence
   #   Vibe::PathSafety     — copy_tree_contents
   module TargetRenderers
-    COPY_RUNTIME_ENTRIES = %w[rules docs skills agents commands memory patterns.md].freeze
+    COPY_RUNTIME_ENTRIES = %w[rules docs skills agents commands memory].freeze
 
     def write_target_docs(output_dir, manifest, doc_types)
       doc_types.each do |type|
@@ -79,7 +79,7 @@ module Vibe
           content = File.read(skill_triggers_source)
 
           # Append Superpowers integration section
-          superpowers_section = generate_superpowers_section(superpowers_status, manifest)
+          superpowers_section = generate_superpowers_section(manifest)
           enhanced_content = superpowers_section.empty? ? content : content + "\n" + superpowers_section
 
           File.write(skill_triggers_dest, enhanced_content)
@@ -362,9 +362,9 @@ module Vibe
 
 
     def render_target_entrypoint_md(target_name, manifest, extra_sections: nil)
-      superpowers_status = detect_superpowers
+      sp_info = verify_superpowers
       rtk_info = verify_rtk
-      integrations = render_integrations_section(target_name, superpowers_status, rtk_info)
+      integrations = render_integrations_section(target_name, sp_info, rtk_info)
 
       <<~MD
         # Vibe workflow for #{target_name}
@@ -449,115 +449,268 @@ module Vibe
       skills.map { |s| "- `superpowers/#{s['id']}` — #{s['intent']}" }.join("\n")
     end
 
-    def render_integrations_section(target_name, superpowers_status, rtk_info)
+    # Data-driven templates for integration section rendering
+    # Reduces conditional complexity and makes target-specific customization declarative
+    INTEGRATION_TEMPLATES = {
+      "kimi-code" => {
+        superpowers: {
+          header_style: :standalone,
+          install_note_template: :kimi_specific,
+          show_benefits: false,
+          show_full_details: true
+        },
+        rtk: {
+          header_style: :standalone,
+          install_template: :kimi_specific,
+          show_benefits: true,
+          show_version: true
+        }
+      },
+      "warp" => {
+        superpowers: {
+          header_style: :nested,
+          install_note_template: :warp_specific,
+          show_benefits: false,
+          show_full_details: false
+        },
+        rtk: {
+          header_style: :nested,
+          install_template: :warp_specific,
+          show_benefits: false,
+          show_warp_note: true,
+          show_version: true
+        }
+      },
+      :default => {
+        superpowers: {
+          header_style: :nested,
+          install_note_template: :generic,
+          show_benefits: false,
+          show_full_details: false
+        },
+        rtk: {
+          header_style: :nested,
+          install_template: :generic,
+          show_benefits: false,
+          show_warp_note: false,
+          show_version: true
+        }
+      }
+    }.freeze
+
+    # Installation note templates for Superpowers
+    SUPERPOWERS_INSTALL_TEMPLATES = {
+      kimi_specific: <<~NOTE.chomp,
+        # Clone the repository
+        git clone https://github.com/obra/superpowers ~/.config/skills/superpowers
+
+        # Then create symlinks to your skills directory
+        ln -s ~/.config/skills/superpowers/skills/* ~/.kimi/skills/  # Adjust path as needed
+      NOTE
+      warp_specific: <<~NOTE.chomp,
+        # Clone the repository
+        git clone https://github.com/obra/superpowers ~/.config/skills/superpowers
+
+        # In Warp, manually add the skill paths or use as reference
+      NOTE
+      generic: ->(target_name) { <<~NOTE.chomp }
+        # Clone the repository
+        git clone https://github.com/obra/superpowers ~/.config/skills/superpowers
+
+        # For #{target_name}, manually register the skills in your tool's skill system
+        # or use the skill files from ~/.config/skills/superpowers/skills/
+      NOTE
+    }.freeze
+
+    # RTK installation templates
+    RTK_INSTALL_TEMPLATES = {
+      kimi_specific: <<~CMD.chomp,
+        brew install rtk
+
+        # Then configure
+        rtk init --global
+      CMD
+      warp_specific: "brew install rtk",
+      generic: <<~CMD.chomp
+        brew install rtk
+
+        # Or build from source
+        cargo install --git https://github.com/rtk-ai/rtk
+      CMD
+    }.freeze
+
+    def render_integrations_section(target_name, sp_info, rtk_info)
       sections = []
-      is_kimi = target_name == "Kimi Code"
-      is_warp = target_name == "Warp"
       skill_bullets = format_superpowers_skill_bullets
-
-      # Superpowers section
-      if superpowers_status == :not_installed
-        header = is_kimi ? "## Optional: Superpowers Skill Pack" : "## Optional Integrations\n\n### Superpowers Skill Pack"
-        install_note = if is_kimi
-                         "# Clone the repository\ngit clone https://github.com/obra/superpowers ~/.config/skills/superpowers\n\n# Then create symlinks to your skills directory\nln -s ~/.config/skills/superpowers/skills/* ~/.kimi/skills/  # Adjust path as needed"
-                       elsif is_warp
-                         "# Clone the repository\ngit clone https://github.com/obra/superpowers ~/.config/skills/superpowers\n\n# In Warp, manually add the skill paths or use as reference"
-                       else
-                         "# Clone the repository\ngit clone https://github.com/obra/superpowers ~/.config/skills/superpowers\n\n# For #{target_name}, manually register the skills in your tool's skill system\n# or use the skill files from ~/.config/skills/superpowers/skills/"
-                       end
-
-        sections << <<~SP
-          #{header}
-
-          **Status**: ❌ Not installed
-
-          Superpowers provides advanced skills for design refinement, TDD, debugging, and more.
-
-          **Installation#{is_kimi ? "" : " for #{target_name}"}**:
-          ```bash
-          #{install_note}
-          ```
-
-          **Available skills#{is_kimi ? " after installation" : ""}**:
-          #{skill_bullets}
-          #{is_kimi ? "\nSee `core/integrations/superpowers.yaml` for full details." : ""}
-        SP
-      else
-        location = case superpowers_status
-                   when :claude_plugin then "~/.claude/plugins/superpowers"
-                   when :skills_symlink then "~/.claude/skills/superpowers-*"
-                   when :local_clone then "~/.config/skills/superpowers"
-                   when :cursor_plugin then (target_name == "Cursor" ? "~/.cursor/plugins/superpowers" : "Cursor plugins")
-                   when :platform_plugin then "~/.claude/plugins/superpowers"
-                   when :platform_skills then "~/.claude/skills"
-                   when :shared_clone then "~/.config/skills/superpowers"
-                   else "Unknown"
-                   end
-        header = is_kimi ? "## Superpowers Skill Pack Integration" : "## Optional Integrations\n\n### Superpowers Skill Pack"
-        sections << <<~SP
-          #{header}
-
-          **Status**: ✅ Installed (#{location})
-
-          The following Superpowers skills are available:
-          #{skill_bullets}
-        SP
-      end
-
-      # RTK section
-      if rtk_info[:installed]
-        hook_status = rtk_info[:hook_configured] ? "✅ Configured" : "⚠️ Not configured"
-        header = is_kimi ? "## RTK Token Optimizer" : "### RTK Token Optimizer"
-        warp_note = is_warp ? "\n**For Warp**: Manually prefix commands with `rtk`, e.g., `rtk git status`" : ""
-        config_note = (!is_warp && !rtk_info[:hook_configured]) ? "\n\n**To configure**: Run `rtk init --global`" : ""
-
-        sections << <<~RTK
-          #{header}
-
-          **Status**: ✅ Installed
-          #{is_warp ? "" : "**Hook**: #{hook_status}\n"}**Version**: #{rtk_info[:version] || "Unknown"}
-
-          RTK reduces token consumption by 60-90% on common commands.#{warp_note}#{config_note}
-        RTK
-      else
-        header = is_kimi ? "## Optional: RTK Token Optimizer" : "### RTK Token Optimizer"
-        install_cmd = is_warp ? "brew install rtk" : "brew install rtk\n\n# Or build from source\ncargo install --git https://github.com/rtk-ai/rtk"
-        config_step = is_warp ? "" : "\n\n# Then configure\nrtk init --global"
-        warp_note = is_warp ? "\n**For Warp**: Manually prefix commands with `rtk`, e.g., `rtk git status`" : ""
-        generic_note = (!is_kimi && !is_warp) ? "\n\n**Note**: RTK works best with Claude Code. For #{target_name}, you may need to manually prefix commands with `rtk`." : ""
-
-        sections << <<~RTK
-          #{header}
-
-          **Status**: ❌ Not installed
-
-          RTK is a CLI proxy that reduces LLM token consumption by 60-90% on common development commands#{is_kimi ? " (git, npm, pytest, etc.)" : ""}.
-
-          **Installation**:
-          ```bash
-          # macOS/Linux with Homebrew
-          #{install_cmd}#{config_step}
-          ```
-          #{is_kimi ? "\n**Benefits**:\n- 60-90% token reduction on command outputs\n- Less than 10ms overhead per command\n- Works transparently via hooks\n\nSee `core/integrations/rtk.yaml` for full details." : "#{warp_note}#{generic_note}"}
-        RTK
-      end
-
-      sections.join("\n")
+      
+      # Get target-specific template configuration
+      target_key = target_name.downcase.gsub(' ', '-')
+      template_config = INTEGRATION_TEMPLATES[target_key] || INTEGRATION_TEMPLATES[:default]
+      
+      # Render Superpowers section
+      sections << render_superpowers_integration(target_name, sp_info, skill_bullets, template_config[:superpowers])
+      
+      # Render RTK section
+      sections << render_rtk_integration(target_name, rtk_info, template_config[:rtk])
+      
+      sections.compact.join("\n\n")
     end
 
     private
 
-    def generate_superpowers_section(status, manifest)
+    def render_superpowers_integration(target_name, sp_info, skill_bullets, config)
+      return nil if skill_bullets.empty?
+      
+      is_standalone = config[:header_style] == :standalone
+      
+      if sp_info[:installed]
+        render_installed_superpowers(target_name, sp_info, skill_bullets, is_standalone)
+      else
+        render_not_installed_superpowers(target_name, skill_bullets, config, is_standalone)
+      end
+    end
+
+    def render_installed_superpowers(target_name, sp_info, skill_bullets, is_standalone)
+      location = sp_info[:location] || "Unknown"
+      
+      if is_standalone
+        header = "## Superpowers Skill Pack Integration"
+      else
+        header = "## Optional Integrations\n\n### Superpowers Skill Pack"
+      end
+      
+      <<~SP
+        #{header}
+
+        **Status**: ✅ Installed (#{location})
+
+        The following Superpowers skills are available:
+        #{skill_bullets}
+      SP
+    end
+
+    def render_not_installed_superpowers(target_name, skill_bullets, config, is_standalone)
+      target_display = target_name == "Kimi Code" ? "" : " for #{target_name}"
+      
+      if is_standalone
+        header = "## Optional: Superpowers Skill Pack"
+      else
+        header = "## Optional Integrations\n\n### Superpowers Skill Pack"
+      end
+      
+      install_note = get_superpowers_install_note(config[:install_note_template], target_name)
+      full_details_note = config[:show_full_details] ? "\nSee `core/integrations/superpowers.yaml` for full details." : ""
+      
+      <<~SP
+        #{header}
+
+        **Status**: ❌ Not installed
+
+        Superpowers provides advanced skills for design refinement, TDD, debugging, and more.
+
+        **Installation#{target_display}**:
+        ```bash
+        #{install_note}
+        ```
+
+        **Available skills#{config[:show_full_details] ? " after installation" : ""}**:
+        #{skill_bullets}#{full_details_note}
+      SP
+    end
+
+    def get_superpowers_install_note(template_key, target_name)
+      template = SUPERPOWERS_INSTALL_TEMPLATES[template_key]
+      return template.call(target_name) if template.is_a?(Proc)
+      template
+    end
+
+    def render_rtk_integration(target_name, rtk_info, config)
+      if rtk_info[:installed]
+        render_installed_rtk(target_name, rtk_info, config)
+      else
+        render_not_installed_rtk(target_name, config)
+      end
+    end
+
+    def render_installed_rtk(target_name, rtk_info, config)
+      is_standalone = config[:header_style] == :standalone
+      is_warp = target_name == "Warp"
+      
+      hook_status = rtk_info[:hook_configured] ? "✅ Configured" : "⚠️ Not configured"
+      
+      if is_standalone
+        header = "## RTK Token Optimizer"
+      else
+        header = "### RTK Token Optimizer"
+      end
+      
+      warp_note = config[:show_warp_note] ? "\n**For Warp**: Manually prefix commands with `rtk`, e.g., `rtk git status`" : ""
+      config_note = (!is_warp && !rtk_info[:hook_configured]) ? "\n\n**To configure**: Run `rtk init --global`" : ""
+      hook_line = is_warp ? "" : "**Hook**: #{hook_status}\n"
+      
+      <<~RTK
+        #{header}
+
+        **Status**: ✅ Installed
+        #{hook_line}**Version**: #{rtk_info[:version] || "Unknown"}
+
+        RTK reduces token consumption by 60-90% on common commands.#{warp_note}#{config_note}
+      RTK
+    end
+
+    def render_not_installed_rtk(target_name, config)
+      is_standalone = config[:header_style] == :standalone
+      is_kimi = target_name == "Kimi Code"
+      is_warp = target_name == "Warp"
+      
+      if is_standalone
+        header = "## Optional: RTK Token Optimizer"
+      else
+        header = "### RTK Token Optimizer"
+      end
+      
+      install_cmd = RTK_INSTALL_TEMPLATES[config[:install_template]]
+      config_step = is_warp ? "" : "\n\n# Then configure\nrtk init --global"
+      warp_note = config[:show_warp_note] ? "\n\n**For Warp**: Manually prefix commands with `rtk`, e.g., `rtk git status`" : ""
+      generic_note = (!is_kimi && !is_warp) ? "\n\n\n**Note**: RTK works best with Claude Code. For #{target_name}, you may need to manually prefix commands with `rtk`." : ""
+      
+      benefits_section = if config[:show_benefits]
+        <<~BENEFITS
+
+
+          **Benefits**:
+          - 60-90% token reduction on command outputs
+          - Less than 10ms overhead per command
+          - Works transparently via hooks
+
+          See `core/integrations/rtk.yaml` for full details.
+        BENEFITS
+      else
+        "#{warp_note}#{generic_note}"
+      end
+      
+      <<~RTK
+        #{header}
+
+        **Status**: ❌ Not installed
+
+        RTK is a CLI proxy that reduces LLM token consumption by 60-90% on common development commands#{is_kimi ? " (git, npm, pytest, etc.)" : ""}.
+
+        **Installation**:
+        ```bash
+        # macOS/Linux with Homebrew
+        #{install_cmd}#{config_step}
+        ```#{benefits_section}
+      RTK
+    end
+
+    private
+
+    def generate_superpowers_section(manifest)
       manifest_skills = Array(manifest["skills"]).select { |skill| skill["namespace"] == "superpowers" }
       return "" if manifest_skills.empty?
 
-      location = case status
-                 when :claude_plugin then "~/.claude/plugins/superpowers"
-                 when :skills_symlink then "~/.claude/skills/superpowers-*"
-                 when :local_clone then "~/superpowers"
-                 when :cursor_plugin then "Cursor plugins"
-                 else "Unknown"
-                 end
+      location = superpowers_location || "Unknown"
 
       # Load trigger_context from superpowers.yaml
       # Build mapping: registry_id -> trigger_context

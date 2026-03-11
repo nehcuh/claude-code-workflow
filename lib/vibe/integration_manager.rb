@@ -91,13 +91,17 @@ module Vibe
     end
 
     # Check environment and display integration status
-    def check_environment
+    # @param target_platform [String, nil] Optional target platform for explicit context
+    def check_environment(target_platform = nil)
+      # Use provided target_platform or fall back to instance variable for backward compatibility
+      platform = target_platform || @target_platform
+      
       puts "Checking your environment..."
       puts
 
       # Show target platform
-      if @target_platform
-        puts "✓ Target platform: #{platform_label(@target_platform)}"
+      if platform
+        puts "✓ Target platform: #{platform_label(platform)}"
       else
         puts "⚠ No target platform specified"
       end

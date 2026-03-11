@@ -6,29 +6,39 @@ module Vibe
   # Host requirements:
   #   None (self-contained utilities)
   module PlatformUtils
-    # Normalize platform name to internal target name
-    # @param platform [String] Platform name (e.g., "claude", "claude-code")
+    VALID_TARGETS = %w[antigravity claude-code codex-cli cursor kimi-code opencode vscode warp].freeze
+
+    TARGET_ALIAS_MAP = {
+      "claude" => "claude-code",
+      "claude-code" => "claude-code",
+      "codex" => "codex-cli",
+      "codex-cli" => "codex-cli",
+      "cursor" => "cursor",
+      "opencode" => "opencode",
+      "warp" => "warp",
+      "vscode" => "vscode",
+      "vs-code" => "vscode",
+      "antigravity" => "antigravity",
+      "kimi" => "kimi-code",
+      "kimi-code" => "kimi-code"
+    }.freeze
+
+    # Normalize platform name to internal target name.
+    # Handles aliases, underscores, and validates against known targets.
+    # @param platform [String, nil] Platform name (e.g., "claude", "claude_code")
+    # @param strict [Boolean] If true, raises on unknown platform; if false, returns input downcased
     # @return [String] Normalized platform name
-    def normalize_target(platform)
-      case platform.to_s.downcase
-      when "claude-code", "claude"
-        "claude-code"
-      when "opencode"
-        "opencode"
-      when "kimi-code", "kimi"
-        "kimi-code"
-      when "cursor"
-        "cursor"
-      when "codex-cli", "codex"
-        "codex-cli"
-      when "vscode", "vs-code"
-        "vscode"
-      when "warp"
-        "warp"
-      when "antigravity"
-        "antigravity"
+    # @raise [Vibe::ValidationError] if strict and platform is unknown
+    def normalize_target(platform, strict: false)
+      normalized = platform.to_s.downcase.gsub("_", "-")
+      resolved = TARGET_ALIAS_MAP[normalized]
+
+      if resolved
+        resolved
+      elsif strict
+        raise Vibe::ValidationError, "Unsupported platform: #{platform}. Valid options: #{VALID_TARGETS.join(', ')}"
       else
-        platform.to_s.downcase
+        normalized
       end
     end
 

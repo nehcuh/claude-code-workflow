@@ -14,22 +14,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cross-platform URL opening for Superpowers installation guide
 - Integration status display with detailed information (version, location, skills count)
 - Installation wrapper scripts (`bin/vibe-install`, `bin/vibe-uninstall`, `bin/vibe-wrapper`)
-- Architecture improvements: dependency injection container, enhanced error handling, thread-safe YAML loading
-- SimpleCov test coverage enforcement (50% threshold, currently 62.99%)
+- Enhanced error handling with context support for better debugging
+- Thread-safe YAML loading with mutex protection
+- SimpleCov test coverage enforcement (50% threshold)
 - Performance benchmarks for critical operations (`test/benchmark/`)
 - Command registry pattern for better CLI extensibility
-- 5 new test files: `test_vibe_container.rb`, `test_vibe_utils_validation.rb`, and 3 benchmark scripts
 - Cross-module dependency documentation to `lib/vibe/init_support.rb`
 - CHANGELOG.md following Keep a Changelog format
 
 ### Changed
-- Modularized CLI from 9 to 10 Ruby modules (added `lib/vibe/container.rb`)
-- Enhanced `lib/vibe/errors.rb` with context support for better debugging
+- Unified platform name normalization into `PlatformUtils::VALID_TARGETS` and `TARGET_ALIAS_MAP` (single source of truth)
+- Extracted shared `build_and_deploy_target` method from `platform_installer.rb` and `quickstart_runner.rb`
+- Cached `integration_status` results to avoid redundant filesystem probes during init flow
 - Updated `lib/vibe/utils.rb` with documented lenient mode for `deep_merge`
 - Improved CI workflow with SimpleCov integration and coverage checks
 - Updated README files to reflect architecture improvements (English + Chinese)
 
+### Removed
+- Removed unused `Container` class (`lib/vibe/container.rb`) and its test file
+- Removed deprecated `install_rtk` method and `install_rtk_with_choice` alias
+- Removed completed planning documents from project root (`task_plan.md`, `optimization_plan.md`, `progress.md`, `phase2_plan.md`, `REFACTOR_PLAN.md`)
+
 ### Fixed
+- Fixed `platform_installer.rb` bypassing `ask_yes_no` with raw stdin read
 - Fixed `bin/vibe-smoke` missing `kimi-code` target in TARGETS array
 - Fixed `test/test_vibe_overlay.rb` missing `antigravity` and `vscode` in SUPPORTED_TARGETS
 - Fixed `rtk_hook_configured?` type safety by adding String type guard before `include?` call

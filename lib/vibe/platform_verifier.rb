@@ -63,8 +63,7 @@ module Vibe
       installed = []
       not_installed = []
 
-      # Define supported targets here to avoid dependency on VibeCLI constant
-      supported_targets = %w[antigravity claude-code codex-cli cursor kimi-code opencode vscode warp]
+      supported_targets = Vibe::PlatformUtils::VALID_TARGETS
       supported_targets.each do |target|
         destination = default_global_destination(target)
         if Dir.exist?(destination)

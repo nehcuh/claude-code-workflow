@@ -14,7 +14,11 @@ module Vibe
     include PlatformUtils
 
     # Verify all integrations and display status
-    def verify_integrations
+    # @param target_platform [String, nil] Optional target platform for explicit context
+    def verify_integrations(target_platform = nil)
+      # Use provided target_platform or fall back to instance variable for backward compatibility
+      platform = target_platform || @target_platform
+      
       puts "Verifying integrations..."
       puts
 
@@ -31,15 +35,15 @@ module Vibe
         puts "All integrations verified successfully! 🎉"
         puts
         puts "Next steps:"
-        puts "1. Run: bin/vibe use #{@target_platform} --destination <your-project>"
-        puts "2. Or:  bin/vibe switch #{@target_platform} (to apply to current repo)"
-        puts "3. Start using: #{platform_command(@target_platform)}"
+        puts "1. Run: bin/vibe use #{platform} --destination <your-project>"
+        puts "2. Or:  bin/vibe switch #{platform} (to apply to current repo)"
+        puts "3. Start using: #{platform_command(platform)}"
       elsif rtk_needs_hook
         puts "RTK is installed but hook is not configured."
         puts "Run: rtk init --global"
         puts
         puts "After that, you can:"
-        puts "  bin/vibe use #{@target_platform} --destination <your-project>"
+        puts "  bin/vibe use #{platform} --destination <your-project>"
       else
         puts "Some integrations still need installation or configuration."
         puts "Run: bin/vibe init --setup (without --verify) to finish setup."

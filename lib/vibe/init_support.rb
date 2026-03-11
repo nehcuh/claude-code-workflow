@@ -76,14 +76,7 @@ module Vibe
     def normalize_platform(platform)
       return "claude-code" if platform.nil?
 
-      normalized = platform.to_s.downcase.gsub("_", "-")
-      valid_platforms = %w[antigravity claude-code codex-cli cursor kimi-code opencode vscode warp]
-
-      unless valid_platforms.include?(normalized)
-        raise ValidationError, "Unsupported platform: #{platform}. Valid options: #{valid_platforms.join(', ')}"
-      end
-
-      normalized
+      normalize_target(platform, strict: true)
     end
 
     def detect_current_platform

@@ -58,10 +58,11 @@ module Vibe
       }
     }.freeze
 
-    def detect_superpowers
+    def detect_superpowers(target_platform = nil)
       return :not_installed if @skip_integrations
 
-      platform = defined?(@target_platform) ? @target_platform : nil
+      # Use provided target_platform or fall back to instance variable for backward compatibility
+      platform = target_platform || (defined?(@target_platform) ? @target_platform : nil)
 
       # Platform-specific detection
       if platform && SUPERPOWERS_PLATFORM_PATHS[platform]
@@ -109,14 +110,15 @@ module Vibe
       :not_installed
     end
 
-    def superpowers_location
-      case detect_superpowers
+    def superpowers_location(target_platform = nil)
+      # Use provided target_platform or fall back to instance variable for backward compatibility
+      platform = target_platform || (defined?(@target_platform) ? @target_platform : nil)
+      
+      case detect_superpowers(platform)
       when :platform_plugin
-        platform = defined?(@target_platform) ? @target_platform : nil
         paths = SUPERPOWERS_PLATFORM_PATHS[platform]
         File.expand_path(paths[:plugin]) if paths
       when :platform_skills
-        platform = defined?(@target_platform) ? @target_platform : nil
         paths = SUPERPOWERS_PLATFORM_PATHS[platform]
         # Return the skills directory itself, not a glob match
         File.expand_path(paths[:skills]) if paths
@@ -136,9 +138,9 @@ module Vibe
       end
     end
 
-    def superpowers_skills_count
-      # Try platform-specific skills path first
-      platform = defined?(@target_platform) ? @target_platform : nil
+    def superpowers_skills_count(target_platform = nil)
+      # Use provided target_platform or fall back to instance variable for backward compatibility
+      platform = target_platform || (defined?(@target_platform) ? @target_platform : nil)
       if platform && SUPERPOWERS_PLATFORM_PATHS[platform]
         paths = SUPERPOWERS_PLATFORM_PATHS[platform]
         if paths[:skills]
@@ -258,11 +260,14 @@ module Vibe
 
     # --- Verification ---
 
-    def verify_superpowers
-      status = detect_superpowers
+    def verify_superpowers(target_platform = nil)
+      # Use provided target_platform or fall back to instance variable for backward compatibility
+      platform = target_platform || (defined?(@target_platform) ? @target_platform : nil)
+      
+      status = detect_superpowers(platform)
       return { installed: false } if status == :not_installed
 
-      location = superpowers_location
+      location = superpowers_location(platform)
 
       # For platform-specific detection, it's both installed and ready
       if status == :platform_plugin || status == :platform_skills
@@ -271,12 +276,11 @@ module Vibe
           ready: true,
           method: status,
           location: location,
-          skills_count: superpowers_skills_count
+          skills_count: superpowers_skills_count(platform)
         }
       end
 
       # For fallback detection (local_clone etc.), check if platform integration is configured
-      platform = defined?(@target_platform) ? @target_platform : nil
       platform_ready = platform.nil? || platform == "claude-code" || !SUPERPOWERS_PLATFORM_PATHS.key?(platform)
 
       # If platform has specific paths, check if they're configured
@@ -297,18 +301,21 @@ module Vibe
         ready: platform_ready,
         method: status,
         location: location,
-        skills_count: superpowers_skills_count,
+        skills_count: superpowers_skills_count(platform),
         platform_configured: platform_ready
       }
     end
 
-    def verify_rtk
+    def verify_rtk(target_platform = nil)
+      # Use provided target_platform or fall back to instance variable for backward compatibility
+      platform = target_platform || (defined?(@target_platform) ? @target_platform : nil)
+      
       status = detect_rtk
       hook_configured = rtk_hook_configured?
       binary_installed = (status == :installed)
 
       # For non-claude-code platforms, hook is not required
-      rtk_needs_hook = !defined?(@target_platform) || @target_platform.nil? || @target_platform == "claude-code"
+      rtk_needs_hook = platform.nil? || platform == "claude-code"
       ready = binary_installed && (rtk_needs_hook ? hook_configured : true)
 
       {
@@ -324,10 +331,15 @@ module Vibe
     # --- Integration Status Summary ---
 
     def integration_status
-      {
+      @_integration_status_cache ||= {
         superpowers: verify_superpowers,
         rtk: verify_rtk
       }
+    end
+
+    # Clear cached integration status (call after install/configure actions)
+    def reset_integration_status!
+      @_integration_status_cache = nil
     end
 
     def all_integrations_installed?

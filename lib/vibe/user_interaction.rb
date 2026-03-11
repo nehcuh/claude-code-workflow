@@ -8,6 +8,10 @@ module Vibe
   # Host requirements:
   #   None (self-contained utilities)
   module UserInteraction
+    NON_INTERACTIVE_HINT = "Re-run `bin/vibe init` in an interactive terminal, " \
+                           "use `bin/vibe init --verify` to inspect current state, " \
+                           "or follow `docs/integrations.md` for manual installation steps."
+
     # Open URL in default browser (cross-platform)
     # @param url [String] URL to open
     def open_url(url)
@@ -32,9 +36,7 @@ module Vibe
       response = $stdin.gets
       if response.nil?
         raise ValidationError,
-              "Input ended before a response was provided for '#{question}'. " \
-              "Re-run `bin/vibe init` in an interactive terminal, use `bin/vibe init --verify` to inspect current state, " \
-              "or follow `docs/integrations.md` for manual installation steps."
+              "Input ended before a response was provided for '#{question}'. #{NON_INTERACTIVE_HINT}"
       end
       ["y", "yes"].include?(response.chomp.downcase)
     end
@@ -63,9 +65,7 @@ module Vibe
 
       detail = prompt ? " when prompting for '#{prompt}'" : ""
       raise ValidationError,
-            "bin/vibe init requires an interactive terminal#{detail}. " \
-            "Re-run `bin/vibe init` in a terminal, use `bin/vibe init --verify` to inspect current state, " \
-            "or follow `docs/integrations.md` for manual installation steps."
+            "bin/vibe init requires an interactive terminal#{detail}. #{NON_INTERACTIVE_HINT}"
     end
 
     private
@@ -79,9 +79,7 @@ module Vibe
       return response unless response.nil?
 
       raise ValidationError,
-            "Input ended before a response was provided for '#{prompt}'. " \
-            "Re-run `bin/vibe init` in an interactive terminal, use `bin/vibe init --verify` to inspect current state, " \
-            "or follow `docs/integrations.md` for manual installation steps."
+            "Input ended before a response was provided for '#{prompt}'. #{NON_INTERACTIVE_HINT}"
     end
   end
 end

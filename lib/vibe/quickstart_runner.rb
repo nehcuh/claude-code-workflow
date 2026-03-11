@@ -39,34 +39,10 @@ module Vibe
         puts "Setting up Claude Code workflow in #{claude_home}..."
       end
 
-      # Execute the use command logic
       begin
-        target = "claude-code"
-        profile_name, profile = resolve_profile(target, nil)
-        destination_root = claude_home
-        output_root = resolve_output_root_for_use(
-          target: target,
-          destination_root: destination_root,
-          explicit_output: nil
-        )
-        overlay = resolve_overlay(explicit_path: nil, search_roots: [destination_root, @repo_root])
-
-        manifest = build_target(
-          target: target,
-          profile_name: profile_name,
-          profile: profile,
-          output_root: output_root,
-          overlay: overlay
-        )
-
-        FileUtils.mkdir_p(destination_root)
-        copy_tree_contents(output_root, destination_root)
-
-        write_marker(
-          File.join(destination_root, ".vibe-target.json"),
-          destination_root: destination_root,
-          manifest: manifest,
-          output_root: output_root,
+        build_and_deploy_target(
+          target: "claude-code",
+          destination_root: claude_home,
           mode: "quickstart"
         )
 
