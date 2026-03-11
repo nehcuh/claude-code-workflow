@@ -159,17 +159,5 @@ module Vibe
       path_str
     end
 
-    # Validate that a value is in an allowed set
-    def validate_choice!(value, allowed_values, context: "value")
-      raise ValidationError, "#{context} must be one of: #{allowed_values.join(', ')}" unless allowed_values.include?(value)
-      value
-    end
-
-    # Sanitize a command argument by removing dangerous characters
-    def sanitize_command_arg(arg)
-      return nil if arg.nil?
-      # Remove null bytes and control characters
-      arg.to_s.gsub(/[\x00-\x1f\x7f]/, "")
-    end
   end
 end

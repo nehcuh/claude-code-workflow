@@ -438,7 +438,7 @@ module Vibe
       yaml_path = File.join(@repo_root, "core", "integrations", "superpowers.yaml")
       return [] unless File.exist?(yaml_path)
 
-      doc = YAML.load_file(yaml_path)
+      doc = YAML.safe_load(File.read(yaml_path), aliases: true)
       Array(doc["skills"]).map { |s| { "id" => s["id"], "intent" => s["intent"] } }
     end
 

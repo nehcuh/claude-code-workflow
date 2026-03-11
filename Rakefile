@@ -22,7 +22,7 @@ task :validate do
   # 1. Validate YAML files
   Dir.glob("core/**/*.yaml").each do |f|
     begin
-      YAML.load_file(f)
+      YAML.safe_load(File.read(f), aliases: true)
       puts "✓ #{f}"
     rescue => e
       abort "✗ #{f}: #{e.message}"
@@ -38,7 +38,7 @@ task :validate do
 
   # 3. Skill entrypoint paths
   puts "🔍 Checking skill entrypoint paths..."
-  registry = YAML.load_file("core/skills/registry.yaml")
+  registry = YAML.safe_load(File.read("core/skills/registry.yaml"), aliases: true)
   registry["skills"].select { |s| s["builtin"] }.each do |s|
     path = s["entrypoint"]
     abort "Missing entrypoint: #{path}" unless File.exist?(path)

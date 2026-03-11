@@ -27,13 +27,13 @@ module Vibe
       if integrations.empty?
         # Fallback to hardcoded list if config not available
         integrations = [
-          { name: "superpowers", label: "Superpowers Skill Pack", priority: "P1" },
-          { name: "rtk", label: "RTK (Token Optimizer)", priority: "P2" }
+          { "name" => "superpowers", "label" => "Superpowers Skill Pack", "priority" => "P1" },
+          { "name" => "rtk", "label" => "RTK (Token Optimizer)", "priority" => "P2" }
         ]
       end
 
       integrations.each_with_index do |integration, index|
-        setup_integration(integration[:name], integration[:label], index + 1, integrations.size)
+        setup_integration(integration["name"], integration["label"], index + 1, integrations.size)
       end
 
       puts
