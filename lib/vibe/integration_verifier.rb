@@ -16,7 +16,6 @@ module Vibe
     # Verify all integrations and display status
     # @param target_platform [String, nil] Optional target platform for explicit context
     def verify_integrations(target_platform = nil)
-      # Use provided target_platform or fall back to instance variable for backward compatibility
       platform = target_platform || @target_platform
       
       puts "Verifying integrations..."

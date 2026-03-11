@@ -61,8 +61,7 @@ module Vibe
     def detect_superpowers(target_platform = nil)
       return :not_installed if @skip_integrations
 
-      # Use provided target_platform or fall back to instance variable for backward compatibility
-      platform = target_platform || (defined?(@target_platform) ? @target_platform : nil)
+      platform = target_platform || @target_platform
 
       # Platform-specific detection
       if platform && SUPERPOWERS_PLATFORM_PATHS[platform]
@@ -111,8 +110,7 @@ module Vibe
     end
 
     def superpowers_location(target_platform = nil)
-      # Use provided target_platform or fall back to instance variable for backward compatibility
-      platform = target_platform || (defined?(@target_platform) ? @target_platform : nil)
+      platform = target_platform || @target_platform
       
       case detect_superpowers(platform)
       when :platform_plugin
@@ -139,8 +137,7 @@ module Vibe
     end
 
     def superpowers_skills_count(target_platform = nil)
-      # Use provided target_platform or fall back to instance variable for backward compatibility
-      platform = target_platform || (defined?(@target_platform) ? @target_platform : nil)
+      platform = target_platform || @target_platform
       if platform && SUPERPOWERS_PLATFORM_PATHS[platform]
         paths = SUPERPOWERS_PLATFORM_PATHS[platform]
         if paths[:skills]
@@ -261,8 +258,7 @@ module Vibe
     # --- Verification ---
 
     def verify_superpowers(target_platform = nil)
-      # Use provided target_platform or fall back to instance variable for backward compatibility
-      platform = target_platform || (defined?(@target_platform) ? @target_platform : nil)
+      platform = target_platform || @target_platform
       
       status = detect_superpowers(platform)
       return { installed: false } if status == :not_installed
@@ -307,8 +303,7 @@ module Vibe
     end
 
     def verify_rtk(target_platform = nil)
-      # Use provided target_platform or fall back to instance variable for backward compatibility
-      platform = target_platform || (defined?(@target_platform) ? @target_platform : nil)
+      platform = target_platform || @target_platform
       
       status = detect_rtk
       hook_configured = rtk_hook_configured?
