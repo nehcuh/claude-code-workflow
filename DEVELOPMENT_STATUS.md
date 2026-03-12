@@ -44,14 +44,21 @@
 
 ## Phase 1：核心稳定（进行中）
 
-### 计划任务
+### 已完成 ✅
 
-#### 1.1 测试覆盖提升
-- [ ] `test/renderers/test_doc_rendering.rb` (6h)
-  - `test_render_behavior_doc`
-  - `test_render_routing_doc`
-  - `test_render_safety_doc`
+#### 1.1 测试覆盖提升 - doc_rendering
+- [x] `test/renderers/test_doc_rendering.rb` (21 个测试)
+  - `test_render_inspect_*` (4 个测试)
+  - `test_render_target_summary_*` (4 个测试)
+  - `test_render_behavior_doc_*` (4 个测试)
+  - `test_render_general_doc_*` (1 个测试)
+  - `test_render_routing_doc_*` (4 个测试)
+  - `test_render_skills_doc_*` (3 个测试)
+  - `test_yaml_caching` (1 个测试)
 
+### 进行中
+
+#### 1.1 测试覆盖提升 - 剩余任务
 - [ ] `test/renderers/test_target_renderers.rb` (8h)
   - `test_render_claude_creates_expected_files`
   - `test_render_opencode_creates_expected_files`
