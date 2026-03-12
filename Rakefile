@@ -4,7 +4,7 @@ require "rake/testtask"
 
 Rake::TestTask.new(:test) do |t|
   t.libs << "test" << "lib"
-  t.test_files = FileList["test/test_*.rb"]
+  t.test_files = FileList["test/test_*.rb", "test/**/test_*.rb"]
   t.verbose = true
 end
 
@@ -73,9 +73,9 @@ task :clean do
   puts "🧹 Cleaned generated files"
 end
 
-desc "Build all targets"
+desc "Build all supported targets"
 task :build do
-  targets = %w[antigravity claude-code codex-cli cursor kimi-code opencode vscode warp]
+  targets = %w[claude-code opencode]
   targets.each do |target|
     puts "Building #{target}..."
     system("ruby", "-Ilib", "bin/vibe", "build", target, "--output", "generated/#{target}")
