@@ -20,6 +20,7 @@ require_relative "../lib/vibe/external_tools"
 require_relative "../lib/vibe/builder"
 require_relative "../lib/vibe/init_support"
 require_relative "../lib/vibe/cli/skills_commands"
+require_relative "../lib/vibe/skill_manager"
 
 class VibeCLI
   include Vibe::Utils
@@ -177,6 +178,32 @@ class VibeCLI
     )
 
     puts "Applied #{target} (#{profile_name})#{overlay_label(manifest)} -> #{destination_root}"
+
+    # Check for new skills after applying
+    check_skills_after_apply(target)
+  end
+
+  # Check for new skills after apply command
+  def check_skills_after_apply(target)
+    # Only check for project-level applies
+    global_dir = default_global_destination(target)
+    return if Dir.pwd == global_dir
+
+    # Check if we should skip skill check
+    return if ENV['VIBE_SKIP_SKILL_CHECK']
+
+    manager = Vibe::SkillManager.new(@repo_root, Dir.pwd)
+    changes = manager.detector.check_skill_changes
+
+    return if changes[:new_skills].empty?
+
+    puts
+    puts "🔍 New skills available for this project!"
+    puts "   Found #{changes[:new_skills].length} skills not yet adapted."
+    puts
+    puts "   Run 'vibe skills check' to review and adapt them."
+    puts "   Or set VIBE_SKIP_SKILL_CHECK=1 to skip this message."
+    puts
   end
 
   def run_targets_command(_argv)
@@ -303,6 +330,11 @@ class VibeCLI
     end
     puts
 
+    # Check project skill configuration
+    puts "Project skill configuration:"
+    check_project_skills_status
+    puts
+
     # Provide recommendations
     missing = status.select { |_name, s| !s[:installed] }.keys
     pending = status.select { |_name, s| s[:installed] && !s[:ready] }.keys
@@ -321,6 +353,42 @@ class VibeCLI
       puts "✅ All checks passed!"
     end
     puts
+  end
+
+  # Check project skill configuration status
+  def check_project_skills_status
+    config_path = File.join(Dir.pwd, ".vibe/skills.yaml")
+
+    unless File.exist?(config_path)
+      puts "  ℹ️  No skill configuration found (.vibe/skills.yaml)"
+      puts "     Run 'vibe skills check' to set up skill adaptation"
+      return
+    end
+
+    manager = Vibe::SkillManager.new(@repo_root, Dir.pwd)
+    skills = manager.list_skills
+
+    adapted_count = skills[:adapted].length
+    skipped_count = skills[:skipped].length
+    available_count = skills[:not_adapted].length
+
+    puts "  ✅ Skill configuration found"
+    puts "     Adapted: #{adapted_count} skills"
+    puts "     Skipped: #{skipped_count} skills"
+
+    if available_count > 0
+      puts "     ⚠️  #{available_count} skills available but not adapted"
+      puts "        Run 'vibe skills check' to review"
+    end
+
+    # Check for new skills since last check
+    changes = manager.detector.check_skill_changes
+    if changes[:new_skills].any?
+      puts "     🆕 #{changes[:new_skills].length} new skills detected!"
+      puts "        Run 'vibe skills check' to adapt them"
+    end
+  rescue StandardError => e
+    puts "  ⚠️  Error checking skills: #{e.message}"
   end
 
   def usage
