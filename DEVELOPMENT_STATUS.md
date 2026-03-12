@@ -42,9 +42,9 @@
 
 ---
 
-## Phase 1：核心稳定（进行中）
+## Phase 1：核心稳定 ✅ 已完成
 
-### 已完成 ✅
+### 已完成内容
 
 #### 1.1 测试覆盖提升
 - [x] `test/renderers/test_doc_rendering.rb` (21 个测试)
@@ -60,17 +60,33 @@
 
 | 指标 | 当前值 | 增长 |
 |------|--------|------|
-| 测试数量 | 231 | +37 (从 194) |
-| 断言数量 | 716 | +202 (从 514) |
-| 通过率 | 100% | ✅ 保持 |
-| 目标覆盖率 | 75% | 进行中 |
+| 测试数量 | **255** | **+61** (从 194) |
+| 断言数量 | **863** | **+349** (从 514) |
+| 通过率 | **100%** | ✅ 保持 |
+| 目标覆盖率 | 75% | **待验证** |
 
-### 进行中
+### Phase 1 总结
 
-#### 1.1 测试覆盖提升 - 剩余任务
-- [ ] `test/unit/test_native_configs.rb` (4h)
-  - `test_claude_settings_config`
-  - `test_opencode_config`
+✅ **测试覆盖大幅提升**：
+- doc_rendering: 21 个测试（570 行代码）
+- target_renderers: 16 个测试（1149 行代码）
+- native_configs: 24 个测试（187 行代码）
+
+✅ **多语言支持**：中英文关键词匹配
+
+✅ **零测试失败**：255 测试全部通过
+
+---
+
+## Phase 2：架构简化（计划中）
+
+#### 1.1 测试覆盖提升 ✅ 已完成
+- [x] `test/renderers/test_doc_rendering.rb` (21 个测试)
+- [x] `test/renderers/test_target_renderers.rb` (16 个测试)
+- [x] `test/unit/test_native_configs.rb` (24 个测试)
+  - Claude Code settings.json 测试 (8 个)
+  - OpenCode opencode.json 测试 (10 个)
+  - Cursor/VSCode 基础测试 (6 个)
 
 #### 1.2 多语言关键词支持 ✅ 已完成
 - [x] 更新 `rules/memory-flush.md` 中英文退出信号
