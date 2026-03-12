@@ -13,7 +13,7 @@ module Vibe
         config_path = File.join(@repo_root, "config", "platforms.yaml")
         unless File.exist?(config_path)
           # Fall back to original workflow repo
-          original_repo = File.expand_path("../../../..", __FILE__)
+          original_repo = File.expand_path("../../..", __FILE__)
           config_path = File.join(original_repo, "config", "platforms.yaml")
         end
         YAML.safe_load(File.read(config_path), aliases: true)["platforms"]
@@ -138,22 +138,39 @@ module Vibe
     # Generate README for .vibe/<target>/ directory
     def generate_vibe_readme(manifest, platform_id)
       target_label = platform_label(platform_id)
-      config = platform_configs[platform_id]
-      runtime_assets = config["runtime_dirs"]&.map { |d| "- `#{d}/`" }&.join("\n") || ""
+      profile = manifest["profile"]
+      overlay = overlay_sentence(manifest)
 
-      <<~MD
-        # #{target_label} target
+      # Platform-specific config directory hints
+      config_dir = case platform_id
+                   when "claude-code" then "~/.claude"
+                   when "opencode" then "~/.config/opencode"
+                   else "~/.#{platform_id}"
+                   end
 
-        This output is intended to be copied into a #{target_label} config directory such as `~/.#{platform_id}`.
+      lines = [
+        "# #{target_label} target",
+        "",
+        "This output is intended to be copied into a #{target_label} config directory such as `#{config_dir}`.",
+        "",
+        "Included runtime assets:",
+        "- `CLAUDE.md`",
+        "- `rules/`",
+        "- `docs/`",
+        "- `skills/`",
+        "- `agents/`",
+        "- `commands/`",
+        "- `memory/`",
+        "- `patterns.md`",
+        "- `settings.json`",
+        "",
+        "Active profile: `#{profile}`",
+        "Applied overlay: #{overlay}",
+        "Generated summary: `.vibe/target-summary.md`",
+        ""
+      ]
 
-        Included runtime assets:
-        #{runtime_assets}
-        - `#{config.dig("native_config", "global", "filename") || "settings.json"}`
-
-        Active profile: `#{manifest["profile"]}``
-        Applied overlay: #{overlay_sentence(manifest)}
-        Generated summary: `.vibe/target-summary.md`
-      MD
+      lines.join("\n")
     end
   end
 end
