@@ -14,6 +14,7 @@ require_relative "superpowers_installer"
 require_relative "integration_setup"
 require_relative "integration_recommendations"
 require_relative "integration_verifier"
+require_relative "hook_installer"
 
 module Vibe
   # Initialization and setup support for global platform configuration.
@@ -47,6 +48,7 @@ module Vibe
     include IntegrationSetup
     include IntegrationRecommendations
     include IntegrationVerifier
+    include HookInstaller
 
     # Main initialization flow - installs global configuration
     def run_init(platform:, force: false, verify_only: false, suggest_only: false, dry_run: false)

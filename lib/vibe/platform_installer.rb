@@ -2,6 +2,7 @@
 
 require_relative "platform_utils"
 require_relative "user_interaction"
+require_relative "hook_installer"
 
 module Vibe
   # Platform installation logic.
@@ -12,9 +13,11 @@ module Vibe
   # Dependencies:
   #   - Vibe::PlatformUtils — for platform-related utilities
   #   - Vibe::UserInteraction — for user prompts
+  #   - Vibe::HookInstaller — for hook installation
   module PlatformInstaller
     include PlatformUtils
     include UserInteraction
+    include HookInstaller
 
     # Build, copy, and write marker for a target to a destination.
     # Shared core used by install_global_config and quickstart.
@@ -90,6 +93,13 @@ module Vibe
       puts
       puts "Configuration location: #{destination_root}"
       puts
+
+      # Install pre-session-end hook for Claude Code
+      if target == "claude-code"
+        puts "Installing session management hook..."
+        install_pre_session_end_hook(destination_root: destination_root, force: force)
+        puts
+      end
 
       # Check and suggest optional integrations
       check_and_suggest_integrations(platform) unless @skip_integrations

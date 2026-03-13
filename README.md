@@ -46,6 +46,7 @@ Claude Code is powerful out of the box, but without structure it becomes a smart
 
 ### Recent Improvements (2026-03)
 
+- **🎯 Session Management Hook**: Automatically prompts to save progress before `/exit` (Claude Code only)
 - **✨ Improved `vibe targets`**: Now shows all supported platforms with clear status indicators
 - **🔍 Better overlay warnings**: Clear error messages when using incorrect overlay format
 - **🧪 New `--dry-run` mode**: Preview init operations without making changes

@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Session Management Hook**: Pre-session-end hook for Claude Code that prompts users to save progress before `/exit`
+  - Automatically installed during `vibe init --platform claude-code`
+  - Detects uncommitted changes and warns users
+  - Three options: Save and exit, Exit without saving, or Cancel
+  - Configures `~/.claude/settings.json` with PreSessionEnd hook
+  - New module: `lib/vibe/hook_installer.rb` with installation and verification logic
+  - New test suite: `test/test_hook_installer.rb` with 6 test cases
+  - Documentation: `docs/session-management-hook.md` and `hooks/README.md`
 - Interactive integration suggestions during `init` and `quickstart` commands
 - `vibe doctor` command for comprehensive environment diagnostics
 - Automatic RTK installation via Homebrew with interactive prompts
