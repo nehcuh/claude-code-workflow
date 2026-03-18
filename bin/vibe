@@ -25,6 +25,7 @@ require_relative "../lib/vibe/cli/token_commands"
 require_relative "../lib/vibe/cli/checkpoint_commands"
 require_relative "../lib/vibe/cli/grade_commands"
 require_relative "../lib/vibe/cli/task_commands"
+require_relative "../lib/vibe/cli/parallel_commands"
 require_relative "../lib/vibe/skill_manager"
 
 class VibeCLI
@@ -43,6 +44,7 @@ class VibeCLI
   include Vibe::CheckpointCommands
   include Vibe::GradeCommands
   include Vibe::TaskCommands
+  include Vibe::ParallelCommands
 
   attr_accessor :skip_integrations
 
@@ -65,7 +67,9 @@ class VibeCLI
     "token" => :run_token_command,
     "checkpoint" => :run_checkpoint_command,
     "grade" => :run_grade_command,
-    "tasks" => :run_tasks_command
+    "tasks"      => :run_tasks_command,
+    "worktree"   => :run_worktree_command,
+    "cascade"    => :run_cascade_command
   }.freeze unless defined?(COMMAND_REGISTRY)
 
   def initialize(repo_root)
@@ -411,6 +415,8 @@ class VibeCLI
         vibe checkpoint <command> [options]
         vibe grade <command> [options]
         vibe tasks <command> [options]
+        vibe worktree <command> [options]
+        vibe cascade <command> <config.yaml>
 
       Commands:
         init        Install global configuration for a platform (e.g., ~/.claude, ~/.config/opencode)
@@ -427,6 +433,8 @@ class VibeCLI
         checkpoint  Code snapshots (create, list, rollback, compare)
         grade       Code evaluation (run, pass-at-k, summary)
         tasks       Background tasks (submit, list, status, cancel)
+        worktree    Git worktree management (create, list, finish, remove, cleanup)
+        cascade     Dependency-aware parallel task execution (run, plan)
 
       Typical workflow:
         1. vibe init --platform claude-code       # Install global config to ~/.claude

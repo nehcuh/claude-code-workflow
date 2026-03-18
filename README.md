@@ -57,6 +57,10 @@ Claude Code is powerful out of the box, but without structure it becomes a smart
 
 ### Recent Improvements (2026-03)
 
+- **🔀 Parallelization Enhancement**: Git worktrees + cascade execution
+  - `vibe worktree create/list/finish/remove/cleanup` — isolated task branches
+  - `vibe cascade run/plan <config.yaml>` — dependency-ordered parallel pipelines
+  - Automatic skip of downstream tasks when a dependency fails
 - **✅ Verification Loop Enhancement**: Continuous code quality evaluation
   - `CheckpointManager` — Code snapshots and rollback system
     - Create/restore checkpoints with file snapshots

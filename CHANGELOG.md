@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Parallelization Enhancement**: Git worktrees + cascade task execution
+  - `WorktreeManager` — automated worktree lifecycle management
+    - Create isolated worktrees per task with auto-generated branches
+    - Finish / remove / cleanup lifecycle commands
+    - Status summary (active vs finished counts)
+    - 16 unit tests
+  - `CascadeExecutor` — dependency-aware parallel task runner
+    - DAG-based task graph with cycle detection
+    - Independent tasks run in parallel; dependents wait automatically
+    - Failed tasks skip all downstream dependents
+    - Configurable concurrency cap (`max_parallel`)
+    - 17 unit tests
+  - CLI commands: `vibe worktree` (create/list/finish/remove/cleanup/status)
+  - CLI commands: `vibe cascade` (run/plan) with YAML config format
+  - New skill: `skills/using-git-worktrees/SKILL.md`
 - **CLI Integration**: New commands for Phase 2-3 modules
   - `vibe token analyze/optimize/stats` — Token optimization commands
   - `vibe checkpoint create/list/rollback/compare/delete/cleanup` — Code snapshot commands
