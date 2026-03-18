@@ -40,7 +40,7 @@ module Vibe
     end
 
     def self.install_superpowers_for_platform(platform)
-      unless system("which", "git", out: File::NULL, err: File::NULL)
+      unless system("git", "--version", out: File::NULL, err: File::NULL)
         puts
         puts "   ❌ Git is not installed. Please install Git first."
         return false
