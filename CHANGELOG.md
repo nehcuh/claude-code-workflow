@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CLI Integration**: New commands for Phase 2-3 modules
+  - `vibe token analyze/optimize/stats` — Token optimization commands
+  - `vibe checkpoint create/list/rollback/compare/delete/cleanup` — Code snapshot commands
+  - `vibe grade run/pass-at-k/summary` — Code evaluation commands
+  - `vibe tasks submit/list/status/cancel/cleanup` — Background task commands
 - **Verification Loop Enhancement**: Continuous code quality evaluation system
   - `CheckpointManager` class for code snapshots and rollback
     - Create checkpoints with automatic file snapshots
