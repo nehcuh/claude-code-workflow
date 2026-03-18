@@ -26,6 +26,7 @@ require_relative "../lib/vibe/cli/checkpoint_commands"
 require_relative "../lib/vibe/cli/grade_commands"
 require_relative "../lib/vibe/cli/task_commands"
 require_relative "../lib/vibe/cli/parallel_commands"
+require_relative "../lib/vibe/cli/toolchain_commands"
 require_relative "../lib/vibe/skill_manager"
 
 class VibeCLI
@@ -45,6 +46,7 @@ class VibeCLI
   include Vibe::GradeCommands
   include Vibe::TaskCommands
   include Vibe::ParallelCommands
+  include Vibe::ToolchainCommands
 
   attr_accessor :skip_integrations
 
@@ -69,7 +71,8 @@ class VibeCLI
     "grade" => :run_grade_command,
     "tasks"      => :run_tasks_command,
     "worktree"   => :run_worktree_command,
-    "cascade"    => :run_cascade_command
+    "cascade"    => :run_cascade_command,
+    "toolchain"  => :run_toolchain_command
   }.freeze unless defined?(COMMAND_REGISTRY)
 
   def initialize(repo_root)
