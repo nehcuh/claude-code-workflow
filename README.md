@@ -335,172 +335,133 @@ Before adopting this workflow, understand these constraints:
 
 ## Quick Start
 
-### Prerequisites
-
-**⚠️ IMPORTANT**: Before using this workflow, you **must** read [PRINCIPLES.md](PRINCIPLES.md). It covers the core philosophy that makes this workflow effective:
-- Production-First mindset
-- Structure > Prompting
-- Memory > Intelligence  
-- Verification > Confidence
-- Portable > Specific
-
-Understanding these principles is essential for getting the most out of this workflow.
-
-### Installation
+### 30 秒安装
 
 ```bash
-# 1. Clone the workflow repository
-git clone https://github.com/nehcuh/vibesop.git
-cd vibesop
-
-# 2. Install vibe command to system PATH
-bin/vibe-install
-# This creates /usr/local/bin/vibe (requires sudo)
-
-# 3. Verify installation
-vibe --help
+git clone https://github.com/nehcuh/vibesop.git && cd vibesop
+bin/vibe-install          # macOS/Linux
+bin\vibe-install.bat      # Windows (cmd.exe)
 ```
 
-**Uninstallation:**
-
-```bash
-# Remove vibe command only
-bin/vibe-uninstall
-
-# Remove vibe + platform configurations
-bin/vibe-uninstall --remove-configs
-
-# Remove everything (including ~/.vibe directory)
-bin/vibe-uninstall --remove-all
-
-# Preview what would be removed
-bin/vibe-uninstall --dry-run
-```
-
-### Workflow Overview
+### 3 步开始使用
 
 ```mermaid
-graph TB
-    A[Install vibe] --> B[vibe init --platform claude-code]
-    B --> C[Global Config: ~/.claude/]
-    C --> D[cd ~/my-project]
-    D --> E[vibe switch --platform claude-code]
-    E --> F[Project Config: CLAUDE.md + .vibe/]
-    F --> G[Launch AI Tool]
-    G --> H[Loads Global + Project Config]
+graph LR
+    A["① vibe init"] --> B["② vibe switch"] --> C["③ 开始编码"]
+    A -.- A1["安装全局配置到 ~/.claude"]
+    B -.- B1["在项目中应用配置"]
+    C -.- C1["AI 工具自动加载配置"]
 
     style A fill:#e1f5ff
     style B fill:#fff4e1
-    style E fill:#fff4e1
-    style G fill:#e8f5e9
+    style C fill:#e8f5e9
 ```
 
-### Typical Workflow
-
-**Step 1: Install Global Configuration**
-
-Choose your AI tool and install its global configuration:
-
 ```bash
-# Preview what would be installed (safe)
-vibe init --platform claude-code --dry-run
+# ① 安装全局配置（选择你的 AI 工具）
+vibe init --platform claude-code     # Claude Code 用户
+vibe init --platform opencode        # OpenCode 用户
 
-# Actually install
-vibe init --platform claude-code
-
-# For OpenCode (exploratory support)
-vibe init --platform opencode
-
-# For other platforms (planned)
-# vibe init --platform codex-cli  # Coming soon
-```
-
-**View all supported platforms:**
-```bash
-vibe targets
-```
-
-This installs the workflow configuration to the tool's global directory (e.g., `~/.claude`, `~/.config/opencode`).
-
-**Step 2: Apply to Your Project**
-
-In your project directory, apply the platform configuration:
-
-```bash
-cd /path/to/your/project
-
-# Apply configuration
-vibe switch --platform claude-code
-# OR
-vibe switch --platform opencode
-```
-
-This creates a lightweight project-level configuration that references the global setup.
-
-**Step 3: Start Coding**
-
-Launch your AI tool in the project directory. It will automatically load both global and project configurations.
-
-```bash
-claude   # For Claude Code
-# OR
-opencode # For OpenCode
-```
-
----
-
-### Advanced Usage
-
-**Verify Installation**
-
-```bash
-vibe init --platform claude-code --verify
-```
-
-**Get Installation Suggestions**
-
-```bash
-vibe init --platform opencode --suggest
-```
-
-**Force Reinstall**
-
-```bash
-vibe init --platform claude-code --force
-```
-
-**Use Multiple Tools**
-
-You can install configurations for multiple tools and switch between them:
-
-```bash
-# Install global configs for active platforms
-vibe init --platform claude-code
-vibe init --platform opencode
-
-# In your project, choose which tool to use
-cd /path/to/your/project
+# ② 在项目中应用
+cd ~/my-project
 vibe switch --platform claude-code
 
-# Switch to a different tool
-vibe switch --platform opencode --force
+# ③ 启动 AI 工具，配置自动生效
+claude                               # 或 opencode
 ```
 
----
+### 常见场景
 
-## Legacy Commands (Advanced Users)
+#### 场景 1：我只用 Claude Code，想快速配好
 
-For advanced use cases, the following commands are still available:
-
-**Quickstart (Claude Code only)**
 ```bash
-vibe quickstart  # Equivalent to: vibe init --platform claude-code
+vibe quickstart                      # 一键配置 ~/.claude
+cd ~/my-project && vibe switch --platform claude-code
+claude                               # 开始编码
 ```
 
-**Manual Installation**
+#### 场景 2：我想在多个 AI 工具间切换
+
 ```bash
-vibe use claude-code ~/.claude           # Install to custom location
-vibe build claude-code --output ./dist   # Generate without installing
+vibe init --platform claude-code     # 安装 Claude Code 配置
+vibe init --platform opencode        # 安装 OpenCode 配置
+
+cd ~/my-project
+vibe switch --platform claude-code   # 用 Claude Code
+vibe switch --platform opencode --force  # 切换到 OpenCode
+```
+
+#### 场景 3：我想定制项目配置
+
+```bash
+cd ~/my-project
+vibe switch --platform claude-code
+
+# 创建项目级 overlay（覆盖默认配置）
+cat > .vibe/overlay.yaml << 'EOF'
+profile: node-fullstack
+policies:
+  test_command: "npm test"
+  lint_command: "npm run lint"
+EOF
+
+vibe switch --platform claude-code   # 重新应用（含 overlay）
+```
+
+#### 场景 4：我想用 Instinct 学习系统积累经验
+
+```mermaid
+graph LR
+    A["编码 session"] --> B["vibe instinct learn"]
+    B --> C["提取模式"]
+    C --> D["vibe instinct status"]
+    D --> E["高置信度模式自动建议"]
+    E --> A
+
+    style B fill:#fff4e1
+    style D fill:#e1f5ff
+```
+
+```bash
+# 手动创建一个 instinct
+vibe instinct learn --pattern "修复 Ruby 语法错误前先跑 rubocop" --tags ruby,linting
+
+# 查看已学习的模式
+vibe instinct status
+
+# 团队共享
+vibe instinct export team-patterns.yaml --min-confidence 0.8
+vibe instinct import team-patterns.yaml --merge
+```
+
+#### 场景 5：Windows 企业环境（无 PowerShell）
+
+```cmd
+REM 使用 cmd.exe 原生安装
+bin\vibe-install.bat
+
+REM 安装 hooks
+cd hooks
+install.bat
+```
+
+详见 [Windows 安装指南](docs/windows-installation.md)。
+
+### 验证安装
+
+```bash
+vibe doctor                          # 检查环境和集成状态
+vibe targets                         # 查看支持的平台
+vibe --version                       # 查看版本
+```
+
+### 卸载
+
+```bash
+bin/vibe-uninstall                   # 仅移除 vibe 命令
+bin/vibe-uninstall --remove-configs  # 移除 vibe + 平台配置
+bin/vibe-uninstall --remove-all      # 移除所有（含 ~/.vibe）
+bin/vibe-uninstall --dry-run         # 预览将被移除的内容
 ```
 
 ---
