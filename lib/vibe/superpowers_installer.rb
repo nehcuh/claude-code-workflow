@@ -3,6 +3,7 @@
 require "fileutils"
 require "open3"
 require "timeout"
+require "rbconfig"
 require_relative "user_interaction"
 require_relative "platform_utils"
 
@@ -118,18 +119,15 @@ module Vibe
         source_path = File.join(source_skills_dir, entry)
         link_path = File.join(target_dir, entry)
 
-        if File.symlink?(link_path)
-          if File.readlink(link_path) == source_path
-            skipped += 1
-            next
-          end
-          FileUtils.rm(link_path)
-        elsif File.exist?(link_path)
-          puts "   ⚠️  Skipping #{entry}: non-symlink already exists at #{link_path}"
+        if skill_linked?(link_path, source_path)
+          skipped += 1
+          next
+        elsif File.exist?(link_path) || File.symlink?(link_path)
+          puts "   ⚠️  Skipping #{entry}: already exists at #{link_path}"
           next
         end
 
-        FileUtils.ln_s(source_path, link_path)
+        create_skill_link(source_path, link_path)
         puts "   ✓ #{entry}"
         created += 1
       end
@@ -180,10 +178,10 @@ module Vibe
           source_path = File.join(source_skills_dir, entry)
           link_path = File.join(target_dir, entry)
 
-          unless File.symlink?(link_path) && File.readlink(link_path) == source_path
-            issues << "Missing or incorrect symlink for skill: #{entry}"
+          unless skill_linked?(link_path, source_path)
+            issues << "Missing or incorrect skill link for: #{entry}"
           end
-          linked_count += 1 if File.symlink?(link_path) && File.readlink(link_path) == source_path
+          linked_count += 1 if skill_linked?(link_path, source_path)
         end
       end
 
@@ -255,6 +253,28 @@ module Vibe
       false
     end
 
+    # Cross-platform: create symlink on Unix, copy on Windows
+    def self.create_skill_link(source_path, link_path)
+      if windows_os?
+        File.directory?(source_path) ? FileUtils.cp_r(source_path, link_path) : FileUtils.cp(source_path, link_path)
+      else
+        FileUtils.ln_s(source_path, link_path)
+      end
+    end
+
+    # Cross-platform: check symlink on Unix, check existence on Windows
+    def self.skill_linked?(link_path, source_path)
+      if windows_os?
+        File.exist?(link_path)
+      else
+        File.symlink?(link_path) && File.readlink(link_path) == source_path
+      end
+    end
+
+    def self.windows_os?
+      RbConfig::CONFIG["host_os"] =~ /mswin|msys|mingw|cygwin/i
+    end
+
     def self.uninstall_superpowers
       shared_dir = SUPERPOWERS_DEFAULT_INSTALL_DIR
 
@@ -270,6 +290,9 @@ module Vibe
             if File.symlink?(link_path) && File.readlink(link_path).include?(shared_dir)
               FileUtils.rm(link_path)
               puts "  Removed symlink: #{link_path}"
+            elsif File.exist?(link_path) && !File.symlink?(link_path) && windows_os?
+              FileUtils.rm_rf(link_path)
+              puts "  Removed copy: #{link_path}"
             end
           end
         end
