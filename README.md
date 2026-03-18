@@ -57,6 +57,18 @@ Claude Code is powerful out of the box, but without structure it becomes a smart
 
 ### Recent Improvements (2026-03)
 
+- **🧠 Instinct Learning System**: Automatic pattern extraction from sessions
+  - `vibe instinct learn` — Extract or manually create reusable patterns
+  - `vibe instinct status` — View instincts grouped by confidence level
+  - `vibe instinct export/import` — Team sharing with merge strategies
+  - `vibe instinct evolve` — Upgrade high-quality instincts to formal skills
+  - Confidence scoring: success rate (60%) + usage frequency (30%) + source diversity (10%)
+  - Integrated into session-end workflow for automatic learning
+- **🪟 Native Windows Support**: cmd.exe batch scripts for corporate environments
+  - `bin/vibe-install.bat` — Windows installation without admin rights
+  - `hooks/pre-session-end.bat` — Windows hook support
+  - Cross-platform command detection (`which`/`where`)
+  - Symlink-free skill installation on Windows
 - **🎯 Session Management Hook**: Automatically prompts to save progress before `/exit`
   - ✅ Claude Code: Fully integrated via Stop hook
   - ⚠️ OpenCode: Use custom commands or semantic triggers (see [docs](docs/session-management-opencode.md))

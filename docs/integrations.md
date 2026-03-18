@@ -4,12 +4,37 @@ This document explains how the vibesop integrates with external tools and skill 
 
 ## Overview
 
-The workflow supports two types of external integrations:
+The workflow supports three types of integrations:
 
 1. **Skill Packs** - Collections of reusable skills (e.g., Superpowers)
 2. **CLI Tools** - Command-line utilities that enhance workflow (e.g., RTK)
+3. **Built-in Learning** - Automatic pattern extraction and knowledge management (Instinct Learning)
 
 All integrations are defined in `core/integrations/` as YAML configuration files.
+
+## Built-in Integrations
+
+### Instinct Learning System
+
+**Purpose**: Automatic pattern extraction from sessions with confidence scoring and team sharing.
+
+**Status**: Built-in (no installation required)
+
+**Commands**:
+- `vibe instinct learn` — Extract or manually create reusable patterns
+- `vibe instinct learn-eval` — Evaluate instinct quality and confidence
+- `vibe instinct status` — View all instincts grouped by confidence level
+- `vibe instinct export <file>` — Export instincts for team sharing
+- `vibe instinct import <file>` — Import instincts with merge strategies
+- `vibe instinct evolve <id>` — Upgrade high-quality instincts to formal skills
+
+**Storage**: `memory/instincts.yaml`
+
+**Integration with session-end**: Automatically extracts patterns at session end (Step 6).
+
+**Documentation**: See `skills/instinct-learning/SKILL.md` and `docs/instinct-learning-design.md`.
+
+## External Integrations
 
 ## Supported Integrations
 

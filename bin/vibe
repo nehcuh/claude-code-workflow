@@ -403,6 +403,8 @@ class VibeCLI
         inspect     Preview resolved profiles and generated state
         targets     List all supported targets
         doctor      Check environment and integration status
+        skills      Manage skills (check, list, adapt, install)
+        instinct    Instinct learning system (learn, status, export, import, evolve)
 
       Typical workflow:
         1. vibe init --platform claude-code       # Install global config to ~/.claude

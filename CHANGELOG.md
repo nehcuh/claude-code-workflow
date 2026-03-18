@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Instinct Learning System**: Automatic pattern extraction from sessions
+  - `vibe instinct` command with 6 subcommands (learn, learn-eval, status, export, import, evolve)
+  - `InstinctManager` class for pattern CRUD, confidence scoring, and team sharing
+  - Confidence algorithm: success rate (60%) + usage frequency (30%) + source diversity (10%)
+  - Import/export with 3 merge strategies (skip, overwrite, merge)
+  - Integrated into session-end workflow (Step 6: automatic instinct extraction)
+  - Skill definition: `skills/instinct-learning/SKILL.md`
+  - Design document: `docs/instinct-learning-design.md`
+  - 29 unit tests for InstinctManager
+  - Registered in `core/skills/registry.yaml` as builtin skill
+- **Native Windows Support**: cmd.exe batch scripts for corporate environments
+  - `bin/vibe-install.bat` for Windows installation (no admin required)
+  - `hooks/install.bat` and `hooks/pre-session-end.bat` for Windows hooks
+  - Cross-platform `cmd_exist?` helper replacing Unix-only `which`
+  - File copy instead of symlinks for skill installation on Windows
+  - Windows path handling in `platform_utils.rb`
+  - Comprehensive Windows installation guide: `docs/windows-installation.md`
+- **Project Rename**: Renamed from "Claude Code Workflow" to "VibeSOP"
+  - Reflects multi-platform scope (Claude Code, OpenCode, future platforms)
+  - Updated all references across 21 files
+  - Added comparison table with original project in README
+
 ### Fixed
 - **Hook Configuration Format**: Fixed `vibe init` generating invalid `PreSessionEnd` hook format
   - Changed from `PreSessionEnd` to `Stop` event (correct Claude Code hook name)

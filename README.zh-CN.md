@@ -40,6 +40,21 @@ VibeSOP fork 自 [runesleo/claude-code-workflow](https://github.com/runesleo/cla
 
 本 fork 保持原始 MIT 许可证并致谢原作者。如果你只需要 Claude Code 支持且偏好更简单的配置，原始项目可能更适合你。
 
+## 最新更新 (2026-03)
+
+- **🧠 Instinct 学习系统**：从 session 中自动提取可复用模式
+  - `vibe instinct learn` — 提取或手动创建可复用模式
+  - `vibe instinct status` — 按置信度分组查看 instinct
+  - `vibe instinct export/import` — 团队共享（支持 3 种合并策略）
+  - `vibe instinct evolve` — 将高质量 instinct 升级为正式 skill
+  - 置信度评分：成功率 (60%) + 使用频率 (30%) + 来源多样性 (10%)
+  - 集成到 session-end 工作流，自动学习
+- **🪟 原生 Windows 支持**：cmd.exe 批处理脚本，适用于企业环境
+  - `bin/vibe-install.bat` — 无需管理员权限的 Windows 安装
+  - `hooks/pre-session-end.bat` — Windows hook 支持
+  - 跨平台命令检测（`which`/`where`）
+  - Windows 上使用文件复制替代符号链接
+
 ## 为什么需要它
 
 Claude Code 开箱即强大，但缺乏结构时它只是一个「每次重新开始」的智能助手。这套模板提供**结构化工作流系统**：
