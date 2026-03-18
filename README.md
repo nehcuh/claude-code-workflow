@@ -1052,6 +1052,24 @@ This template draws from:
 
 This project builds upon the excellent foundation laid by [@runes_leo](https://x.com/runes_leo)'s original vibesop. The fork aims to enhance maintainability and extend the workflow to serve Chinese-speaking developers while preserving the core philosophy.
 
+### Integrated External Projects
+
+This project integrates and draws inspiration from the following excellent open-source projects:
+
+- **[Superpowers](https://github.com/obra/superpowers)** by [@obra](https://github.com/obra)
+  Advanced skill pack providing design refinement, TDD enforcement, systematic debugging, and more. This project integrates it as an optional enhancement and defines portable skill ID mappings in `core/integrations/superpowers.yaml`.
+
+- **[RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk)**
+  CLI proxy tool that reduces LLM token consumption by 60-90% through intelligent context management. This project provides automatic detection and configuration support.
+
+- **[everything-claude-code](https://github.com/affaan-m/everything-claude-code)** by [@affaan-m](https://github.com/affaan-m)
+  Anthropic Hackathon award-winning project. The Instinct learning system, token optimization strategies, verification loop system, and parallelization approaches in VibeSOP were directly inspired by this project's research.
+
+- **[awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code)** by [@hesreallyhim](https://github.com/hesreallyhim)
+  Community-curated directory of Claude Code workflows and tools. The RIPER workflow, security scanner (inspired by parry), and TDD Guard in VibeSOP were discovered through and informed by this collection.
+
+Thanks to the authors and contributors of these projects — their work significantly enhances the capabilities of this workflow.
+
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=runesleo/claude-code-workflow&type=Date)](https://star-history.com/#runesleo/claude-code-workflow&Date)

@@ -884,6 +884,24 @@ make test
 
 本项目基于 [@runes_leo](https://x.com/runes_leo) 的原始 vibesop 优秀基础构建。本 fork 旨在提升可维护性并扩展工作流以服务中文开发者，同时保留核心理念。
 
+### 集成的外部项目
+
+本项目集成并借鉴了以下优秀开源项目：
+
+- **[Superpowers](https://github.com/obra/superpowers)** by [@obra](https://github.com/obra)
+  高级技能包，提供设计优化、TDD 强制执行、系统化调试等功能。本项目将其作为可选集成，并在 `core/integrations/superpowers.yaml` 中定义了可移植的技能 ID 映射。
+
+- **[RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk)**
+  CLI 代理工具，通过智能上下文管理将 LLM token 消耗减少 60-90%。本项目提供自动检测和配置支持。
+
+- **[everything-claude-code](https://github.com/affaan-m/everything-claude-code)** by [@affaan-m](https://github.com/affaan-m)
+  Anthropic Hackathon 获奖项目。VibeSOP 的 Instinct 学习系统、Token 优化策略、验证循环系统和并行化方法均直接受此项目研究的启发。
+
+- **[awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code)** by [@hesreallyhim](https://github.com/hesreallyhim)
+  Claude Code 社区精选资源目录。VibeSOP 的 RIPER 工作流、安全扫描器（受 parry 启发）和 TDD Guard 均通过此合集发现并借鉴。
+
+感谢这些项目的作者和贡献者，他们的工作极大地增强了本工作流的能力。
+
 ## 许可
 
 MIT — 随意使用、fork、改造。
