@@ -209,7 +209,7 @@ module Vibe
           "Manual installation"
         end
       when "rtk"
-        if system("which", "brew", out: File::NULL, err: File::NULL)
+        if system("which", "brew", out: File::NULL, err: File::NULL) || system("where", "brew", out: File::NULL, err: File::NULL)
           "Homebrew: brew install rtk"
         elsif methods["manual"]
           "Manual download from GitHub releases"

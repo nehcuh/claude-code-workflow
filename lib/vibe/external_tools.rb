@@ -4,6 +4,7 @@ require "json"
 require "yaml"
 require "open3"
 require "pathname"
+require "rbconfig"
 require_relative "errors"
 
 module Vibe
@@ -12,6 +13,13 @@ module Vibe
   # Host requirements:
   #   @repo_root [String] — absolute path to the workflow repository root
   module ExternalTools
+    # Cross-platform command existence check.
+    # Uses 'where' on Windows, 'which' on Unix.
+    def cmd_exist?(cmd)
+      finder = RbConfig::CONFIG["host_os"] =~ /mswin|msys|mingw|cygwin/i ? "where" : "which"
+      system(finder, cmd, out: File::NULL, err: File::NULL)
+    end
+
     # Load integration config for a specific tool
     def load_integration_config(tool_name)
       config_path = File.join(@repo_root, "core/integrations/#{tool_name}.yaml")
@@ -167,7 +175,7 @@ module Vibe
       return :not_installed if skip_integrations
 
       # Method 1: Check if rtk binary is in PATH
-      return :installed if system("which", "rtk", out: File::NULL, err: File::NULL)
+      return :installed if cmd_exist?("rtk")
 
       # Method 2: Check Claude settings.json for hook
       return :hook_configured if rtk_hook_configured?
@@ -188,7 +196,8 @@ module Vibe
     def rtk_binary_path
       return nil unless detect_rtk == :installed
 
-      path_output, status = Open3.capture2("which", "rtk", err: File::NULL)
+      finder = RbConfig::CONFIG["host_os"] =~ /mswin|msys|mingw|cygwin/i ? "where" : "which"
+      path_output, status = Open3.capture2(finder, "rtk", err: File::NULL)
       status.success? ? path_output.strip : nil
     rescue StandardError => e
       warn "Warning: Failed to get RTK binary path: #{e.message}" if ENV["VIBE_DEBUG"]
@@ -227,7 +236,7 @@ module Vibe
     # --- Installation Helpers ---
 
     def install_rtk_via_homebrew
-      return false unless system("which", "brew", out: File::NULL, err: File::NULL)
+      return false unless cmd_exist?("brew")
 
       puts "Installing RTK via Homebrew..."
       system("brew", "install", "rtk")

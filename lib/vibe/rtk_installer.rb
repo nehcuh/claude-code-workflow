@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "user_interaction"
+require "rbconfig"
 
 module Vibe
   # RTK (Token Optimizer) installation and configuration.
@@ -40,7 +41,7 @@ module Vibe
     # Interactive Homebrew installation with user feedback
     def install_rtk_via_homebrew_interactive
       puts
-      if system("which", "brew", out: File::NULL, err: File::NULL)
+      if system("which", "brew", out: File::NULL, err: File::NULL) || system("where", "brew", out: File::NULL, err: File::NULL)
         if install_rtk_via_homebrew
           reset_integration_status!
           puts "   ✓ RTK installed successfully"
@@ -74,7 +75,7 @@ module Vibe
     # Interactive Cargo installation with user feedback
     def install_rtk_via_cargo_interactive
       puts
-      if system("which", "cargo", out: File::NULL, err: File::NULL)
+      if system("which", "cargo", out: File::NULL, err: File::NULL) || system("where", "cargo", out: File::NULL, err: File::NULL)
         puts "   Installing RTK via Cargo..."
         rtk_config = read_yaml_abs(File.join(@repo_root, "core/integrations/rtk.yaml"))
         cargo_url = rtk_config.dig("installation_methods", "cargo", "command")&.split&.last || "https://github.com/rtk-ai/rtk"
