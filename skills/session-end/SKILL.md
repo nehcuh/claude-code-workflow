@@ -103,7 +103,24 @@ git add [specific files]  # Never git add .
 git commit -m "[type]: [description]"
 ```
 
-### 6. Content Mining (Optional)
+### 6. Instinct Learning (Automatic)
+
+**Condition**: Session had ≥5 tool calls.
+
+Automatically extract reusable patterns from the session:
+
+1. Analyze tool call sequences for successful patterns
+2. Compare with existing instincts in `memory/instincts.yaml`
+3. Create new instinct candidates or update existing confidence scores
+
+**Output**:
+```
+Instincts: [Extracted N patterns / Updated M confidence scores / No new patterns]
+```
+
+**Note**: This step runs automatically. Use `vibe instinct status` to review learned patterns.
+
+### 7. Content Mining (Optional)
 
 **Condition**: session.md has ≥3 session records for the day.
 
@@ -126,6 +143,7 @@ session.md updated
 overview.md: [goals updated / projects updated / no changes]
 PROJECT_CONTEXT.md: [updated / created]
 Committed [N] files
+Instincts: [Extracted N / Updated M / No new patterns]
 Content material: [N items / none (<3 sessions)]
 ```
 

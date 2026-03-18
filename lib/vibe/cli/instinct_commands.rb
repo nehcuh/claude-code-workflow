@@ -33,46 +33,112 @@ module Vibe
 
     # vibe instinct learn - Extract patterns from current session
     def run_instinct_learn(argv)
+      options = parse_instinct_learn_options(argv)
+      manager = InstinctManager.new
+
       puts "\n🧠 Instinct Learning - Pattern Extraction\n"
       puts "=" * 60
       puts
 
-      # TODO: Implement session analysis
-      # For now, show a placeholder message
-      puts "⚠️  Session analysis not yet implemented"
-      puts
-      puts "This command will:"
-      puts "  1. Analyze tool call history from current session"
-      puts "  2. Identify successful sequences (3+ consecutive successes)"
-      puts "  3. Generate pattern descriptions"
-      puts "  4. Create instinct candidates for review"
-      puts
-      puts "Coming soon in Phase 1 Week 3-4!"
+      # Load session data from file or stdin
+      session_data = load_session_data(options[:file])
+
+      if session_data.nil? || session_data.empty?
+        puts "No session data provided."
+        puts
+        puts "Usage:"
+        puts "  vibe instinct learn --file session-log.yaml"
+        puts "  echo '<yaml>' | vibe instinct learn --stdin"
+        puts
+        puts "Or manually create an instinct:"
+        puts "  vibe instinct learn --pattern 'Run tests before committing' --tags ruby,testing"
+        puts
+
+        # Manual mode: create instinct directly
+        if options[:pattern]
+          instinct = manager.create(
+            pattern: options[:pattern],
+            tags: options[:tags] || [],
+            context: options[:context],
+            source_sessions: [Time.now.strftime("session-%Y-%m-%d")]
+          )
+          puts "✓ Created instinct: #{instinct['pattern']}"
+          puts "  ID: #{instinct['id']}"
+          puts "  Confidence: #{instinct['confidence']}"
+          puts "  Tags: #{instinct['tags'].join(', ')}"
+        end
+        return
+      end
+
+      # Extract patterns from session data
+      candidates = extract_patterns(session_data)
+
+      if candidates.empty?
+        puts "No patterns found in session data."
+        return
+      end
+
+      puts "Found #{candidates.size} pattern candidate(s):\n\n"
+
+      candidates.each_with_index do |candidate, idx|
+        puts "  #{idx + 1}. #{candidate[:pattern]}"
+        puts "     Tags: #{candidate[:tags].join(', ')}"
+        puts "     Confidence: #{candidate[:confidence]}"
+        puts
+      end
+
+      puts "Use 'vibe instinct learn-eval' to review and save these patterns."
+      puts "Or use 'vibe instinct learn --pattern \"...\" --tags tag1,tag2' to create manually."
     end
 
     # vibe instinct learn-eval - Evaluate and save instinct candidates
     def run_instinct_learn_eval(argv)
-      instinct_id = argv.shift
+      manager = InstinctManager.new
 
-      if instinct_id.nil?
-        puts "Usage: vibe instinct learn-eval <instinct_id>"
+      # If ID provided, evaluate specific instinct
+      instinct_id = argv.first unless argv.first&.start_with?("--")
+
+      if instinct_id
+        instinct = manager.get(instinct_id)
+        unless instinct
+          puts "Instinct not found: #{instinct_id}"
+          return
+        end
+
+        puts "\n📊 Evaluating Instinct\n"
+        puts "=" * 60
+        puts
+        puts "Pattern: #{instinct['pattern']}"
+        puts "Confidence: #{instinct['confidence'].round(2)}"
+        puts "  - Success rate: #{instinct['success_rate'].round(2)} (60% weight)"
+        puts "  - Usage count: #{instinct['usage_count']} (30% weight)"
+        puts "  - Source sessions: #{instinct['source_sessions'].size} (10% weight)"
+        puts
+        puts "Tags: #{instinct['tags'].join(', ')}"
+        puts "Status: #{instinct['status']}"
+        puts "Created: #{instinct['created_at']}"
         return
       end
 
-      puts "\n📊 Evaluating Instinct Candidate\n"
+      # List all active instincts for evaluation
+      instincts = manager.list(status: "active", sort_by: :confidence)
+
+      if instincts.empty?
+        puts "No instincts to evaluate. Use 'vibe instinct learn' first."
+        return
+      end
+
+      puts "\n📊 Instinct Evaluation\n"
       puts "=" * 60
       puts
 
-      # TODO: Implement evaluation logic
-      puts "⚠️  Instinct evaluation not yet implemented"
-      puts
-      puts "This command will:"
-      puts "  1. Calculate confidence score"
-      puts "  2. Show usage statistics"
-      puts "  3. Ask for user confirmation"
-      puts "  4. Save to memory/instincts.yaml"
-      puts
-      puts "Coming soon in Phase 1 Week 3-4!"
+      instincts.each_with_index do |instinct, idx|
+        confidence = instinct["confidence"].round(2)
+        label = confidence >= 0.8 ? "High" : confidence >= 0.6 ? "Medium" : "Low"
+        puts "  #{idx + 1}. [#{label}] #{instinct['pattern']} (#{confidence})"
+        puts "     Uses: #{instinct['usage_count']} | Success: #{(instinct['success_rate'] * 100).round}%"
+        puts
+      end
     end
 
     # vibe instinct status - View all instincts
@@ -291,20 +357,112 @@ module Vibe
 
         Commands:
           learn                    Extract patterns from current session
-          learn-eval <id>          Evaluate and save instinct candidate
+          learn-eval [id]          Evaluate instinct(s)
           status                   View all instincts
           export <file>            Export instincts to file
           import <file>            Import instincts from file
           evolve <id> [name]       Upgrade instinct to skill
 
+        Learn options:
+          --pattern "..."          Create instinct manually
+          --tags tag1,tag2         Tags for manual instinct
+          --context "..."          Context for manual instinct
+          --file <path>            Load session data from YAML file
+          --stdin                  Read session data from stdin
+
         Examples:
-          vibe instinct status
+          vibe instinct learn --pattern "Run tests before commit" --tags ruby,testing
           vibe instinct status --tag ruby --min-confidence 0.8
           vibe instinct export team-patterns.yaml --min-confidence 0.8
           vibe instinct import shared-patterns.yaml --merge
 
         For more information, see: skills/instinct-learning/SKILL.md
       USAGE
+    end
+
+    def parse_instinct_learn_options(argv)
+      options = { file: nil, stdin: false, pattern: nil, tags: nil, context: nil }
+
+      while (arg = argv.shift)
+        case arg
+        when "--file"
+          options[:file] = argv.shift
+        when "--stdin"
+          options[:stdin] = true
+        when "--pattern"
+          options[:pattern] = argv.shift
+        when "--tags"
+          options[:tags] = argv.shift&.split(",")&.map(&:strip)
+        when "--context"
+          options[:context] = argv.shift
+        end
+      end
+
+      options
+    end
+
+    def load_session_data(file_path)
+      return nil unless file_path
+
+      unless File.exist?(file_path)
+        puts "File not found: #{file_path}"
+        return nil
+      end
+
+      YAML.safe_load(File.read(file_path), permitted_classes: [Time, Symbol], aliases: true)
+    rescue StandardError => e
+      puts "Failed to load session data: #{e.message}"
+      nil
+    end
+
+    def extract_patterns(session_data)
+      candidates = []
+      tool_calls = session_data["tool_calls"] || session_data[:tool_calls] || []
+
+      return candidates if tool_calls.size < 3
+
+      # Find consecutive successful sequences
+      current_sequence = []
+
+      tool_calls.each do |call|
+        success = call["success"] || call[:success]
+
+        if success
+          current_sequence << call
+        else
+          if current_sequence.size >= 3
+            candidates << build_candidate(current_sequence, session_data)
+          end
+          current_sequence = []
+        end
+      end
+
+      # Check last sequence
+      if current_sequence.size >= 3
+        candidates << build_candidate(current_sequence, session_data)
+      end
+
+      candidates
+    end
+
+    def build_candidate(sequence, session_data)
+      tools = sequence.map { |c| c["tool"] || c[:tool] }.compact
+      commands = sequence.map { |c| c["command"] || c[:command] || c["tool"] || c[:tool] }.compact
+
+      # Extract tags from context
+      context = session_data["context"] || session_data[:context] || {}
+      tags = []
+      tags << (context["language"] || context[:language]) if context["language"] || context[:language]
+      tags << (context["framework"] || context[:framework]) if context["framework"] || context[:framework]
+      tags.compact!
+
+      {
+        pattern: "Workflow: #{commands.join(' → ')}",
+        tags: tags,
+        confidence: [0.5 + (sequence.size * 0.05), 0.9].min,
+        tools: tools,
+        sequence_length: sequence.size
+      }
     end
   end
 end
