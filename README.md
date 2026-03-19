@@ -950,7 +950,10 @@ This template encodes several principles learned from daily AI-assisted developm
 ## Requirements
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI (Claude Max or API subscription)
-- Ruby >= 2.6.0 (for `bin/vibe` generator, comes with macOS)
+- Ruby >= 2.6.0 (for `bin/vibe` generator)
+  - **macOS**: Comes pre-installed with the system
+  - **Linux**: `sudo apt install ruby-full` (Debian/Ubuntu) or equivalent
+  - **Windows**: Install via [RubyInstaller](https://rubyinstaller.org/) (Ruby+Devkit recommended), or use Ruby inside WSL 2
   - **Runtime dependencies**: None (uses only Ruby stdlib)
   - **Development dependencies**: See `Gemfile` (minitest for testing)
 - Optional: Codex CLI for cross-verification
@@ -963,7 +966,9 @@ This workflow now supports Windows through multiple installation methods:
 
 ### Option 1: Native Windows (cmd.exe) - NEW ✨
 
-**Best for**: Corporate environments where PowerShell is restricted or Ruby is already installed.
+**Best for**: Corporate environments where PowerShell is restricted.
+
+**Prerequisites**: Ruby >= 2.6.0 must be installed. Get it from [RubyInstaller](https://rubyinstaller.org/) (Ruby+Devkit recommended).
 
 ```cmd
 REM Install using native Windows batch scripts

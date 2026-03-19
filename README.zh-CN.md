@@ -833,9 +833,32 @@ make test
 
 ## Windows / WSL 支持
 
-本工作流为类 Unix 环境（macOS、Linux）设计。Windows 用户：
+本工作流支持多种 Windows 安装方式：
 
-**推荐：使用 WSL 2（Windows 子系统 Linux）**
+### 方式 1：原生 Windows（cmd.exe）✨
+
+**适用场景**：企业环境中 PowerShell 受限的情况。
+
+**前置条件**：需要安装 Ruby >= 2.6.0。从 [RubyInstaller](https://rubyinstaller.org/) 获取（推荐 Ruby+Devkit）。
+
+```cmd
+REM 使用原生 Windows 批处理脚本安装
+bin\vibe-install.bat
+
+REM 安装 hooks（可选）
+cd hooks
+install.bat
+```
+
+**特性**：
+- 在 cmd.exe（DOS）中运行，无需 PowerShell
+- 安装到 `%USERPROFILE%\.local\bin`
+- 无需管理员权限
+- 完整 hook 支持（`.bat` 脚本）
+
+详见 [Windows 安装指南](docs/windows-installation.md)。
+
+### 方式 2：WSL 2（推荐，获得完整 Unix 体验）
 
 1. 安装 WSL 2 和 Ubuntu：
    ```powershell
@@ -857,19 +880,39 @@ make test
 
 4. 从 WSL 访问 Windows 文件：`/mnt/c/Users/你的用户名/`
 
-**原生 Windows（不推荐）**
+### 方式 3：Git Bash 回退（功能有限）
 
-虽然技术上可行，但原生 Windows 支持需要：
-- Ruby for Windows（RubyInstaller）
-- Git Bash 或带 Unix 工具的 PowerShell
-- 手动调整脚本中的路径
+如果无法使用 WSL2，但安装了 Git for Windows（自带 Git Bash）：
 
-工作流的 shell 脚本、符号链接处理和路径约定针对 Unix 优化。WSL 提供最佳体验。
+```bash
+# 在 Git Bash 中使用纯 Bash 回退脚本
+./bin/vibe-bash.sh targets           # 列出可用目标
+./bin/vibe-bash.sh build opencode    # 构建 OpenCode 配置
+./bin/vibe-bash.sh switch opencode   # 应用到当前项目
+```
+
+**Bash 回退的限制**：
+- 无法从 YAML 生成新配置（需要 Ruby）
+- 无法应用 overlay 或复杂合并
+- 最适合使用 `generated/` 中的预生成配置
+
+### 平台对比
+
+| 方式 | cmd.exe 支持 | 需要管理员 | Hook 支持 | 完整功能 |
+|------|-------------|-----------|----------|---------|
+| 原生 Windows (.bat) | ✅ 是 | ❌ 否 | ✅ 是 | ✅ 是 |
+| WSL 2 | N/A（Linux） | ⚠️ 初始安装需要 | ✅ 是 | ✅ 是 |
+| Git Bash | ⚠️ 通过 bash | ❌ 否 | ⚠️ 有限 | ⚠️ 有限 |
+
+**注意**：原生 Windows 支持已可用于生产环境。如果条件允许，WSL 提供最佳的类 Unix 体验。
 
 ## 环境要求
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI（Claude Max 或 API 订阅）
-- Ruby >= 2.6.0（用于 `bin/vibe` 生成器，macOS 自带）
+- Ruby >= 2.6.0（用于 `bin/vibe` 生成器）
+  - **macOS**：系统自带
+  - **Linux**：`sudo apt install ruby-full`（Debian/Ubuntu）或等效命令
+  - **Windows**：通过 [RubyInstaller](https://rubyinstaller.org/) 安装（推荐 Ruby+Devkit），或在 WSL 2 内使用 Ruby
   - **运行时依赖**：无（仅使用 Ruby 标准库）
   - **开发依赖**：参见 `Gemfile`（minitest 用于测试）
 - 可选：Codex CLI 用于交叉验证
