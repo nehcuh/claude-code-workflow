@@ -13,7 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Multi-trigger mechanism: project completion, session accumulation, periodic review
   - Pattern detection: scan → identify → cluster → rank workflow
   - Personal skill generation with preview and auto-registration
-  - `config/skill-craft.yaml` — user configuration template
+  - `config/skill-craft.example.yml` — user configuration template
+  - **Phase 7 Core Implementation** (2026-03-20)
+  - `lib/vibe/session_analyzer.rb` — session history analyzer (195 lines)
+  - `lib/vibe/skill_generator.rb` — skill generator from patterns (159 lines)
+  - `lib/vibe/trigger_manager.rb` — trigger mechanism manager (160 lines)
 - **Security & Quality Hooks** (2026-03-20)
   - `hooks/parry-scan.rb` — prompt injection and security risk detector
     - 6 threat categories: prompt_injection, system_leak, data_extraction, command_injection, filesystem_danger, obfuscation

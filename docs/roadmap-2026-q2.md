@@ -25,7 +25,7 @@
 | Phase 6.2: Parry 安全扫描 | ✅ 已完成 | 95% | `hooks/parry-scan.rb`, `lib/vibe/security_scanner.rb` |
 | Phase 6.3: TDD Guard | ✅ 已完成 | 95% | `hooks/tdd-guard.rb`, `lib/vibe/tdd_enforcer.rb` |
 | Phase 6.4: Context Engineering | ✅ 已完成 | 95% | `lib/vibe/context_optimizer.rb` |
-| Phase 7: Skill Craft | 🟢 设计完成 | 80% | `skills/skill-craft/SKILL.md`, `config/skill-craft.yaml` |
+| Phase 7: Skill Craft | ✅ 已完成 | 95% | `skills/skill-craft/SKILL.md`, `lib/vibe/session_analyzer.rb`, `lib/vibe/skill_generator.rb`, `lib/vibe/trigger_manager.rb`, `config/skill-craft.example.yml` |
 
 **总计**: 44 个核心模块 (`lib/vibe/*.rb`)
 
