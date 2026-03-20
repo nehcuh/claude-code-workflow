@@ -1,7 +1,7 @@
 ---
 name: session-end
 description: Session wrap-up - update handoff + commit + auto-record experience
-version: 2.0.0
+version: 2.1.0
 allowed-tools:
   - Read
   - Write
@@ -13,7 +13,7 @@ allowed-tools:
 
 > Trigger: `/session-end` or exit signals ("that's all for now" / "heading out")
 
-## Core Steps (5 steps)
+## Core Steps (8 steps)
 
 ### 1. Experience Recording
 
@@ -135,6 +135,43 @@ Content material: Found N shareable discoveries today
 
 **Nothing found**: Skip silently.
 
+### 8. Skill Craft Trigger (Optional)
+
+**Condition**: One of the following triggers is met.
+
+Check for skill crafting opportunities:
+
+**Trigger 1: Accumulation**
+- Count sessions since last skill-craft
+- If ≥10 sessions (configurable), prompt user
+
+**Trigger 2: Project Completion**
+- Detect recent merge/push to main branch
+- Check if this completed a feature (from commit messages)
+
+**Trigger 3: Periodic Review**
+- Check if it's been ≥7 days since last skill review
+- Day of week check (e.g., Friday afternoon)
+
+**Output (when triggered)**:
+```
+Skill Craft: [Trigger type detected]
+  - Sessions accumulated: N since last review
+  - Patterns available: ~M candidates
+  
+  Run /skill-craft to extract personal skills? [hint]
+```
+
+**Configuration** (in `~/.claude/config/skill-craft.yaml`):
+```yaml
+triggers:
+  accumulation_threshold: 10    # sessions before prompt
+  periodic_interval: 7          # days between reviews
+  max_prompts_per_day: 1        # don't spam user
+```
+
+**Not triggered**: Skip silently.
+
 ## Output Format
 
 ```
@@ -145,6 +182,7 @@ PROJECT_CONTEXT.md: [updated / created]
 Committed [N] files
 Instincts: [Extracted N / Updated M / No new patterns]
 Content material: [N items / none (<3 sessions)]
+Skill Craft: [triggered - N sessions accumulated / not triggered]
 ```
 
 ## Migration Notes

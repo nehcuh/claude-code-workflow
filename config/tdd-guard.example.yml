@@ -1,0 +1,36 @@
+# TDD Guard Configuration
+# Copy to .tdd-guard.yml in your project root
+
+# Mode: strict (block) or warn only
+strict_mode: false
+
+# Test file patterns to recognize
+test_patterns:
+  - "*_test.rb"
+  - "*_spec.rb"
+  - "test_*.py"
+  - "*_test.go"
+  - "*.test.js"
+  - "*.spec.js"
+  - "*.test.ts"
+  - "*.spec.ts"
+
+# Source file patterns to check
+src_patterns:
+  - "*.rb"
+  - "*.py"
+  - "*.go"
+  - "*.js"
+  - "*.ts"
+  - "*.java"
+
+# Minimum test coverage threshold (%)
+min_coverage: 80.0
+
+# Directories to ignore
+ignore_dirs:
+  - vendor
+  - node_modules
+  - .git
+  - tmp
+  - log

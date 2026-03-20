@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Skill Craft System** (2026-03-20)
+  - `skills/skill-craft/SKILL.md` — craft personal skills from session history
+  - Multi-trigger mechanism: project completion, session accumulation, periodic review
+  - Pattern detection: scan → identify → cluster → rank workflow
+  - Personal skill generation with preview and auto-registration
+  - `config/skill-craft.yaml` — user configuration template
+- **Security & Quality Hooks** (2026-03-20)
+  - `hooks/parry-scan.rb` — prompt injection and security risk detector
+    - 6 threat categories: prompt_injection, system_leak, data_extraction, command_injection, filesystem_danger, obfuscation
+    - Risk levels: critical, high, medium, low
+    - Whitelist support for safe patterns
+  - `hooks/tdd-guard.rb` — test-driven development enforcement
+    - Source-to-test file mapping
+    - Coverage threshold checking
+    - Strict/loose mode configuration
+  - `config/tdd-guard.example.yml` — TDD guard configuration template
+- **Session-End Enhancement** (2026-03-20)
+  - Added Step 8: Skill Craft Trigger in `skills/session-end/SKILL.md`
+  - Automatic skill crafting prompts based on triggers
 - **gstack Skill Pack Integration**
   - `core/integrations/gstack.yaml` — full skill pack definition with 21 skills across 7 sprint phases
   - `gstack` namespace in `core/skills/registry.yaml` with trigger modes (suggest/manual)
