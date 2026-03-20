@@ -57,6 +57,7 @@ module Vibe
       label = case name
               when :superpowers then "Superpowers"
               when :rtk then "RTK"
+              when :gstack then "gstack"
               else name.to_s.capitalize
               end
 
@@ -70,6 +71,10 @@ module Vibe
           puts "    Binary: #{info[:binary]}"
           puts "    Version: #{info[:version]}"
           puts "    Hook: #{info[:hook_configured] ? 'Configured' : 'Not configured'}"
+        when :gstack
+          puts "    Location: #{info[:location]}"
+          puts "    Version: #{info[:version]}"
+          puts "    Skills detected: #{info[:skills_count]}"
         end
         puts "    Status: Ready"
       elsif name == :rtk && info[:installed]
@@ -98,6 +103,7 @@ module Vibe
         label = case name
                 when :superpowers then "Superpowers"
                 when :rtk then "RTK"
+                when :gstack then "gstack"
                 else name.to_s.capitalize
                 end
 

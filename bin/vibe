@@ -21,6 +21,14 @@ require_relative "../lib/vibe/builder"
 require_relative "../lib/vibe/init_support"
 require_relative "../lib/vibe/cli/skills_commands"
 require_relative "../lib/vibe/cli/instinct_commands"
+require_relative "../lib/vibe/cli/token_commands"
+require_relative "../lib/vibe/cli/checkpoint_commands"
+require_relative "../lib/vibe/cli/grade_commands"
+require_relative "../lib/vibe/cli/task_commands"
+require_relative "../lib/vibe/cli/parallel_commands"
+require_relative "../lib/vibe/cli/toolchain_commands"
+require_relative "../lib/vibe/cli/security_commands"
+require_relative "../lib/vibe/cli/skill_craft_commands"
 require_relative "../lib/vibe/skill_manager"
 
 class VibeCLI
@@ -35,6 +43,14 @@ class VibeCLI
   include Vibe::InitSupport
   include Vibe::SkillsCommands
   include Vibe::InstinctCommands
+  include Vibe::TokenCommands
+  include Vibe::CheckpointCommands
+  include Vibe::GradeCommands
+  include Vibe::TaskCommands
+  include Vibe::ParallelCommands
+  include Vibe::ToolchainCommands
+  include Vibe::SecurityCommands
+  include Vibe::SkillCraftCommands
 
   attr_accessor :skip_integrations
 
@@ -53,7 +69,16 @@ class VibeCLI
     "targets" => :run_targets_command,
     "doctor" => :run_doctor_command,
     "skills" => :run_skills_command,
-    "instinct" => :run_instinct_command
+    "instinct" => :run_instinct_command,
+    "token" => :run_token_command,
+    "checkpoint" => :run_checkpoint_command,
+    "grade" => :run_grade_command,
+    "tasks"      => :run_tasks_command,
+    "worktree"   => :run_worktree_command,
+    "cascade"    => :run_cascade_command,
+    "toolchain"  => :run_toolchain_command,
+    "scan"       => :run_scan_command,
+    "skill-craft" => :run_skill_craft_command
   }.freeze unless defined?(COMMAND_REGISTRY)
 
   def initialize(repo_root)
@@ -321,6 +346,11 @@ class VibeCLI
     end
     puts
 
+    # Check skill conflicts
+    puts "Skill conflict check:"
+    check_skill_conflicts
+    puts
+
     # Check project skill configuration
     puts "Project skill configuration:"
     check_project_skills_status
@@ -382,6 +412,66 @@ class VibeCLI
     puts "  ⚠️  Error checking skills: #{e.message}"
   end
 
+  # Check for overlapping skills across packs that may confuse users
+  def check_skill_conflicts
+    status = integration_status
+    installed_packs = []
+    installed_packs << :superpowers if status[:superpowers]&.dig(:installed)
+    installed_packs << :gstack if status[:gstack]&.dig(:installed)
+
+    if installed_packs.empty?
+      puts "  ℹ️  No external skill packs installed"
+      puts "     Install Superpowers or gstack for enhanced workflows"
+      return
+    end
+
+    puts "  Installed packs: #{installed_packs.map(&:to_s).join(', ')}"
+
+    # Define overlapping skill groups
+    overlaps = {
+      "Review/Verification" => {
+        builtin: "verification-before-completion (P0 mandatory)",
+        gstack: "gstack/review (P1 suggest)",
+        superpowers: "superpowers/review (P2 manual)"
+      },
+      "Debugging" => {
+        builtin: "systematic-debugging (P0 mandatory)",
+        gstack: "gstack/investigate (P1 suggest)"
+      },
+      "Session/Retrospective" => {
+        builtin: "session-end (P0 mandatory)",
+        gstack: "gstack/retro (manual)"
+      }
+    }
+
+    conflicts_found = false
+    overlaps.each do |category, skills|
+      applicable = skills.select { |pack, _|
+        pack == :builtin || installed_packs.include?(pack)
+      }
+
+      if applicable.length > 1
+        conflicts_found = true
+        puts
+        puts "  ⚠️  #{category}: multiple skills available"
+        applicable.each do |pack, skill|
+          priority = skill.match(/\(P\d/)&.to_s || "(optional)"
+          puts "     • #{skill}"
+        end
+        puts "     → Priority: #{applicable[:builtin] ? 'builtin mandatory first' : applicable.values.first}"
+      end
+    end
+
+    unless conflicts_found
+      puts "  ✅ No conflicts detected"
+    end
+
+    puts
+    puts "  Tip: See docs/integrations.md 'Skill Selection Guide' for usage advice"
+  rescue StandardError => e
+    puts "  ⚠️  Error checking conflicts: #{e.message}"
+  end
+
   def usage
     <<~TEXT
       Usage:
@@ -395,6 +485,14 @@ class VibeCLI
         vibe doctor
         vibe skills <command>
         vibe instinct <command> [options]
+        vibe token <command> [options]
+        vibe checkpoint <command> [options]
+        vibe grade <command> [options]
+        vibe tasks <command> [options]
+        vibe worktree <command> [options]
+        vibe cascade <command> <config.yaml>
+        vibe scan <subcommand> [args]
+        vibe skill-craft [analyze|generate|triggers|status]
 
       Commands:
         init        Install global configuration for a platform (e.g., ~/.claude, ~/.config/opencode)
@@ -407,6 +505,15 @@ class VibeCLI
         doctor      Check environment and integration status
         skills      Manage skills (check, list, adapt, install)
         instinct    Instinct learning system (learn, status, export, import, evolve)
+        token       Token optimization (analyze, optimize, stats)
+        checkpoint  Code snapshots (create, list, rollback, compare)
+        grade       Code evaluation (run, pass-at-k, summary)
+        tasks       Background tasks (submit, list, status, cancel)
+        worktree    Git worktree management (create, list, finish, remove, cleanup)
+        cascade     Dependency-aware parallel task execution (run, plan)
+        toolchain   Toolchain detection (detect, suggest)
+        scan        Security scanning and TDD audit (text, file, tdd, ctx)
+        skill-craft Personal skill generation from session history
 
       Typical workflow:
         1. vibe init --platform claude-code       # Install global config to ~/.claude

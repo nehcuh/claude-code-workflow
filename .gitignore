@@ -39,6 +39,7 @@ settings.json
 
 # Company internal materials
 /公司推广材料.md
+/articles/
 
 # Development intermediate files
 /test-workspace/

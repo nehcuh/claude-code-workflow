@@ -57,6 +57,44 @@ Claude Code is powerful out of the box, but without structure it becomes a smart
 
 ### Recent Improvements (2026-03)
 
+- **🛠️ Skill Craft System**: Generate personal reusable skills from your own session history
+  - `vibe skill-craft` — Interactive session: analyze → select patterns → generate skills
+  - `vibe skill-craft analyze` — Detect recurring tool sequences, error-recovery flows, and workflows
+  - `vibe skill-craft generate --pattern <id> [--force]` — Generate a skill from a detected pattern
+  - `vibe skill-craft status` — View session count and last review date
+  - Auto-saves to `~/.claude/skills/personal/`
+- **🔧 gstack Integration**: Virtual engineering team as pluggable skill pack
+  - 21 skills across 7 sprint phases (Think → Plan → Build → Review → Test → Ship → Reflect)
+  - Auto-detected during `vibe init`, trigger rules generated in `skill-triggers.md`
+  - Browser QA, cross-model review, release automation, safety guardrails
+  - Complements builtin skills — gstack handles product/review/ship, VibeSOP handles memory/verification/session
+  - Auto-install via `vibe init` or manual: `git clone https://github.com/garrytan/gstack.git ~/.claude/skills/gstack`
+- **🔀 Parallelization Enhancement**: Git worktrees + cascade execution
+  - `vibe worktree create/list/finish/remove/cleanup` — isolated task branches
+  - `vibe cascade run/plan <config.yaml>` — dependency-ordered parallel pipelines
+  - Automatic skip of downstream tasks when a dependency fails
+- **✅ Verification Loop Enhancement**: Continuous code quality evaluation
+  - `CheckpointManager` — Code snapshots and rollback system
+    - Create/restore checkpoints with file snapshots
+    - Compare checkpoints for quality assessment
+    - Automatic cleanup of old checkpoints
+  - `Grader` — Multi-type code evaluation
+    - Four grader types: unit_test, integration_test, linter, security
+    - pass@k metric for candidate solution evaluation
+    - Statistics tracking and summary reports
+- **⚡ Token Optimization System**: Reduce token consumption by 30-50%
+  - `TokenOptimizer` — Analyze and optimize prompt content
+    - Token estimation for English/Chinese mixed text
+    - Redundancy detection and removal
+    - Whitespace compression and selective section loading
+  - `ModelSelector` — Intelligent model selection based on task complexity
+    - Automatic complexity evaluation (simple → Haiku, medium → Sonnet, complex → Opus)
+    - Keyword-based scoring with fallback chain
+    - Usage statistics tracking
+  - `BackgroundTaskManager` — Long-running task management
+    - Priority-based queue (low/normal/high/critical)
+    - Task cancellation and automatic cleanup
+    - Thread-safe persistent storage
 - **🧠 Instinct Learning System**: Automatic pattern extraction from sessions
   - `vibe instinct learn` — Extract or manually create reusable patterns
   - `vibe instinct status` — View instincts grouped by confidence level
@@ -924,7 +962,10 @@ This template encodes several principles learned from daily AI-assisted developm
 ## Requirements
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI (Claude Max or API subscription)
-- Ruby >= 2.6.0 (for `bin/vibe` generator, comes with macOS)
+- Ruby >= 2.6.0 (for `bin/vibe` generator)
+  - **macOS**: Comes pre-installed with the system
+  - **Linux**: `sudo apt install ruby-full` (Debian/Ubuntu) or equivalent
+  - **Windows**: Install via [RubyInstaller](https://rubyinstaller.org/) (Ruby+Devkit recommended), or use Ruby inside WSL 2
   - **Runtime dependencies**: None (uses only Ruby stdlib)
   - **Development dependencies**: See `Gemfile` (minitest for testing)
 - Optional: Codex CLI for cross-verification
@@ -937,7 +978,9 @@ This workflow now supports Windows through multiple installation methods:
 
 ### Option 1: Native Windows (cmd.exe) - NEW ✨
 
-**Best for**: Corporate environments where PowerShell is restricted or Ruby is already installed.
+**Best for**: Corporate environments where PowerShell is restricted.
+
+**Prerequisites**: Ruby >= 2.6.0 must be installed. Get it from [RubyInstaller](https://rubyinstaller.org/) (Ruby+Devkit recommended).
 
 ```cmd
 REM Install using native Windows batch scripts
@@ -1025,6 +1068,24 @@ This template draws from:
 ## Acknowledgments
 
 This project builds upon the excellent foundation laid by [@runes_leo](https://x.com/runes_leo)'s original vibesop. The fork aims to enhance maintainability and extend the workflow to serve Chinese-speaking developers while preserving the core philosophy.
+
+### Integrated External Projects
+
+This project integrates and draws inspiration from the following excellent open-source projects:
+
+- **[Superpowers](https://github.com/obra/superpowers)** by [@obra](https://github.com/obra)
+  Advanced skill pack providing design refinement, TDD enforcement, systematic debugging, and more. This project integrates it as an optional enhancement and defines portable skill ID mappings in `core/integrations/superpowers.yaml`.
+
+- **[RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk)**
+  CLI proxy tool that reduces LLM token consumption by 60-90% through intelligent context management. This project provides automatic detection and configuration support.
+
+- **[everything-claude-code](https://github.com/affaan-m/everything-claude-code)** by [@affaan-m](https://github.com/affaan-m)
+  Anthropic Hackathon award-winning project. The Instinct learning system, token optimization strategies, verification loop system, and parallelization approaches in VibeSOP were directly inspired by this project's research.
+
+- **[awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code)** by [@hesreallyhim](https://github.com/hesreallyhim)
+  Community-curated directory of Claude Code workflows and tools. The RIPER workflow, security scanner (inspired by parry), and TDD Guard in VibeSOP were discovered through and informed by this collection.
+
+Thanks to the authors and contributors of these projects — their work significantly enhances the capabilities of this workflow.
 
 ## Star History
 

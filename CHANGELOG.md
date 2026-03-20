@@ -8,6 +8,123 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Skill Craft System** (2026-03-20)
+  - `skills/skill-craft/SKILL.md` — craft personal skills from session history
+  - Multi-trigger mechanism: project completion, session accumulation, periodic review
+  - Pattern detection: scan → identify → cluster → rank workflow
+  - Personal skill generation with preview and auto-registration
+  - `config/skill-craft.example.yml` — user configuration template
+  - **Phase 7 Core Implementation** (2026-03-20)
+  - `lib/vibe/session_analyzer.rb` — session history analyzer (195 lines)
+  - `lib/vibe/skill_generator.rb` — skill generator from patterns (159 lines)
+  - `lib/vibe/trigger_manager.rb` — trigger mechanism manager (160 lines)
+- **Security & Quality Hooks** (2026-03-20)
+  - `hooks/parry-scan.rb` — prompt injection and security risk detector
+    - 6 threat categories: prompt_injection, system_leak, data_extraction, command_injection, filesystem_danger, obfuscation
+    - Risk levels: critical, high, medium, low
+    - Whitelist support for safe patterns
+  - `hooks/tdd-guard.rb` — test-driven development enforcement
+    - Source-to-test file mapping
+    - Coverage threshold checking
+    - Strict/loose mode configuration
+  - `config/tdd-guard.example.yml` — TDD guard configuration template
+- **Session-End Enhancement** (2026-03-20)
+  - Added Step 8: Skill Craft Trigger in `skills/session-end/SKILL.md`
+  - Automatic skill crafting prompts based on triggers
+- **gstack Skill Pack Integration**
+  - `core/integrations/gstack.yaml` — full skill pack definition with 21 skills across 7 sprint phases
+  - `gstack` namespace in `core/skills/registry.yaml` with trigger modes (suggest/manual)
+  - `GstackInstaller` — auto-clone from GitHub (Gitee mirror fallback), run setup, verify installation
+  - Detection logic in `lib/vibe/external_tools.rb` — checks `~/.claude/skills/gstack`, `.claude/skills/gstack`, and `~/.config/opencode/skills/gstack`
+  - Integration manager auto-installs gstack during `vibe init` (interactive clone + setup + verification)
+  - Integration verifier displays gstack status (version, location, skills count, browse readiness with Bun check)
+  - Trigger rules in `rules/skill-triggers.md` with overlap documentation for builtin skills
+  - 18 integration tests with 320 assertions
+  - Sprint pipeline coverage: Think → Plan → Build → Review → Test → Ship → Reflect
+  - Complements builtin skills (memory, verification, session-end) with product thinking, browser QA, and release automation
+- **Community Best Practices Integration** (Phase 6)
+  - `SecurityScanner` — lightweight prompt-injection and jailbreak detector
+    - 5 rule categories: system_prompt_leak (critical), role_hijack, instruction_injection, privilege_escalation (high), indirect_injection (medium)
+    - `scan(text)` returns `{ safe:, threats:, risk_level: }`; `scan!` raises `SecurityError`
+    - Deduplication by rule ID; risk level derived from highest-severity threat
+    - 20 unit tests
+  - `TddEnforcer` — test-first development enforcement
+    - Detects implementation files missing corresponding test coverage
+    - Supports Ruby (minitest/rspec), Python (pytest), JS/TS (jest/vitest) conventions
+    - `check(file)`, `check_many(files)`, `audit` (full project scan)
+    - Excludes vendor/ and node_modules/ from audits
+    - 14 unit tests
+  - `ContextOptimizer` — context window engineering kit
+    - Token estimation for English/Chinese mixed text
+    - Priority-based context packaging within a token budget
+    - Filler phrase compression
+    - `build_package(budget:, required_ids:)` for structured context assembly
+    - 16 unit tests
+  - New skill: `skills/riper-workflow/SKILL.md` — structured 5-phase workflow (Research → Innovate → Plan → Execute → Review)
+  - CLI command: `vibe scan text/file/tdd/ctx` — security scanning and TDD audit
+  - Registered `riper-workflow` and `using-git-worktrees` skills in `core/skills/registry.yaml`
+- **Toolchain Detection** (Phase 5)
+  - `ToolchainDetector` — detects package managers, build tools, and test frameworks
+    - 10 package managers: bun, pnpm, yarn, npm, poetry, pipenv, pip, cargo, gomod, bundler
+    - 9 build tools: vite, webpack, rollup, esbuild, gradle, maven, cmake, make, rake
+    - 7 test frameworks: vitest, jest, pytest, rspec, minitest, cargo_test, go_test
+    - Primary language detection by ecosystem frequency
+    - Suggested commands for install/test/build
+    - 27 unit tests
+  - CLI commands: `vibe toolchain detect/suggest`
+
+  - `WorktreeManager` — automated worktree lifecycle management
+    - Create isolated worktrees per task with auto-generated branches
+    - Finish / remove / cleanup lifecycle commands
+    - Status summary (active vs finished counts)
+    - 16 unit tests
+  - `CascadeExecutor` — dependency-aware parallel task runner
+    - DAG-based task graph with cycle detection
+    - Independent tasks run in parallel; dependents wait automatically
+    - Failed tasks skip all downstream dependents
+    - Configurable concurrency cap (`max_parallel`)
+    - 17 unit tests
+  - CLI commands: `vibe worktree` (create/list/finish/remove/cleanup/status)
+  - CLI commands: `vibe cascade` (run/plan) with YAML config format
+  - New skill: `skills/using-git-worktrees/SKILL.md`
+- **CLI Integration**: New commands for Phase 2-3 modules
+  - `vibe token analyze/optimize/stats` — Token optimization commands
+  - `vibe checkpoint create/list/rollback/compare/delete/cleanup` — Code snapshot commands
+  - `vibe grade run/pass-at-k/summary` — Code evaluation commands
+  - `vibe tasks submit/list/status/cancel/cleanup` — Background task commands
+- **Verification Loop Enhancement**: Continuous code quality evaluation system
+  - `CheckpointManager` class for code snapshots and rollback
+    - Create checkpoints with automatic file snapshots
+    - Rollback to any checkpoint with dry-run preview
+    - Compare two checkpoints for differences
+    - Automatic cleanup of old checkpoints
+    - Persistent storage with snapshot directories
+  - `Grader` class for multi-type code evaluation
+    - Four grader types: unit_test, integration_test, linter, security
+    - Grade levels: pass, fail, warning, skip
+    - pass@k metric for evaluating multiple candidate solutions
+    - Statistics tracking and summary reports
+  - Design document: `docs/verification-loop-design.md`
+  - 34 unit tests for CheckpointManager and Grader
+- **Token Optimization System**: Reduce token consumption and improve response speed
+  - `TokenOptimizer` class for prompt analysis and optimization
+    - Token estimation for English/Chinese mixed text
+    - Redundancy detection and removal
+    - Whitespace compression
+    - Selective section loading
+  - `ModelSelector` class for intelligent model selection
+    - Task complexity evaluation (simple/medium/complex)
+    - Keyword-based scoring system
+    - Automatic model recommendation with fallback chain
+    - Usage statistics tracking
+  - `BackgroundTaskManager` class for long-running operations
+    - Priority-based task queue (low/normal/high/critical)
+    - Task status tracking (pending/running/completed/failed/cancelled)
+    - Task cancellation support
+    - Automatic cleanup of old tasks
+    - Thread-safe operations with persistent storage
+  - Design document: `docs/token-optimization-design.md`
+  - 46 unit tests covering all three modules
 - **Instinct Learning System**: Automatic pattern extraction from sessions
   - `vibe instinct` command with 6 subcommands (learn, learn-eval, status, export, import, evolve)
   - `InstinctManager` class for pattern CRUD, confidence scoring, and team sharing

@@ -3,6 +3,7 @@
 require_relative "platform_utils"
 require_relative "user_interaction"
 require_relative "superpowers_installer"
+require_relative "gstack_installer"
 
 module Vibe
   module IntegrationManager
@@ -117,6 +118,32 @@ module Vibe
         end
       end
 
+      if missing.include?(:gstack)
+        puts
+        puts "⚠️  gstack Skill Pack not detected"
+        puts "   gstack provides a virtual engineering team: product thinking, code review,"
+        puts "   browser QA, release automation, and safety guardrails."
+        puts
+        puts "   Repository: https://github.com/garrytan/gstack"
+        puts
+
+        if interactive
+          if ask_yes_no("Would you like to install gstack now?")
+            success = install_gstack_auto(platform)
+            if success
+              puts
+              verify_gstack_install(platform)
+            else
+              puts "   ❌ Installation failed"
+            end
+          end
+        else
+          puts "   (Run in an interactive terminal to install automatically)"
+          puts "   Manual: git clone https://github.com/garrytan/gstack.git ~/.claude/skills/gstack"
+          puts "           cd ~/.claude/skills/gstack && ./setup"
+        end
+      end
+
       puts
     end
 
@@ -167,6 +194,24 @@ module Vibe
         puts "   ✓ Verification passed"
         puts "   Location: #{result[:location]}"
         puts "   Skills: #{result[:skills_count]} found"
+      else
+        puts "   ⚠ Verification issues:"
+        result[:issues].each { |issue| puts "     - #{issue}" }
+      end
+    end
+
+    def install_gstack_auto(platform)
+      GstackInstaller.install_gstack(platform)
+    end
+
+    def verify_gstack_install(platform)
+      result = GstackInstaller.verify_installation(platform)
+      if result[:success]
+        puts "   ✓ Verification passed"
+        puts "   Location: #{result[:location]}"
+        puts "   Version: #{result[:version]}"
+        puts "   Skills: #{result[:skills_count]} found"
+        puts "   Browser: #{result[:browse_ready] ? 'Ready' : 'Not built (run setup with Bun)'}"
       else
         puts "   ⚠ Verification issues:"
         result[:issues].each { |issue| puts "     - #{issue}" }
