@@ -49,6 +49,98 @@ adapted_skills:
     mode: suggest
     adapted_at: '2026-03-13T14:05:52+0800'
     adapted_by: user_choice
+  instinct-learning:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/office-hours:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/plan-ceo-review:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/plan-eng-review:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/plan-design-review:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/design-consultation:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/review:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/design-review:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/codex:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/investigate:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/qa:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/qa-only:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/browse:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/setup-browser-cookies:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/ship:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/document-release:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/retro:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/careful:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/freeze:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/guard:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  gstack/unfreeze:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  riper-workflow:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
+  using-git-worktrees:
+    mode: suggest
+    adapted_at: '2026-03-20T13:23:10+0800'
+    adapted_by: user_choice
 skipped_skills: []
 installed_packs: {}
-last_checked: '2026-03-13T14:05:52+0800'
+last_checked: '2026-03-20T13:23:10+0800'

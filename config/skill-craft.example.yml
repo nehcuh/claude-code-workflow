@@ -1,0 +1,83 @@
+# Skill Craft Configuration
+# Copy this file to ~/.claude/config/skill-craft.yaml and customize
+
+skill-craft:
+  # Trigger settings - when to prompt user for skill crafting
+  triggers:
+    # Prompt after N sessions since last skill-craft
+    accumulation_threshold: 10
+    
+    # Days between periodic reviews
+    periodic_interval: 7
+    
+    # Which day of week for periodic review (0=Sunday, 6=Saturday)
+    periodic_day: 5  # Friday
+    
+    # Detect project completion (git merge/push to main)
+    project_completion: true
+    
+    # Maximum prompts per day (avoid spamming)
+    max_prompts_per_day: 2
+    
+    # Quiet hours - no prompts during these times (24h format)
+    quiet_hours_start: 22  # 10 PM
+    quiet_hours_end: 8     # 8 AM
+
+  # Pattern detection settings
+  detection:
+    # Minimum occurrences to consider a pattern
+    min_occurrences: 3
+    
+    # Minimum success rate (0.0-1.0)
+    min_success_rate: 0.7
+    
+    # Number of recent sessions to scan
+    scan_recent_sessions: 20
+    
+    # Minimum pattern score to present to user
+    min_pattern_score: 0.5
+    
+    # Tags to prioritize (optional)
+    priority_tags:
+      - debugging
+      - workflow
+      - testing
+
+  # Skill generation settings
+  generation:
+    # Require manual approval before registering skills
+    auto_register: false
+    
+    # Directory to save personal skills (relative to ~/.claude/skills/)
+    skill_directory: personal
+    
+    # Include examples from actual sessions
+    include_examples: true
+    
+    # Maximum examples per skill
+    max_examples: 3
+    
+    # Default skill version for generated skills
+    default_version: "1.0.0"
+
+  # Notification settings
+  notifications:
+    # Enable/disable all skill-craft notifications
+    enabled: true
+    
+    # Notification style: full, compact, minimal
+    style: compact
+    
+    # Show pattern preview in notifications
+    show_preview: true
+
+  # Integration settings
+  integration:
+    # Mark instincts as "evolved" when converted to skills
+    mark_instincts_evolved: true
+    
+    # Update session-end to include skill-craft hints
+    session_end_hints: true
+    
+    # Share skills with team (experimental)
+    team_sharing: false

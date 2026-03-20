@@ -8,6 +8,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Skill Craft System** (2026-03-20)
+  - `skills/skill-craft/SKILL.md` — craft personal skills from session history
+  - Multi-trigger mechanism: project completion, session accumulation, periodic review
+  - Pattern detection: scan → identify → cluster → rank workflow
+  - Personal skill generation with preview and auto-registration
+  - `config/skill-craft.example.yml` — user configuration template
+  - **Phase 7 Core Implementation** (2026-03-20)
+  - `lib/vibe/session_analyzer.rb` — session history analyzer (195 lines)
+  - `lib/vibe/skill_generator.rb` — skill generator from patterns (159 lines)
+  - `lib/vibe/trigger_manager.rb` — trigger mechanism manager (160 lines)
+- **Security & Quality Hooks** (2026-03-20)
+  - `hooks/parry-scan.rb` — prompt injection and security risk detector
+    - 6 threat categories: prompt_injection, system_leak, data_extraction, command_injection, filesystem_danger, obfuscation
+    - Risk levels: critical, high, medium, low
+    - Whitelist support for safe patterns
+  - `hooks/tdd-guard.rb` — test-driven development enforcement
+    - Source-to-test file mapping
+    - Coverage threshold checking
+    - Strict/loose mode configuration
+  - `config/tdd-guard.example.yml` — TDD guard configuration template
+- **Session-End Enhancement** (2026-03-20)
+  - Added Step 8: Skill Craft Trigger in `skills/session-end/SKILL.md`
+  - Automatic skill crafting prompts based on triggers
+- **gstack Skill Pack Integration**
+  - `core/integrations/gstack.yaml` — full skill pack definition with 21 skills across 7 sprint phases
+  - `gstack` namespace in `core/skills/registry.yaml` with trigger modes (suggest/manual)
+  - `GstackInstaller` — auto-clone from GitHub (Gitee mirror fallback), run setup, verify installation
+  - Detection logic in `lib/vibe/external_tools.rb` — checks `~/.claude/skills/gstack`, `.claude/skills/gstack`, and `~/.config/opencode/skills/gstack`
+  - Integration manager auto-installs gstack during `vibe init` (interactive clone + setup + verification)
+  - Integration verifier displays gstack status (version, location, skills count, browse readiness with Bun check)
+  - Trigger rules in `rules/skill-triggers.md` with overlap documentation for builtin skills
+  - 18 integration tests with 320 assertions
+  - Sprint pipeline coverage: Think → Plan → Build → Review → Test → Ship → Reflect
+  - Complements builtin skills (memory, verification, session-end) with product thinking, browser QA, and release automation
 - **Community Best Practices Integration** (Phase 6)
   - `SecurityScanner` — lightweight prompt-injection and jailbreak detector
     - 5 rule categories: system_prompt_leak (critical), role_hijack, instruction_injection, privilege_escalation (high), indirect_injection (medium)

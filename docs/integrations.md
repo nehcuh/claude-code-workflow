@@ -89,11 +89,51 @@ This configures a hook in `~/.claude/settings.json` to transparently intercept c
 
 **Configuration**: `core/integrations/rtk.yaml`
 
+### gstack Skill Pack
+
+**Purpose**: Virtual engineering team as slash commands — product thinking, code review, browser QA, release automation, and safety guardrails. Structured as a sprint pipeline: Think → Plan → Build → Review → Test → Ship → Reflect.
+
+**Author**: Garry Tan (@garrytan) | **License**: MIT
+
+**Installation**:
+- Automatic: `bin/vibe init` detects and offers to install gstack (clone + setup + verification)
+- Claude Code: `git clone https://github.com/garrytan/gstack.git ~/.claude/skills/gstack && cd ~/.claude/skills/gstack && ./setup`
+- Project-level: `cp -Rf ~/.claude/skills/gstack .claude/skills/gstack && cd .claude/skills/gstack && ./setup`
+- Requires: Bun v1.0+ (for `/browse` browser skills; other skills work without Bun)
+- China mirror: Gitee fallback is used automatically when GitHub is unreachable
+
+**Portable skill IDs exposed by this workflow**:
+- `gstack/office-hours` - Product brainstorming with forcing questions
+- `gstack/plan-ceo-review` - CEO/founder perspective review
+- `gstack/plan-eng-review` - Engineering architecture review
+- `gstack/plan-design-review` - Design review with ratings
+- `gstack/design-consultation` - Complete design system creation
+- `gstack/review` - Pre-landing PR code review with auto-fixes
+- `gstack/design-review` - Visual design audit with fixes
+- `gstack/codex` - Cross-model second opinion via OpenAI Codex
+- `gstack/investigate` - Root-cause debugging with scope freeze
+- `gstack/qa` - Browser QA in real Chromium
+- `gstack/qa-only` - QA reporting without code changes
+- `gstack/browse` - Headless Chromium browser
+- `gstack/setup-browser-cookies` - Import cookies from real browser
+- `gstack/ship` - Release workflow (tests, PR, push)
+- `gstack/document-release` - Auto-update project docs
+- `gstack/retro` - Weekly retrospective with shipping stats
+- `gstack/careful` - Safety guardrails for destructive commands
+- `gstack/freeze` / `gstack/guard` / `gstack/unfreeze` - Edit scope control
+
+**Overlap with builtin skills**:
+- `gstack/investigate` overlaps with builtin `systematic-debugging` (P0 mandatory) — builtin takes precedence by default
+- `gstack/review` complements `verification-before-completion` — gstack reviews code quality, builtin verifies completion evidence
+
+**Configuration**: `core/integrations/gstack.yaml`
+
 ## Integration Architecture
 
 ```
 core/integrations/
 ├── superpowers.yaml    # Skill pack integration config
+├── gstack.yaml         # gstack skill pack config
 ├── rtk.yaml            # CLI tool integration config
 └── README.md           # This file
 
@@ -266,7 +306,7 @@ Checking your environment...
 
 Checking external integrations...
 
-[1/2] Superpowers Skill Pack
+[1/3] Superpowers Skill Pack
    Status: Not installed
    Would you like to install? [Y/n]: y
 
@@ -274,12 +314,21 @@ Checking external integrations...
    /plugin marketplace add obra/superpowers-marketplace
    /plugin install superpowers@superpowers-marketplace
 
-[2/2] RTK (Token Optimizer)
+[2/3] RTK (Token Optimizer)
    Status: Not installed
    Would you like to install? [Y/n]: y
    Installing via Homebrew...
    ✓ RTK installed (version 0.x.x)
    ✓ Hook configured
+
+[3/3] gstack Skill Pack
+   Status: Not installed
+   Would you like to install? [Y/n]: y
+   Cloning gstack repository...
+   ✓ Cloned successfully from https://github.com/garrytan/gstack.git
+   Running gstack setup...
+   ✅ gstack installed successfully!
+   Location: ~/.claude/skills/gstack
 
 Configuration complete! 🎉
 ```
@@ -314,6 +363,13 @@ Verifying integrations...
     Hook: Configured
     Status: Ready
 
+[✓] gstack
+    Location: ~/.claude/skills/gstack
+    Version: 1.1.0
+    Skills: 15 detected
+    Browser: Ready
+    Status: Ready
+
 All integrations verified! 🎉
 ```
 
@@ -327,6 +383,48 @@ $ bin/vibe init --verify
     Hook: Configured
     Status: Hook configured, but RTK binary was not found
 ```
+
+## Skill Selection Guide
+
+When multiple skill packs provide similar capabilities, use this priority order:
+
+### Review & Verification
+
+| Scenario | Recommended Skill | Why |
+|----------|-------------------|-----|
+| Before claiming task completion | `verification-before-completion` (builtin) | P0 mandatory — ensures evidence exists |
+| Pre-landing PR review | `gstack/review` | Suggest mode — catches security/architecture issues |
+| Deep code quality audit | `superpowers/review` | Manual — comprehensive checks when time permits |
+
+**Rule**: Always run verification-before-completion; use gstack/review for PRs; use superpowers/review for major refactors.
+
+### Debugging
+
+| Scenario | Recommended Skill | Why |
+|----------|-------------------|-----|
+| Root cause analysis | `systematic-debugging` (builtin) | P0 mandatory — structured 5-phase process |
+| Quick investigation with scope lock | `gstack/investigate` | Suggest alternative — auto-freeze prevents drift |
+
+**Rule**: Builtin takes precedence; gstack/investigate if you need scope lock.
+
+### Session Management
+
+| Scenario | Recommended Skill | Why |
+|----------|-------------------|-----|
+| End of session cleanup | `session-end` (builtin) | P0 mandatory — memory flush protocol |
+| Weekly team retrospective | `gstack/retro` | Manual — stats and shipping streaks |
+
+**Rule**: These complement — session-end every session, retro weekly.
+
+### Browser QA
+
+| Skill | When to Use | Requirements |
+|-------|-------------|--------------|
+| `gstack/qa` | End-to-end testing with fixes | Bun installed |
+| `gstack/qa-only` | Bug reporting without changes | Bun installed |
+| `gstack/browse` | Manual browser inspection | Bun installed |
+
+**Note**: gstack browser skills require Bun v1.0+. If Bun unavailable, use manual testing.
 
 ## Troubleshooting
 
@@ -364,6 +462,73 @@ If multiple tools provide similar functionality:
 4. **Test in isolation**: Verify each integration works independently
 5. **Review security**: External tools may require additional permissions
 
+## Hooks
+
+Vibe ships two standalone hook scripts in `hooks/`. They are **not enabled by default** — install them manually based on your needs.
+
+### parry-scan.rb — Claude Code Pre-Tool-Use Hook
+
+Scans user input for prompt injection, system-prompt leakage attempts, and other security patterns before Claude processes them.
+
+**Install as a Claude Code hook:**
+
+Claude Code hooks receive tool input as JSON on stdin. The hook reads from stdin automatically when stdin is not a TTY.
+
+```json
+// .claude/settings.json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ruby /path/to/vibe/hooks/parry-scan.rb"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Or call manually:**
+```bash
+ruby hooks/parry-scan.rb "your input text"
+echo "some input" | ruby hooks/parry-scan.rb
+```
+
+Exit codes: `0` = safe, `1` = high risk, `2` = critical risk.
+
+---
+
+### tdd-guard.rb — Git Pre-Commit Hook
+
+Checks that source file changes are accompanied by test files. Warns (or blocks in strict mode) commits that lack test coverage.
+
+**Install as a git pre-commit hook:**
+
+```bash
+cp hooks/tdd-guard.rb .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+**Configure via `.tdd-guard.yml` in your project root** (see `config/tdd-guard.example.yml`):
+
+```yaml
+strict_mode: false    # true = block commit, false = warn only
+min_coverage: 80.0
+```
+
+**Or call manually:**
+```bash
+ruby hooks/tdd-guard.rb                     # audit changed files (git diff --cached)
+ruby hooks/tdd-guard.rb path/to/file.rb     # check a specific file
+```
+
+---
+
 ## Security Considerations
 
 - **Skill Packs**: Review skills before enabling auto-triggers
@@ -386,4 +551,5 @@ https://github.com/nehcuh/vibesop/issues
 
 For more information:
 - Superpowers: https://github.com/obra/superpowers
+- gstack: https://github.com/garrytan/gstack
 - RTK: https://github.com/rtk-ai/rtk

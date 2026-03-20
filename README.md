@@ -57,6 +57,18 @@ Claude Code is powerful out of the box, but without structure it becomes a smart
 
 ### Recent Improvements (2026-03)
 
+- **🛠️ Skill Craft System**: Generate personal reusable skills from your own session history
+  - `vibe skill-craft` — Interactive session: analyze → select patterns → generate skills
+  - `vibe skill-craft analyze` — Detect recurring tool sequences, error-recovery flows, and workflows
+  - `vibe skill-craft generate --pattern <id> [--force]` — Generate a skill from a detected pattern
+  - `vibe skill-craft status` — View session count and last review date
+  - Auto-saves to `~/.claude/skills/personal/`
+- **🔧 gstack Integration**: Virtual engineering team as pluggable skill pack
+  - 21 skills across 7 sprint phases (Think → Plan → Build → Review → Test → Ship → Reflect)
+  - Auto-detected during `vibe init`, trigger rules generated in `skill-triggers.md`
+  - Browser QA, cross-model review, release automation, safety guardrails
+  - Complements builtin skills — gstack handles product/review/ship, VibeSOP handles memory/verification/session
+  - Auto-install via `vibe init` or manual: `git clone https://github.com/garrytan/gstack.git ~/.claude/skills/gstack`
 - **🔀 Parallelization Enhancement**: Git worktrees + cascade execution
   - `vibe worktree create/list/finish/remove/cleanup` — isolated task branches
   - `vibe cascade run/plan <config.yaml>` — dependency-ordered parallel pipelines
