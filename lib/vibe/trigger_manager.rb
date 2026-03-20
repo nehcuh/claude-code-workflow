@@ -36,11 +36,9 @@ module Vibe
     def load_state
       return { "version" => "1.0", "last_review" => nil, "session_count" => 0 } unless File.exist?(@state_file)
 
-      
-      FileUtils.mkdir_p(File.dirname(@state_file))
-      {}
-      
       YAML.safe_load(File.read(@state_file))
+    rescue StandardError
+      { "version" => "1.0", "last_review" => nil, "session_count" => 0 }
     end
 
     def save_state
@@ -107,15 +105,17 @@ module Vibe
     end
 
     def accumulation_message
-      sessions = @state["session_count"]
+      sessions = @state["session_count"] || 0
+      threshold = @config.dig("triggers", "accumulation_threshold") || 10
       <<~MSG
         📊 Session Milestone
         
-        Sessions completed: #{sessions} (threshold: #{@config.dig("triggers", "accumulation_threshold")})
+        Sessions completed: #{sessions} (threshold: #{threshold})
         
         Consider crafting personal skills from your successful patterns.
         
-        Run `/skill-craft` to review and      MSG
+        Run `/skill-craft` to review and extract patterns.
+      MSG
     end
 
     def periodic_message
