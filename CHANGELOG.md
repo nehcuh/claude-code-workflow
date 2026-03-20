@@ -12,9 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `core/integrations/gstack.yaml` — full skill pack definition with 21 skills across 7 sprint phases
   - `gstack` namespace in `core/skills/registry.yaml` with trigger modes (suggest/manual)
   - `GstackInstaller` — auto-clone from GitHub (Gitee mirror fallback), run setup, verify installation
-  - Detection logic in `lib/vibe/external_tools.rb` — checks `~/.claude/skills/gstack` and `.claude/skills/gstack`
+  - Detection logic in `lib/vibe/external_tools.rb` — checks `~/.claude/skills/gstack`, `.claude/skills/gstack`, and `~/.config/opencode/skills/gstack`
   - Integration manager auto-installs gstack during `vibe init` (interactive clone + setup + verification)
-  - Integration verifier displays gstack status (version, location, skills count, browse readiness)
+  - Integration verifier displays gstack status (version, location, skills count, browse readiness with Bun check)
   - Trigger rules in `rules/skill-triggers.md` with overlap documentation for builtin skills
   - 18 integration tests with 320 assertions
   - Sprint pipeline coverage: Think → Plan → Build → Review → Test → Ship → Reflect

@@ -384,6 +384,48 @@ $ bin/vibe init --verify
     Status: Hook configured, but RTK binary was not found
 ```
 
+## Skill Selection Guide
+
+When multiple skill packs provide similar capabilities, use this priority order:
+
+### Review & Verification
+
+| Scenario | Recommended Skill | Why |
+|----------|-------------------|-----|
+| Before claiming task completion | `verification-before-completion` (builtin) | P0 mandatory — ensures evidence exists |
+| Pre-landing PR review | `gstack/review` | Suggest mode — catches security/architecture issues |
+| Deep code quality audit | `superpowers/review` | Manual — comprehensive checks when time permits |
+
+**Rule**: Always run verification-before-completion; use gstack/review for PRs; use superpowers/review for major refactors.
+
+### Debugging
+
+| Scenario | Recommended Skill | Why |
+|----------|-------------------|-----|
+| Root cause analysis | `systematic-debugging` (builtin) | P0 mandatory — structured 5-phase process |
+| Quick investigation with scope lock | `gstack/investigate` | Suggest alternative — auto-freeze prevents drift |
+
+**Rule**: Builtin takes precedence; gstack/investigate if you need scope lock.
+
+### Session Management
+
+| Scenario | Recommended Skill | Why |
+|----------|-------------------|-----|
+| End of session cleanup | `session-end` (builtin) | P0 mandatory — memory flush protocol |
+| Weekly team retrospective | `gstack/retro` | Manual — stats and shipping streaks |
+
+**Rule**: These complement — session-end every session, retro weekly.
+
+### Browser QA
+
+| Skill | When to Use | Requirements |
+|-------|-------------|--------------|
+| `gstack/qa` | End-to-end testing with fixes | Bun installed |
+| `gstack/qa-only` | Bug reporting without changes | Bun installed |
+| `gstack/browse` | Manual browser inspection | Bun installed |
+
+**Note**: gstack browser skills require Bun v1.0+. If Bun unavailable, use manual testing.
+
 ## Troubleshooting
 
 ### Superpowers Not Detected

@@ -343,6 +343,11 @@ class VibeCLI
     end
     puts
 
+    # Check skill conflicts
+    puts "Skill conflict check:"
+    check_skill_conflicts
+    puts
+
     # Check project skill configuration
     puts "Project skill configuration:"
     check_project_skills_status
@@ -402,6 +407,66 @@ class VibeCLI
     end
   rescue StandardError => e
     puts "  ⚠️  Error checking skills: #{e.message}"
+  end
+
+  # Check for overlapping skills across packs that may confuse users
+  def check_skill_conflicts
+    status = integration_status
+    installed_packs = []
+    installed_packs << :superpowers if status[:superpowers]&.dig(:installed)
+    installed_packs << :gstack if status[:gstack]&.dig(:installed)
+
+    if installed_packs.empty?
+      puts "  ℹ️  No external skill packs installed"
+      puts "     Install Superpowers or gstack for enhanced workflows"
+      return
+    end
+
+    puts "  Installed packs: #{installed_packs.map(&:to_s).join(', ')}"
+
+    # Define overlapping skill groups
+    overlaps = {
+      "Review/Verification" => {
+        builtin: "verification-before-completion (P0 mandatory)",
+        gstack: "gstack/review (P1 suggest)",
+        superpowers: "superpowers/review (P2 manual)"
+      },
+      "Debugging" => {
+        builtin: "systematic-debugging (P0 mandatory)",
+        gstack: "gstack/investigate (P1 suggest)"
+      },
+      "Session/Retrospective" => {
+        builtin: "session-end (P0 mandatory)",
+        gstack: "gstack/retro (manual)"
+      }
+    }
+
+    conflicts_found = false
+    overlaps.each do |category, skills|
+      applicable = skills.select { |pack, _|
+        pack == :builtin || installed_packs.include?(pack)
+      }
+
+      if applicable.length > 1
+        conflicts_found = true
+        puts
+        puts "  ⚠️  #{category}: multiple skills available"
+        applicable.each do |pack, skill|
+          priority = skill.match(/\(P\d/)&.to_s || "(optional)"
+          puts "     • #{skill}"
+        end
+        puts "     → Priority: #{applicable[:builtin] ? 'builtin mandatory first' : applicable.values.first}"
+      end
+    end
+
+    unless conflicts_found
+      puts "  ✅ No conflicts detected"
+    end
+
+    puts
+    puts "  Tip: See docs/integrations.md 'Skill Selection Guide' for usage advice"
+  rescue StandardError => e
+    puts "  ⚠️  Error checking conflicts: #{e.message}"
   end
 
   def usage
