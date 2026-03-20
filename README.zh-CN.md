@@ -42,6 +42,12 @@ VibeSOP fork 自 [runesleo/claude-code-workflow](https://github.com/runesleo/cla
 
 ## 最新更新 (2026-03)
 
+- **🔧 gstack 集成**：虚拟工程团队作为可插拔技能包
+  - 21 个技能覆盖 7 个冲刺阶段（构思 → 规划 → 开发 → 审查 → 测试 → 发布 → 回顾）
+  - `vibe init` 时自动检测，触发规则自动生成到 `skill-triggers.md`
+  - 浏览器 QA、跨模型审查、发布自动化、安全护栏
+  - 与内置技能互补 — gstack 负责产品/审查/发布，VibeSOP 负责记忆/验证/会话
+  - 安装：`git clone https://github.com/garrytan/gstack.git ~/.claude/skills/gstack`
 - **🧠 Instinct 学习系统**：从 session 中自动提取可复用模式
   - `vibe instinct learn` — 提取或手动创建可复用模式
   - `vibe instinct status` — 按置信度分组查看 instinct

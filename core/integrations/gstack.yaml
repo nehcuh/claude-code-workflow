@@ -1,0 +1,209 @@
+schema_version: 1
+name: gstack
+type: skill_pack
+namespace: gstack
+source: https://github.com/garrytan/gstack
+description: Virtual engineering team as slash commands — product thinking, code review, browser QA, release automation, and safety guardrails
+author: Garry Tan (@garrytan)
+license: MIT
+
+installation_methods:
+  claude-code:
+    preferred: git_clone
+    commands:
+      - git clone https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
+      - cd ~/.claude/skills/gstack && ./setup
+    requirements:
+      - Bun v1.0+ (for /browse browser binary)
+    notes: |
+      After install, add a gstack section to CLAUDE.md listing available skills.
+      Project-level install: cp -Rf ~/.claude/skills/gstack .claude/skills/gstack
+
+  opencode:
+    preferred: manual
+    steps:
+      - Clone to ~/.config/opencode/skills/gstack
+      - Run ./setup to build browser binary
+      - Reference skills in AGENTS.md
+    notes: OpenCode can load gstack skills via instruction references
+
+  manual:
+    steps:
+      - git clone https://github.com/garrytan/gstack.git <skills-dir>/gstack
+      - cd <skills-dir>/gstack && ./setup
+      - Register namespace in core/skills/registry.yaml
+    notes: Requires Bun for /browse; other skills are pure markdown
+
+detection:
+  paths:
+    - ~/.claude/skills/gstack
+    - .claude/skills/gstack
+  verification:
+    method: check_skill_dir
+    marker_files:
+      - SKILL.md
+      - VERSION
+      - setup
+
+# Sprint workflow: Think → Plan → Build → Review → Test → Ship → Reflect
+# Each skill's output feeds into the next skill's input (implicit pipeline)
+
+skills:
+  # === Think phase ===
+  - id: office-hours
+    registry_id: gstack/office-hours
+    intent: Product brainstorming with forcing questions — reframes problems before code is written
+    trigger_context: When brainstorming a new idea, exploring whether something is worth building, or starting a new feature from scratch
+
+  # === Plan phase ===
+  - id: plan-ceo-review
+    registry_id: gstack/plan-ceo-review
+    intent: CEO/founder perspective review — find the 10-star product hiding in the request
+    trigger_context: When reviewing a plan from product/strategy perspective, or challenging scope and ambition level
+
+  - id: plan-eng-review
+    registry_id: gstack/plan-eng-review
+    intent: Engineering architecture review with diagrams, edge cases, and test plans
+    trigger_context: When reviewing a plan from architecture perspective, locking data flow and failure modes
+
+  - id: plan-design-review
+    registry_id: gstack/plan-design-review
+    intent: Design review with 0-10 ratings per dimension and AI slop detection
+    trigger_context: When reviewing a plan from design/UX perspective
+
+  - id: design-consultation
+    registry_id: gstack/design-consultation
+    intent: Build a complete design system — research landscape, propose creative risks, generate mockups
+    trigger_context: When creating a design system from scratch or making major design decisions
+
+  # === Build phase (no gstack skill — user codes with AI) ===
+
+  # === Review phase ===
+  - id: review
+    registry_id: gstack/review
+    intent: Pre-landing PR review — SQL safety, LLM trust boundaries, structural issues, auto-fixes
+    trigger_context: When reviewing code before merge, doing pre-landing review, or checking a diff
+
+  - id: design-review
+    registry_id: gstack/design-review
+    intent: Visual design audit with fixes — same audit as plan-design-review but applies changes
+    trigger_context: When auditing visual design of implemented code and applying fixes
+
+  - id: codex
+    registry_id: gstack/codex
+    intent: Cross-model second opinion via OpenAI Codex CLI — independent review from a different AI
+    trigger_context: When wanting adversarial code review or a second opinion from a different model
+
+  # === Debug phase ===
+  - id: investigate
+    registry_id: gstack/investigate
+    intent: Systematic root-cause debugging with auto-freeze scope boundary
+    trigger_context: When debugging errors or unexpected behavior (note — builtin systematic-debugging equivalent exists)
+
+  # === Test phase ===
+  - id: qa
+    registry_id: gstack/qa
+    intent: Browser QA — test app in real Chromium, find bugs, fix with atomic commits, generate regression tests
+    trigger_context: When testing a web app end-to-end, verifying a deployment, or dogfooding a feature
+
+  - id: qa-only
+    registry_id: gstack/qa-only
+    intent: QA reporting without code changes — pure bug report from browser testing
+    trigger_context: When wanting a QA bug report without automatic fixes
+
+  - id: browse
+    registry_id: gstack/browse
+    intent: Headless Chromium browser — navigate, click, screenshot, assert element states (~100ms per command)
+    trigger_context: When needing browser interaction for testing, screenshots, or page inspection
+
+  - id: setup-browser-cookies
+    registry_id: gstack/setup-browser-cookies
+    intent: Import cookies from real browser (Chrome, Arc, Brave, Edge) into headless session
+    trigger_context: When testing authenticated pages that require login cookies
+
+  # === Ship phase ===
+  - id: ship
+    registry_id: gstack/ship
+    intent: Release workflow — sync main, run tests, audit coverage, push, open PR
+    trigger_context: When ready to ship, deploy, create a PR, or merge and push
+
+  - id: document-release
+    registry_id: gstack/document-release
+    intent: Auto-update all project docs to match what was just shipped
+    trigger_context: After shipping a release, when docs may have drifted from code
+
+  # === Reflect phase ===
+  - id: retro
+    registry_id: gstack/retro
+    intent: Team-aware weekly retrospective with per-person breakdowns and shipping streaks
+    trigger_context: When doing a weekly retrospective or reviewing team shipping velocity
+
+  # === Safety tools ===
+  - id: careful
+    registry_id: gstack/careful
+    intent: Safety guardrails — warns before destructive commands (rm -rf, DROP TABLE, force-push)
+    trigger_context: When working with production systems or running potentially destructive operations
+
+  - id: freeze
+    registry_id: gstack/freeze
+    intent: Edit scope lock — restrict file edits to one directory during debugging
+    trigger_context: When wanting to prevent accidental edits outside a specific module
+
+  - id: guard
+    registry_id: gstack/guard
+    intent: Maximum safety — careful + freeze combined
+    trigger_context: When working on production or sensitive code requiring maximum safety
+
+  - id: unfreeze
+    registry_id: gstack/unfreeze
+    intent: Remove edit scope lock set by /freeze
+    trigger_context: When done debugging and ready to remove edit restrictions
+
+  - id: gstack-upgrade
+    registry_id: gstack/upgrade
+    intent: Self-updater — upgrade gstack to latest version
+    trigger_context: When upgrading gstack or checking for updates
+
+integration:
+  auto_enable: ask_user
+  priority: P1
+  fallback_strategy: use_builtin_equivalent
+
+  registry_update:
+    file: core/skills/registry.yaml
+    action: append_namespace
+    namespace_config:
+      owner: external_skill_pack
+      default_trust: review_required
+      purpose: Virtual engineering team with role-based skills and browser QA
+
+compatibility:
+  min_claude_code_version: "0.1.0"
+  external_requirements:
+    - name: Bun
+      version: ">=1.0.0"
+      required_for: /browse, /qa, /qa-only browser skills
+      optional: true
+      note: Other skills work without Bun
+
+  conflicts:
+    - name: builtin:systematic-debugging
+      resolution: prefer_builtin_default
+      note: gstack/investigate adds freeze-scope but builtin is P0 mandatory; user can override via overlay
+
+  complements:
+    - name: builtin:verification-before-completion
+      note: gstack/review provides deeper code review; verification-before-completion ensures completion evidence
+    - name: builtin:session-end
+      note: gstack/retro provides team-level retrospective; session-end handles per-session memory flush
+    - name: superpowers/tdd
+      note: gstack/qa adds browser-level testing on top of unit-level TDD
+
+benefits:
+  - Product thinking before code (office-hours, plan-ceo-review)
+  - Real browser QA testing with Chromium (qa, browse)
+  - Cross-model code review via Codex (codex)
+  - End-to-end release automation (ship, document-release)
+  - Safety guardrails for production work (careful, freeze, guard)
+  - Design-aware development workflow (design-consultation, design-review)
+  - Sprint-structured skill pipeline (Think → Plan → Build → Review → Test → Ship → Reflect)

@@ -130,3 +130,57 @@ The following portable Superpowers skills are available for on-demand invocation
 
 **Security**: All Superpowers skills have been reviewed and are considered safe for use.
 See `core/integrations/superpowers.yaml` for full skill definitions.
+
+## gstack Skill Pack Integration
+
+**Status**: Conditional (detected at `~/.claude/skills/gstack`)
+
+gstack provides a virtual engineering team as slash commands, structured as a sprint pipeline:
+**Think → Plan → Build → Review → Test → Ship → Reflect**
+
+| Portable skill | Trigger mode | Phase | Description |
+|----------------|--------------|-------|-------------|
+| `gstack/office-hours` | `suggest` | Think | Product brainstorming — reframes problems before code is written |
+| `gstack/plan-ceo-review` | `suggest` | Plan | CEO/founder perspective — find the 10-star product in the request |
+| `gstack/plan-eng-review` | `suggest` | Plan | Architecture review with diagrams, edge cases, test plans |
+| `gstack/plan-design-review` | `manual` | Plan | Design review with 0-10 ratings and AI slop detection |
+| `gstack/design-consultation` | `manual` | Plan | Build a complete design system from scratch |
+| `gstack/review` | `suggest` | Review | Pre-landing PR review — SQL safety, trust boundaries, auto-fixes |
+| `gstack/design-review` | `manual` | Review | Visual design audit with fixes |
+| `gstack/codex` | `manual` | Review | Cross-model second opinion via OpenAI Codex CLI |
+| `gstack/investigate` | `suggest` | Debug | Root-cause debugging with auto-freeze scope (builtin equivalent exists) |
+| `gstack/qa` | `suggest` | Test | Browser QA in real Chromium — find bugs, fix, generate regression tests |
+| `gstack/qa-only` | `manual` | Test | QA reporting without code changes |
+| `gstack/browse` | `manual` | Test | Headless Chromium browser (~100ms per command) |
+| `gstack/ship` | `suggest` | Ship | Release workflow — tests, coverage audit, PR creation |
+| `gstack/document-release` | `suggest` | Ship | Auto-update project docs to match shipped code |
+| `gstack/retro` | `manual` | Reflect | Weekly retrospective with shipping stats |
+| `gstack/careful` | `suggest` | Safety | Warns before destructive commands |
+| `gstack/freeze` | `manual` | Safety | Edit scope lock to one directory |
+| `gstack/guard` | `manual` | Safety | Maximum safety (careful + freeze) |
+| `gstack/unfreeze` | `manual` | Safety | Remove edit scope lock |
+
+### When to Use gstack Skills
+
+| Scenario | Skill | ❌ NOT when |
+|----------|-------|------------|
+| Brainstorming a new idea or feature<br>头脑风暴新想法或功能 | `gstack/office-hours` | Requirements are already clear and documented |
+| Reviewing a plan from product/strategy angle<br>从产品/战略角度审查方案 | `gstack/plan-ceo-review` | Pure technical implementation detail |
+| Reviewing architecture before implementation<br>实现前审查架构 | `gstack/plan-eng-review` | Simple single-file change |
+| Code review before merge<br>合并前代码审查 | `gstack/review` | Only changed docs/comments |
+| Debugging errors (alternative to builtin)<br>调试错误（builtin 替代方案） | `gstack/investigate` | builtin `systematic-debugging` already active |
+| Testing a web app end-to-end<br>端到端测试 Web 应用 | `gstack/qa` | No web UI to test; pure backend/CLI |
+| Ready to ship / create PR<br>准备发布/创建 PR | `gstack/ship` | Uncommitted experimental changes; tests not passing |
+| After shipping, docs may have drifted<br>发布后文档可能过时 | `gstack/document-release` | No docs in the project |
+| Working with production / destructive ops<br>操作生产环境/破坏性操作 | `gstack/careful` | Local dev environment only |
+
+### Overlap with Builtin Skills
+
+| gstack skill | Builtin equivalent | Resolution |
+|---|---|---|
+| `gstack/investigate` | `systematic-debugging` (P0 mandatory) | Builtin takes precedence; gstack available as alternative if user prefers |
+| `gstack/review` | `verification-before-completion` (P0 mandatory) | Complementary — gstack reviews code quality, builtin verifies completion evidence |
+| `gstack/careful` | P0/P1/P2 safety policy | Complementary — gstack uses hook-based interception, builtin uses policy documents |
+
+**Requirements**: Bun v1.0+ required for `/browse`, `/qa`, `/qa-only` browser skills. Other skills are pure markdown.
+**Security**: Review `core/integrations/gstack.yaml` for full skill definitions. Run skill security audit before first use.

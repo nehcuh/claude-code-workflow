@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **gstack Skill Pack Integration**
+  - `core/integrations/gstack.yaml` — full skill pack definition with 21 skills across 7 sprint phases
+  - `gstack` namespace in `core/skills/registry.yaml` with trigger modes (suggest/manual)
+  - Detection logic in `lib/vibe/external_tools.rb` — checks `~/.claude/skills/gstack` and `.claude/skills/gstack`
+  - Integration manager suggests gstack during `vibe init` when not detected
+  - Integration verifier displays gstack status (version, location, skills count)
+  - Trigger rules in `rules/skill-triggers.md` with overlap documentation for builtin skills
+  - 18 integration tests with 320 assertions
+  - Sprint pipeline coverage: Think → Plan → Build → Review → Test → Ship → Reflect
+  - Complements builtin skills (memory, verification, session-end) with product thinking, browser QA, and release automation
 - **Community Best Practices Integration** (Phase 6)
   - `SecurityScanner` — lightweight prompt-injection and jailbreak detector
     - 5 rule categories: system_prompt_leak (critical), role_hijack, instruction_injection, privilege_escalation (high), indirect_injection (medium)

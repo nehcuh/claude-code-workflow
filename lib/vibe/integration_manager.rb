@@ -117,6 +117,20 @@ module Vibe
         end
       end
 
+      if missing.include?(:gstack)
+        puts
+        puts "⚠️  gstack Skill Pack not detected"
+        puts "   gstack provides a virtual engineering team: product thinking, code review,"
+        puts "   browser QA, release automation, and safety guardrails."
+        puts
+        puts "   Repository: https://github.com/garrytan/gstack"
+        puts "   Install:    git clone https://github.com/garrytan/gstack.git ~/.claude/skills/gstack"
+        puts "               cd ~/.claude/skills/gstack && ./setup"
+        puts
+        puts "   Requires: Bun v1.0+ (for /browse browser skills)"
+        puts
+      end
+
       puts
     end
 

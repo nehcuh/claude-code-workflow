@@ -89,11 +89,49 @@ This configures a hook in `~/.claude/settings.json` to transparently intercept c
 
 **Configuration**: `core/integrations/rtk.yaml`
 
+### gstack Skill Pack
+
+**Purpose**: Virtual engineering team as slash commands — product thinking, code review, browser QA, release automation, and safety guardrails. Structured as a sprint pipeline: Think → Plan → Build → Review → Test → Ship → Reflect.
+
+**Author**: Garry Tan (@garrytan) | **License**: MIT
+
+**Installation**:
+- Claude Code: `git clone https://github.com/garrytan/gstack.git ~/.claude/skills/gstack && cd ~/.claude/skills/gstack && ./setup`
+- Project-level: `cp -Rf ~/.claude/skills/gstack .claude/skills/gstack && cd .claude/skills/gstack && ./setup`
+- Requires: Bun v1.0+ (for `/browse` browser skills; other skills work without Bun)
+
+**Portable skill IDs exposed by this workflow**:
+- `gstack/office-hours` - Product brainstorming with forcing questions
+- `gstack/plan-ceo-review` - CEO/founder perspective review
+- `gstack/plan-eng-review` - Engineering architecture review
+- `gstack/plan-design-review` - Design review with ratings
+- `gstack/design-consultation` - Complete design system creation
+- `gstack/review` - Pre-landing PR code review with auto-fixes
+- `gstack/design-review` - Visual design audit with fixes
+- `gstack/codex` - Cross-model second opinion via OpenAI Codex
+- `gstack/investigate` - Root-cause debugging with scope freeze
+- `gstack/qa` - Browser QA in real Chromium
+- `gstack/qa-only` - QA reporting without code changes
+- `gstack/browse` - Headless Chromium browser
+- `gstack/setup-browser-cookies` - Import cookies from real browser
+- `gstack/ship` - Release workflow (tests, PR, push)
+- `gstack/document-release` - Auto-update project docs
+- `gstack/retro` - Weekly retrospective with shipping stats
+- `gstack/careful` - Safety guardrails for destructive commands
+- `gstack/freeze` / `gstack/guard` / `gstack/unfreeze` - Edit scope control
+
+**Overlap with builtin skills**:
+- `gstack/investigate` overlaps with builtin `systematic-debugging` (P0 mandatory) — builtin takes precedence by default
+- `gstack/review` complements `verification-before-completion` — gstack reviews code quality, builtin verifies completion evidence
+
+**Configuration**: `core/integrations/gstack.yaml`
+
 ## Integration Architecture
 
 ```
 core/integrations/
 ├── superpowers.yaml    # Skill pack integration config
+├── gstack.yaml         # gstack skill pack config
 ├── rtk.yaml            # CLI tool integration config
 └── README.md           # This file
 
@@ -386,4 +424,5 @@ https://github.com/nehcuh/vibesop/issues
 
 For more information:
 - Superpowers: https://github.com/obra/superpowers
+- gstack: https://github.com/garrytan/gstack
 - RTK: https://github.com/rtk-ai/rtk
