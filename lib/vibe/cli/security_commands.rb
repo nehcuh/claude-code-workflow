@@ -5,6 +5,7 @@ require_relative '../tdd_enforcer'
 require_relative '../context_optimizer'
 
 module Vibe
+  # CLI commands for security scanning and TDD enforcement, included in VibeCLI.
   module SecurityCommands
     def run_scan_command(argv)
       subcommand = argv.shift

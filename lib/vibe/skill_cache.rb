@@ -30,9 +30,7 @@ module Vibe
     # @return Cached or freshly loaded data
     def fetch(key, ttl = DEFAULT_TTL)
       @mutex.synchronize do
-        if valid?(key, ttl)
-          return @cache[key]
-        end
+        return @cache[key] if valid?(key, ttl)
 
         data = yield
         @cache[key] = data
@@ -123,7 +121,7 @@ module Vibe
     #
     # @param repo_root [String] Repository root path
     def preload_registry(repo_root)
-      registry_path = File.join(repo_root, "core/skills/registry.yaml")
+      registry_path = File.join(repo_root, 'core/skills/registry.yaml')
       return unless File.exist?(registry_path)
 
       doc = YAML.safe_load(File.read(registry_path), aliases: true)
@@ -176,7 +174,7 @@ module Vibe
       }
 
       fetch(cache_key, 60) do # 1 minute TTL for project config
-        config_path = File.join(project_root, ".vibe/skills.yaml")
+        config_path = File.join(project_root, '.vibe/skills.yaml')
 
         if File.exist?(config_path)
           YAML.safe_load(File.read(config_path), aliases: true) || default_config

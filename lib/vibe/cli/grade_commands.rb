@@ -6,6 +6,7 @@
 require_relative '../grader'
 
 module Vibe
+  # CLI commands for the grader system, included in VibeCLI.
   module GradeCommands
     # Main entry point for 'vibe grade' subcommand
     def run_grade_command(argv)

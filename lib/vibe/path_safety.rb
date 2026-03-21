@@ -88,7 +88,7 @@ module Vibe
 
       raise PathSafetyError.new(
         "Refusing to use #{expanded} as output root: path is too shallow " \
-        "(need at least 2 levels)",
+        '(need at least 2 levels)',
         context: {
           output_path: expanded,
           depth: parts.length,
@@ -141,7 +141,7 @@ module Vibe
       # Prevent stack overflow from extremely deep directory structures
       if depth > PathSafety::MAX_NORMALIZE_DEPTH
         raise PathSafetyError.new(
-          "Path normalization exceeded maximum depth " \
+          'Path normalization exceeded maximum depth ' \
           "(#{PathSafety::MAX_NORMALIZE_DEPTH})",
           context: {
             path: path.to_s,

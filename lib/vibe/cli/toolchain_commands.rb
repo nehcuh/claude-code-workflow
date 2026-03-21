@@ -3,6 +3,7 @@
 require_relative '../toolchain_detector'
 
 module Vibe
+  # CLI commands for toolchain detection, included in VibeCLI.
   module ToolchainCommands
     def run_toolchain_command(argv)
       subcommand = argv.shift

@@ -7,6 +7,7 @@ require_relative '../worktree_manager'
 require_relative '../cascade_executor'
 
 module Vibe
+  # CLI commands for parallel execution (worktrees and cascade), included in VibeCLI.
   module ParallelCommands
     # ── vibe worktree ────────────────────────────────────────────────────────
 

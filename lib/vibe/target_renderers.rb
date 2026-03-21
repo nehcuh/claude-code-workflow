@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "config_driven_renderers"
+require_relative 'config_driven_renderers'
 
 module Vibe
   # Per-target file renderers that write generated output to disk.
@@ -28,9 +28,9 @@ module Vibe
       doc_types.each do |type|
         filename = "#{type.to_s.gsub('_', '-')}.md"
         # Special cases for filenames
-        filename = "behavior-policies.md" if type == :behavior
-        filename = "execution-policy.md" if type == :execution_policy
-        filename = "execution.md" if type == :execution
+        filename = 'behavior-policies.md' if type == :behavior
+        filename = 'execution-policy.md' if type == :execution_policy
+        filename = 'execution.md' if type == :execution
 
         content = case type
                   when :behavior then render_behavior_doc(manifest)
@@ -53,17 +53,17 @@ module Vibe
     # Render Claude Code configuration
     # Now uses configuration-driven rendering for better maintainability
     def render_claude(output_root, manifest, project_level: false)
-      render_platform(output_root, manifest, "claude-code", project_level: project_level)
+      render_platform(output_root, manifest, 'claude-code', project_level: project_level)
     end
 
     # Render OpenCode configuration
     # Now uses configuration-driven rendering for better maintainability
     def render_opencode(output_root, manifest, project_level: false)
-      render_platform(output_root, manifest, "opencode", project_level: project_level)
+      render_platform(output_root, manifest, 'opencode', project_level: project_level)
     end
 
     def render_opencode_project_md(manifest)
-      render_generic_project_md("opencode", manifest)
+      render_generic_project_md('opencode', manifest)
     end
 
     def render_target_entrypoint_md(target_name, manifest, extra_sections: nil)
@@ -74,7 +74,7 @@ module Vibe
       <<~MD
         # Vibe workflow for #{target_name}
 
-        Generated from the portable `core/` spec with profile `#{manifest["profile"]}`.#{integrations}
+        Generated from the portable `core/` spec with profile `#{manifest['profile']}`.#{integrations}
         Applied overlay: #{overlay_sentence(manifest)}
 
         #{target_entrypoint_intent(target_name)}
@@ -85,7 +85,7 @@ module Vibe
 
         ## Capability routing
 
-        #{bullet_mapping(manifest["profile_mapping"])}
+        #{bullet_mapping(manifest['profile_mapping'])}
 
         ## Mandatory portable skills
 
@@ -102,11 +102,11 @@ module Vibe
     private
 
     def render_claude_project_md(manifest)
-      config_dir = platform_config_dir("claude-code")
+      config_dir = platform_config_dir('claude-code')
       <<~MD
         # Project Claude Code Configuration
 
-        Generated from the portable `core/` spec with profile `#{manifest["profile"]}`.
+        Generated from the portable `core/` spec with profile `#{manifest['profile']}`.
         Applied overlay: #{overlay_sentence(manifest)}
 
         Global workflow rules are loaded from `#{config_dir}/`. This file adds project-specific context only.
@@ -131,28 +131,28 @@ module Vibe
 
     def target_entrypoint_intent(target_name)
       case target_name
-      when "OpenCode"
+      when 'OpenCode'
         <<~TEXT.chomp
           Project rules are split into modular instruction files loaded from `opencode.json`.
 
           Keep repository files as the single source of truth, verify before claiming completion, and follow the generated safety policy.
         TEXT
       else
-        "Keep repository files as the SSOT, verify before claiming completion, " \
-          "and follow the generated routing + safety rules."
+        'Keep repository files as the SSOT, verify before claiming completion, ' \
+          'and follow the generated routing + safety rules.'
       end
     end
 
     def superpowers_skill_list
       doc = superpowers_doc
-      Array(doc["skills"]).map { |s| { "id" => s["id"], "intent" => s["intent"] } }
+      Array(doc['skills']).map { |s| { 'id' => s['id'], 'intent' => s['intent'] } }
     rescue Vibe::ConfigurationError, Errno::ENOENT
       []
     end
 
     def format_superpowers_skill_bullets
       skills = superpowers_skill_list
-      return "" if skills.empty?
+      return '' if skills.empty?
 
       skills.map { |s| "- `superpowers/#{s['id']}` — #{s['intent']}" }.join("\n")
     end
@@ -207,8 +207,8 @@ module Vibe
                         INTEGRATION_TEMPLATES[:default]
 
       # Render Superpowers section
-      sections << render_superpowers_integration(target_name, sp_info, skill_bullets, 
-template_config[:superpowers])
+      sections << render_superpowers_integration(target_name, sp_info, skill_bullets,
+                                                 template_config[:superpowers])
 
       # Render RTK section
       sections << render_rtk_integration(target_name, rtk_info, template_config[:rtk])
@@ -224,18 +224,18 @@ template_config[:superpowers])
       if sp_info[:installed]
         render_installed_superpowers(target_name, sp_info, skill_bullets, is_standalone)
       else
-        render_not_installed_superpowers(target_name, skill_bullets, config, 
-is_standalone)
+        render_not_installed_superpowers(target_name, skill_bullets, config,
+                                         is_standalone)
       end
     end
 
     def render_installed_superpowers(_target_name, sp_info, skill_bullets, is_standalone)
-      location = sp_info[:location] || "Unknown"
+      location = sp_info[:location] || 'Unknown'
 
       header = if is_standalone
-        "## Superpowers Skill Pack Integration"
-      else
-        "## Optional Integrations\n\n### Superpowers Skill Pack"
+                 '## Superpowers Skill Pack Integration'
+               else
+                 "## Optional Integrations\n\n### Superpowers Skill Pack"
                end
 
       <<~SP
@@ -248,23 +248,23 @@ is_standalone)
       SP
     end
 
-    def render_not_installed_superpowers(target_name, skill_bullets, config, 
+    def render_not_installed_superpowers(target_name, skill_bullets, config,
                                          is_standalone)
       target_display = " for #{target_name}"
 
       header = if is_standalone
-        "## Optional: Superpowers Skill Pack"
-      else
-        "## Optional Integrations\n\n### Superpowers Skill Pack"
+                 '## Optional: Superpowers Skill Pack'
+               else
+                 "## Optional Integrations\n\n### Superpowers Skill Pack"
                end
 
-      install_note = get_superpowers_install_note(config[:install_note_template], 
-target_name)
+      install_note = get_superpowers_install_note(config[:install_note_template],
+                                                  target_name)
       full_details_note = if config[:show_full_details]
-        "\nSee `core/integrations/superpowers.yaml` for full details."
-      else
-        ""
-      end
+                            "\nSee `core/integrations/superpowers.yaml` for full details."
+                          else
+                            ''
+                          end
 
       <<~SP
         #{header}
@@ -278,7 +278,7 @@ target_name)
         #{install_note}
         ```
 
-        **Available skills#{config[:show_full_details] ? " after installation" : ""}**:
+        **Available skills#{config[:show_full_details] ? ' after installation' : ''}**:
         #{skill_bullets}#{full_details_note}
       SP
     end
@@ -286,6 +286,7 @@ target_name)
     def get_superpowers_install_note(template_key, target_name)
       template = SUPERPOWERS_INSTALL_TEMPLATES[template_key]
       return template.call(target_name) if template.is_a?(Proc)
+
       template
     end
 
@@ -300,26 +301,26 @@ target_name)
     def render_installed_rtk(_target_name, rtk_info, config)
       is_standalone = config[:header_style] == :standalone
 
-      hook_status = rtk_info[:hook_configured] ? "✅ Configured" : "⚠️ Not configured"
+      hook_status = rtk_info[:hook_configured] ? '✅ Configured' : '⚠️ Not configured'
 
       header = if is_standalone
-        "## RTK Token Optimizer"
-      else
-        "### RTK Token Optimizer"
+                 '## RTK Token Optimizer'
+               else
+                 '### RTK Token Optimizer'
                end
 
       config_note = if !rtk_info[:hook_configured]
-        "\n\n**To configure**: Run `rtk init --global`"
-      else
-        ""
-      end
+                      "\n\n**To configure**: Run `rtk init --global`"
+                    else
+                      ''
+                    end
 
       <<~RTK
         #{header}
 
         **Status**: ✅ Installed
         **Hook**: #{hook_status}
-        **Version**: #{rtk_info[:version] || "Unknown"}
+        **Version**: #{rtk_info[:version] || 'Unknown'}
 
         RTK reduces token consumption by 60-90% on common commands.#{config_note}
       RTK
@@ -329,31 +330,31 @@ target_name)
       is_standalone = config[:header_style] == :standalone
 
       header = if is_standalone
-        "## Optional: RTK Token Optimizer"
-      else
-        "### RTK Token Optimizer"
+                 '## Optional: RTK Token Optimizer'
+               else
+                 '### RTK Token Optimizer'
                end
 
       install_cmd = RTK_INSTALL_TEMPLATES[config[:install_template]]
       config_step = "\n\n# Then configure\nrtk init --global"
       generic_note = "\n\n\n**Note**: RTK works best with Claude Code. " \
                      "For #{target_name}, you may need to manually prefix " \
-                     "commands with `rtk`."
+                     'commands with `rtk`.'
 
       benefits_section = if config[:show_benefits]
-        <<~BENEFITS
+                           <<~BENEFITS
 
 
-          **Benefits**:
-          - 60-90% token reduction on command outputs
-          - Less than 10ms overhead per command
-          - Works transparently via hooks
+                             **Benefits**:
+                             - 60-90% token reduction on command outputs
+                             - Less than 10ms overhead per command
+                             - Works transparently via hooks
 
-          See `core/integrations/rtk.yaml` for full details.
-        BENEFITS
-      else
-        generic_note
-      end
+                             See `core/integrations/rtk.yaml` for full details.
+                           BENEFITS
+                         else
+                           generic_note
+                         end
 
       <<~RTK
         #{header}

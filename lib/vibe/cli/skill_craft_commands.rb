@@ -5,6 +5,7 @@ require_relative '../skill_generator'
 require_relative '../trigger_manager'
 
 module Vibe
+  # CLI commands for the skill-craft generation system, included in VibeCLI.
   module SkillCraftCommands
     def run_skill_craft_command(argv)
       subcommand = argv.shift

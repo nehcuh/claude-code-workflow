@@ -134,9 +134,8 @@ module Vibe
     def scan_installed_packs
       return [] unless Dir.exist?(USER_SKILLS_DIR)
 
-      Dir.glob(File.join(USER_SKILLS_DIR, '*')).select do |f|
-        File.directory?(f)
-      end.map do |pack_dir|
+      dirs = Dir.glob(File.join(USER_SKILLS_DIR, '*')).select { |f| File.directory?(f) }
+      dirs.map do |pack_dir|
         pack_name = File.basename(pack_dir)
         {
           name: pack_name,

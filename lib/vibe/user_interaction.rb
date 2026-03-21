@@ -37,7 +37,7 @@ module Vibe
       response = $stdin.gets
       if response.nil?
         raise ValidationError,
-              "Input ended before a response was provided for " \
+              'Input ended before a response was provided for ' \
               "'#{question}'. #{NON_INTERACTIVE_HINT}"
       end
       %w[y yes].include?(response.chomp.downcase)

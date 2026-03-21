@@ -8,6 +8,7 @@ require_relative 'user_interaction'
 require_relative 'platform_utils'
 
 module Vibe
+  # Installer for the Superpowers skill pack (clones repo and links skills).
   module SuperpowersInstaller
     include UserInteraction
     include PlatformUtils
@@ -77,7 +78,7 @@ module Vibe
           puts '   Troubleshooting:'
           puts '   - Check your internet connection'
           puts '   - Check if a firewall is blocking Git'
-          puts "   - Try manual clone: git clone " \
+          puts '   - Try manual clone: git clone ' \
                "#{SUPERPOWERS_REPO_URLS.first} #{shared_dir}"
           return false
         end

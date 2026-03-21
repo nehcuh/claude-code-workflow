@@ -3,28 +3,29 @@
 # CLI commands for instinct learning subsystem
 # These methods are included in VibeCLI class
 
-require_relative "../instinct_manager"
+require_relative '../instinct_manager'
 
 module Vibe
+  # CLI commands for the instinct learning subsystem, included in VibeCLI.
   module InstinctCommands
     # Main entry point for 'vibe instinct' subcommand
     def run_instinct_command(argv)
       subcommand = argv.shift
 
       case subcommand
-      when "learn"
+      when 'learn'
         run_instinct_learn(argv)
-      when "learn-eval"
+      when 'learn-eval'
         run_instinct_learn_eval(argv)
-      when "status"
+      when 'status'
         run_instinct_status(argv)
-      when "export"
+      when 'export'
         run_instinct_export(argv)
-      when "import"
+      when 'import'
         run_instinct_import(argv)
-      when "evolve"
+      when 'evolve'
         run_instinct_evolve(argv)
-      when nil, "help", "--help", "-h"
+      when nil, 'help', '--help', '-h'
         puts instinct_usage
       else
         raise Vibe::ValidationError,
@@ -38,21 +39,21 @@ module Vibe
       manager = InstinctManager.new
 
       puts "\n🧠 Instinct Learning - Pattern Extraction\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
 
       # Load session data from file or stdin
       session_data = load_session_data(options[:file])
 
       if session_data.nil? || session_data.empty?
-        puts "No session data provided."
+        puts 'No session data provided.'
         puts
-        puts "Usage:"
-        puts "  vibe instinct learn --file session-log.yaml"
+        puts 'Usage:'
+        puts '  vibe instinct learn --file session-log.yaml'
         puts "  echo '<yaml>' | vibe instinct learn --stdin"
         puts
-        puts "Or manually create an instinct:"
-        puts "  vibe instinct learn --pattern " \
+        puts 'Or manually create an instinct:'
+        puts '  vibe instinct learn --pattern ' \
              "'Run tests before committing' --tags ruby,testing"
         puts
 
@@ -62,7 +63,7 @@ module Vibe
             pattern: options[:pattern],
             tags: options[:tags] || [],
             context: options[:context],
-            source_sessions: [Time.now.strftime("session-%Y-%m-%d")]
+            source_sessions: [Time.now.strftime('session-%Y-%m-%d')]
           )
           puts "✓ Created instinct: #{instinct['pattern']}"
           puts "  ID: #{instinct['id']}"
@@ -76,7 +77,7 @@ module Vibe
       candidates = extract_patterns(session_data)
 
       if candidates.empty?
-        puts "No patterns found in session data."
+        puts 'No patterns found in session data.'
         return
       end
 
@@ -99,7 +100,7 @@ module Vibe
       manager = InstinctManager.new
 
       # If ID provided, evaluate specific instinct
-      instinct_id = argv.first unless argv.first&.start_with?("--")
+      instinct_id = argv.first unless argv.first&.start_with?('--')
 
       if instinct_id
         instinct = manager.get(instinct_id)
@@ -109,7 +110,7 @@ module Vibe
         end
 
         puts "\n📊 Evaluating Instinct\n"
-        puts "=" * 60
+        puts '=' * 60
         puts
         puts "Pattern: #{instinct['pattern']}"
         puts "Confidence: #{instinct['confidence'].round(2)}"
@@ -124,7 +125,7 @@ module Vibe
       end
 
       # List all active instincts for evaluation
-      instincts = manager.list(status: "active", sort_by: :confidence)
+      instincts = manager.list(status: 'active', sort_by: :confidence)
 
       if instincts.empty?
         puts "No instincts to evaluate. Use 'vibe instinct learn' first."
@@ -132,15 +133,15 @@ module Vibe
       end
 
       puts "\n📊 Instinct Evaluation\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
 
       instincts.each_with_index do |entry, idx|
-        confidence = entry["confidence"].round(2)
+        confidence = entry['confidence'].round(2)
         label = if confidence >= 0.8
-                  "High"
+                  'High'
                 else
-                  confidence >= 0.6 ? "Medium" : "Low"
+                  confidence >= 0.6 ? 'Medium' : 'Low'
                 end
         puts "  #{idx + 1}. [#{label}] #{entry['pattern']} (#{confidence})"
         puts "     Uses: #{entry['usage_count']} | " \
@@ -157,32 +158,32 @@ module Vibe
       filters = {}
       filters[:tags] = [options[:tag]] if options[:tag]
       filters[:min_confidence] = options[:min_confidence] if options[:min_confidence]
-      filters[:status] = options[:all] ? nil : "active"
+      filters[:status] = options[:all] ? nil : 'active'
       filters[:sort_by] = :confidence
       filters[:ascending] = false
 
       instincts = manager.list(filters)
 
       puts "\n📋 Instinct Status\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
 
       if instincts.empty?
-        puts "No instincts found."
+        puts 'No instincts found.'
         puts
         puts "💡 Use 'vibe instinct learn' to extract patterns from your sessions."
         return
       end
 
       # Group by confidence level
-      high = instincts.select { |i| i["confidence"] >= 0.8 }
-      medium = instincts.select { |i| i["confidence"] >= 0.6 && i["confidence"] < 0.8 }
-      low = instincts.select { |i| i["confidence"] < 0.6 }
+      high = instincts.select { |i| i['confidence'] >= 0.8 }
+      medium = instincts.select { |i| i['confidence'] >= 0.6 && i['confidence'] < 0.8 }
+      low = instincts.select { |i| i['confidence'] < 0.6 }
 
       puts "Total: #{instincts.size} instincts\n\n"
 
       if high.any?
-        puts "High Confidence (≥ 0.8):"
+        puts 'High Confidence (≥ 0.8):'
         high.each_with_index do |instinct, idx|
           print_instinct_summary(instinct, idx + 1)
         end
@@ -190,7 +191,7 @@ module Vibe
       end
 
       if medium.any?
-        puts "Medium Confidence (0.6-0.8):"
+        puts 'Medium Confidence (0.6-0.8):'
         medium.each_with_index do |instinct, idx|
           print_instinct_summary(instinct, high.size + idx + 1)
         end
@@ -198,12 +199,12 @@ module Vibe
       end
 
       return unless low.any?
-        puts "Low Confidence (< 0.6):"
-        low.each_with_index do |instinct, idx|
-          print_instinct_summary(instinct, high.size + medium.size + idx + 1)
-        end
-        puts
 
+      puts 'Low Confidence (< 0.6):'
+      low.each_with_index do |instinct, idx|
+        print_instinct_summary(instinct, high.size + medium.size + idx + 1)
+      end
+      puts
     end
 
     # vibe instinct export - Export instincts to file
@@ -211,11 +212,11 @@ module Vibe
       file_path = argv.shift
 
       if file_path.nil?
-        puts "Usage: vibe instinct export <file_path> [options]"
+        puts 'Usage: vibe instinct export <file_path> [options]'
         puts
-        puts "Options:"
-        puts "  --tag TAG              Export instincts with specific tag"
-        puts "  --min-confidence NUM   Export instincts with confidence >= NUM"
+        puts 'Options:'
+        puts '  --tag TAG              Export instincts with specific tag'
+        puts '  --min-confidence NUM   Export instincts with confidence >= NUM'
         return
       end
 
@@ -230,7 +231,7 @@ module Vibe
 
       puts "\n✓ Exported #{count} instincts to #{file_path}"
       puts
-      puts "Share this file with your team!"
+      puts 'Share this file with your team!'
     rescue StandardError => e
       puts "\n✗ Export failed: #{e.message}"
       exit 1
@@ -241,11 +242,11 @@ module Vibe
       file_path = argv.shift
 
       if file_path.nil?
-        puts "Usage: vibe instinct import <file_path> [options]"
+        puts 'Usage: vibe instinct import <file_path> [options]'
         puts
-        puts "Options:"
-        puts "  --overwrite   Overwrite existing instincts"
-        puts "  --merge       Merge usage statistics"
+        puts 'Options:'
+        puts '  --overwrite   Overwrite existing instincts'
+        puts '  --merge       Merge usage statistics'
         return
       end
 
@@ -264,7 +265,7 @@ module Vibe
       stats = manager.import(file_path, merge_strategy)
 
       puts "\n📥 Import Results\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
       puts "  ✓ Imported: #{stats[:imported]} new instincts"
       puts "  ⊘ Skipped: #{stats[:skipped]} duplicates" if (stats[:skipped]).positive?
@@ -282,12 +283,12 @@ module Vibe
       skill_name = argv.shift
 
       if instinct_id.nil?
-        puts "Usage: vibe instinct evolve <instinct_id> [skill_name]"
+        puts 'Usage: vibe instinct evolve <instinct_id> [skill_name]'
         return
       end
 
       puts "\n🚀 Evolving Instinct to Skill\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
 
       manager = InstinctManager.new
@@ -296,9 +297,9 @@ module Vibe
       if result[:success]
         puts "✅ #{result[:message]}"
         puts
-        puts "Next steps:"
+        puts 'Next steps:'
         puts "  1. Edit #{result[:skill_path]} to add detailed instructions"
-        puts "  2. Register in core/skills/registry.yaml if needed"
+        puts '  2. Register in core/skills/registry.yaml if needed'
       else
         puts "✗ #{result[:message]}"
         exit 1
@@ -308,8 +309,8 @@ module Vibe
     private
 
     def print_instinct_summary(instinct, number)
-      confidence = instinct["confidence"].round(2)
-      tags = instinct["tags"].join(", ")
+      confidence = instinct['confidence'].round(2)
+      tags = instinct['tags'].join(', ')
       puts "  #{number}. #{instinct['pattern']} (#{confidence})"
       puts "     Tags: [#{tags}]" unless tags.empty?
       puts "     Usage: #{instinct['usage_count']} times, " \
@@ -321,11 +322,11 @@ module Vibe
 
       while (arg = argv.shift)
         case arg
-        when "--all"
+        when '--all'
           options[:all] = true
-        when "--tag"
+        when '--tag'
           options[:tag] = argv.shift
-        when "--min-confidence"
+        when '--min-confidence'
           options[:min_confidence] = argv.shift.to_f
         end
       end
@@ -338,9 +339,9 @@ module Vibe
 
       while (arg = argv.shift)
         case arg
-        when "--tag"
+        when '--tag'
           options[:tag] = argv.shift
-        when "--min-confidence"
+        when '--min-confidence'
           options[:min_confidence] = argv.shift.to_f
         end
       end
@@ -353,9 +354,9 @@ module Vibe
 
       while (arg = argv.shift)
         case arg
-        when "--overwrite"
+        when '--overwrite'
           options[:overwrite] = true
-        when "--merge"
+        when '--merge'
           options[:merge] = true
         end
       end
@@ -397,15 +398,15 @@ module Vibe
 
       while (arg = argv.shift)
         case arg
-        when "--file"
+        when '--file'
           options[:file] = argv.shift
-        when "--stdin"
+        when '--stdin'
           options[:stdin] = true
-        when "--pattern"
+        when '--pattern'
           options[:pattern] = argv.shift
-        when "--tags"
-          options[:tags] = argv.shift&.split(",")&.map(&:strip)
-        when "--context"
+        when '--tags'
+          options[:tags] = argv.shift&.split(',')&.map(&:strip)
+        when '--context'
           options[:context] = argv.shift
         end
       end
@@ -430,7 +431,7 @@ module Vibe
 
     def extract_patterns(session_data)
       candidates = []
-      tool_calls = session_data["tool_calls"] || session_data[:tool_calls] || []
+      tool_calls = session_data['tool_calls'] || session_data[:tool_calls] || []
 
       return candidates if tool_calls.size < 3
 
@@ -438,7 +439,7 @@ module Vibe
       current_sequence = []
 
       tool_calls.each do |call|
-        success = call["success"] || call[:success]
+        success = call['success'] || call[:success]
 
         if success
           current_sequence << call
@@ -459,16 +460,16 @@ module Vibe
     end
 
     def build_candidate(sequence, session_data)
-      tools = sequence.map { |c| c["tool"] || c[:tool] }.compact
+      tools = sequence.map { |c| c['tool'] || c[:tool] }.compact
       commands = sequence.map do |c|
-  c["command"] || c[:command] || c["tool"] || c[:tool]
-end.compact
+        c['command'] || c[:command] || c['tool'] || c[:tool]
+      end.compact
 
       # Extract tags from context
-      context = session_data["context"] || session_data[:context] || {}
+      context = session_data['context'] || session_data[:context] || {}
       tags = []
-      language = context["language"] || context[:language]
-      framework = context["framework"] || context[:framework]
+      language = context['language'] || context[:language]
+      framework = context['framework'] || context[:framework]
       tags << language if language
       tags << framework if framework
       tags.compact!

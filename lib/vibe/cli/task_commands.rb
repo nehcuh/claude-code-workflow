@@ -6,6 +6,7 @@
 require_relative '../background_task_manager'
 
 module Vibe
+  # CLI commands for background task management, included in VibeCLI.
   module TaskCommands
     # Main entry point for 'vibe tasks' subcommand
     def run_tasks_command(argv)

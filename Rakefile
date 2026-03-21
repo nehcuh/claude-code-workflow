@@ -39,7 +39,7 @@ task :validate do
   # 3. Skill entrypoint paths
   puts "🔍 Checking skill entrypoint paths..."
   registry = YAML.safe_load(File.read("core/skills/registry.yaml"), aliases: true)
-  registry["skills"].select { |s| s["builtin"] }.each do |s|
+  registry["skills"].select { |s| s["namespace"] == "builtin" }.each do |s|
     path = s["entrypoint"]
     abort "Missing entrypoint: #{path}" unless File.exist?(path)
   end

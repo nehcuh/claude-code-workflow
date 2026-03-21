@@ -2,12 +2,13 @@
 
 module Vibe
   # Model selection based on task complexity
+  # TODO: Not wired into any CLI command. Scoring logic exists but is never invoked.
   class ModelSelector
     # Model tier mapping
     MODEL_MAP = {
-      simple: "haiku",
-      medium: "sonnet",
-      complex: "opus"
+      simple: 'haiku',
+      medium: 'sonnet',
+      complex: 'opus'
     }.freeze
 
     # Complexity evaluation rules
@@ -31,9 +32,9 @@ module Vibe
 
     # Model fallback chain (downgrade when current model fails)
     FALLBACK_CHAIN = {
-      "opus" => "sonnet",
-      "sonnet" => "haiku",
-      "haiku" => nil
+      'opus' => 'sonnet',
+      'sonnet' => 'haiku',
+      'haiku' => nil
     }.freeze
 
     attr_reader :stats
@@ -73,13 +74,11 @@ module Vibe
       score += 20 if context[:has_tests]
 
       # Determine complexity level
-      complexity = case score
-                   when 0..50 then :simple
-                   when 51..200 then :medium
-                   else :complex
-                   end
-
-      complexity
+      case score
+      when 0..50 then :simple
+      when 51..200 then :medium
+      else :complex
+      end
     end
 
     # Select appropriate model for given complexity
@@ -150,17 +149,17 @@ module Vibe
 
       case complexity
       when :simple
-        reasons << "Task appears straightforward"
+        reasons << 'Task appears straightforward'
         reasons << "#{context[:file_count]} files involved" if context[:file_count]
       when :medium
-        reasons << "Moderate complexity task"
-        reasons << "Multiple files or refactoring involved"
+        reasons << 'Moderate complexity task'
+        reasons << 'Multiple files or refactoring involved'
       when :complex
-        reasons << "High complexity task"
-        reasons << "Requires deep reasoning or architectural decisions"
+        reasons << 'High complexity task'
+        reasons << 'Requires deep reasoning or architectural decisions'
       end
 
-      reasons.join("; ")
+      reasons.join('; ')
     end
   end
 end

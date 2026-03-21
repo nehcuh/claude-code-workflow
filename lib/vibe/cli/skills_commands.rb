@@ -9,6 +9,7 @@ require_relative '../skill_detector'
 require_relative '../skill_adapter'
 
 module Vibe
+  # CLI commands for skill management, included in VibeCLI.
   module SkillsCommands
     # Main entry point for 'vibe skills' subcommand
     def run_skills_command(argv)

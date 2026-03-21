@@ -40,9 +40,10 @@ module Vibe
       integrations_dir = File.join(@repo_root, 'core/integrations')
       return [] unless Dir.exist?(integrations_dir)
 
-      Dir.glob(File.join(integrations_dir, '*.yaml')).map do |path|
+      names = Dir.glob(File.join(integrations_dir, '*.yaml')).map do |path|
         File.basename(path, '.yaml')
-      end.reject { |name| name == 'README' }
+      end
+      names.reject { |name| name == 'README' }
     end
 
     # --- Superpowers Detection ---
@@ -267,7 +268,6 @@ module Vibe
 
     GSTACK_DETECTION_PATHS = [
       '~/.claude/skills/gstack',
-      '.claude/skills/gstack',
       '~/.config/opencode/skills/gstack'
     ].freeze
 
@@ -421,7 +421,7 @@ module Vibe
     # --- Integration Status Summary ---
 
     def integration_status
-      @_integration_status_cache ||= {
+      @integration_status ||= {
         superpowers: verify_superpowers,
         rtk: verify_rtk,
         gstack: verify_gstack

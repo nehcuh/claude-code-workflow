@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "platform_utils"
+require_relative 'platform_utils'
 
 module Vibe
   # Platform verification and setup suggestions.
@@ -18,14 +18,14 @@ module Vibe
     def verify_platform_installation(platform)
       target = normalize_target(platform)
       destination = default_global_destination(target)
-      
+
       puts "Target platform: #{platform_label(platform)}"
       puts
 
       if Dir.exist?(destination)
         puts "✅ #{platform_label(platform)} configuration found at #{destination}"
 
-        marker = File.join(destination, ".vibe-target.json")
+        marker = File.join(destination, '.vibe-target.json')
         if File.exist?(marker)
           data = JSON.parse(File.read(marker))
           puts "   Profile: #{data['profile']}"
@@ -46,21 +46,21 @@ module Vibe
 
       puts "Suggested setup for #{platform_label(platform)}:"
       puts
-      puts "1. Install global configuration:"
+      puts '1. Install global configuration:'
       puts "   vibe init --platform #{platform}"
       puts
-      puts "2. Configuration will be installed to:"
+      puts '2. Configuration will be installed to:'
       puts "   #{destination}"
       puts
-      puts "3. Then in your project directory:"
+      puts '3. Then in your project directory:'
       puts "   vibe apply #{platform}"
       puts
 
       # Show integration suggestions
-      if respond_to?(:suggest_integrations, true)
-        puts
-        suggest_integrations
-      end
+      return unless respond_to?(:suggest_integrations, true)
+
+      puts
+      suggest_integrations
     end
 
     # Verify all supported platforms
@@ -80,14 +80,14 @@ module Vibe
       end
 
       if installed.any?
-        puts "✅ Installed platforms:"
+        puts '✅ Installed platforms:'
         installed.each do |target|
           puts "   - #{platform_label(target)}"
         end
       end
 
       if not_installed.any?
-        puts "❌ Not installed platforms:"
+        puts '❌ Not installed platforms:'
         not_installed.each do |target|
           puts "   - #{platform_label(target)}"
         end

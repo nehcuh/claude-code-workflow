@@ -14,6 +14,7 @@ module Vibe
 
     def to_s
       return super if context.empty?
+
       "#{super} [Context: #{context.inspect}]"
     end
   end
@@ -43,6 +44,7 @@ module Vibe
     def to_s
       msg = super
       return msg if field.nil? && value.nil?
+
       parts = []
       parts << "field=#{field}" if field
       parts << "value=#{value.inspect}" if value

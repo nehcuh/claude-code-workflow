@@ -5,6 +5,7 @@ require 'fileutils'
 
 module Vibe
   # Structured knowledge base with YAML storage and multilingual support
+  # TODO: Not wired into any CLI command. Requires memory/knowledge.yaml (does not exist).
   class KnowledgeBase
     attr_reader :data, :path
 

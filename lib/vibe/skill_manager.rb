@@ -32,7 +32,7 @@ module Vibe
       changes = detector.check_skill_changes
 
       if changes[:new_skills].empty? && changes[:new_packs].empty?
-        puts "✓ No new skills found." if verbose?
+        puts '✓ No new skills found.' if verbose?
         return { adapted: [], skipped: [] }
       end
 
@@ -91,7 +91,7 @@ module Vibe
         skipped: project[:skipped],
         not_adapted: available.reject do |skill|
           project[:adapted].any? { |s| s[:id] == skill[:id] } ||
-          project[:skipped].any? { |s| s[:id] == skill[:id] }
+            project[:skipped].any? { |s| s[:id] == skill[:id] }
         end
       }
     end
@@ -110,21 +110,25 @@ module Vibe
       skipped = project[:skipped].find { |s| s[:id] == skill_id }
 
       skill.merge(
-        adaptation_status: adapted ? :adapted : (skipped ? :skipped : :not_adapted),
-        adaptation_mode: adapted&[:mode],
-        adapted_at: adapted&[:adapted_at]
+        adaptation_status: if adapted
+                             :adapted
+                           else
+                             (skipped ? :skipped : :not_adapted)
+                           end,
+        adaptation_mode: adapted & [:mode],
+        adapted_at: adapted & [:adapted_at]
       )
     end
 
     # Update last check timestamp
     def update_check_timestamp
-      config_path = File.join(project_root, ".vibe/skills.yaml")
-      
+      config_path = File.join(project_root, '.vibe/skills.yaml')
+
       config = if File.exist?(config_path)
-        YAML.safe_load(File.read(config_path), aliases: true) || {}
-      else
-        { 'schema_version' => 1 }
-      end
+                 YAML.safe_load(File.read(config_path), aliases: true) || {}
+               else
+                 { 'schema_version' => 1 }
+               end
 
       config['last_checked'] = Time.now.strftime('%Y-%m-%dT%H:%M:%S%z')
 
@@ -136,11 +140,11 @@ module Vibe
 
     def show_detection_results(changes)
       puts "\n🔍 Skill Detection Results"
-      puts "=" * 60
+      puts '=' * 60
       puts
 
       if changes[:new_packs].any?
-        puts "📦 Newly Installed Skill Packs:"
+        puts '📦 Newly Installed Skill Packs:'
         changes[:new_packs].each do |pack|
           puts "  • #{pack[:name]} (v#{pack[:version]})"
           puts "    Installed at: #{pack[:installed_at]}"
@@ -162,11 +166,9 @@ module Vibe
     end
 
     def load_project_skills
-      config_path = File.join(project_root, ".vibe/skills.yaml")
-      
-      unless File.exist?(config_path)
-        return { adapted: [], skipped: [] }
-      end
+      config_path = File.join(project_root, '.vibe/skills.yaml')
+
+      return { adapted: [], skipped: [] } unless File.exist?(config_path)
 
       doc = YAML.safe_load(File.read(config_path), aliases: true) || {}
 

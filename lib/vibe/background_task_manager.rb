@@ -8,6 +8,8 @@ require 'shellwords'
 
 module Vibe
   # Background task manager for long-running operations
+  # TODO: Runs synchronously in CLI mode. submit/cancel/stop_worker API reflects
+  # a former async design that was removed. Consider simplifying the interface.
   class BackgroundTaskManager
     attr_reader :tasks, :storage_path
 
@@ -115,7 +117,6 @@ module Vibe
 
         task['status'] = STATUS[:cancelled]
         task['completed_at'] = Time.now.iso8601
-        @queue.delete(task_id)
         save_tasks
         true
       end

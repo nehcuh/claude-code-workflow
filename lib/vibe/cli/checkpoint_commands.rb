@@ -6,6 +6,7 @@
 require_relative '../checkpoint_manager'
 
 module Vibe
+  # CLI commands for checkpoint management, included in VibeCLI.
   module CheckpointCommands
     # Main entry point for 'vibe checkpoint' subcommand
     def run_checkpoint_command(argv)

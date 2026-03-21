@@ -6,6 +6,7 @@
 require_relative '../token_optimizer'
 
 module Vibe
+  # CLI commands for token optimization, included in VibeCLI.
   module TokenCommands
     # Main entry point for 'vibe token' subcommand
     def run_token_command(argv)

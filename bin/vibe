@@ -1,35 +1,36 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "fileutils"
-require "json"
-require "optparse"
-require "time"
-require "digest"
-require "yaml"
-require_relative "../lib/vibe/errors"
-require_relative "../lib/vibe/utils"
-require_relative "../lib/vibe/version"
-require_relative "../lib/vibe/doc_rendering"
-require_relative "../lib/vibe/native_configs"
-require_relative "../lib/vibe/overlay_support"
-require_relative "../lib/vibe/path_safety"
-require_relative "../lib/vibe/target_renderers"
-require_relative "../lib/vibe/external_tools"
-require_relative "../lib/vibe/builder"
-require_relative "../lib/vibe/init_support"
-require_relative "../lib/vibe/cli/skills_commands"
-require_relative "../lib/vibe/cli/instinct_commands"
-require_relative "../lib/vibe/cli/token_commands"
-require_relative "../lib/vibe/cli/checkpoint_commands"
-require_relative "../lib/vibe/cli/grade_commands"
-require_relative "../lib/vibe/cli/task_commands"
-require_relative "../lib/vibe/cli/parallel_commands"
-require_relative "../lib/vibe/cli/toolchain_commands"
-require_relative "../lib/vibe/cli/security_commands"
-require_relative "../lib/vibe/cli/skill_craft_commands"
-require_relative "../lib/vibe/skill_manager"
+require 'fileutils'
+require 'json'
+require 'optparse'
+require 'time'
+require 'digest'
+require 'yaml'
+require_relative '../lib/vibe/errors'
+require_relative '../lib/vibe/utils'
+require_relative '../lib/vibe/version'
+require_relative '../lib/vibe/doc_rendering'
+require_relative '../lib/vibe/native_configs'
+require_relative '../lib/vibe/overlay_support'
+require_relative '../lib/vibe/path_safety'
+require_relative '../lib/vibe/target_renderers'
+require_relative '../lib/vibe/external_tools'
+require_relative '../lib/vibe/builder'
+require_relative '../lib/vibe/init_support'
+require_relative '../lib/vibe/cli/skills_commands'
+require_relative '../lib/vibe/cli/instinct_commands'
+require_relative '../lib/vibe/cli/token_commands'
+require_relative '../lib/vibe/cli/checkpoint_commands'
+require_relative '../lib/vibe/cli/grade_commands'
+require_relative '../lib/vibe/cli/task_commands'
+require_relative '../lib/vibe/cli/parallel_commands'
+require_relative '../lib/vibe/cli/toolchain_commands'
+require_relative '../lib/vibe/cli/security_commands'
+require_relative '../lib/vibe/cli/skill_craft_commands'
+require_relative '../lib/vibe/skill_manager'
 
+# Main CLI class for the vibe command-line tool.
 class VibeCLI
   include Vibe::Utils
   include Vibe::DocRendering
@@ -55,31 +56,33 @@ class VibeCLI
 
   SUPPORTED_TARGETS = Vibe::PlatformUtils::VALID_TARGETS \
     unless defined?(SUPPORTED_TARGETS)
-  MARKER_FILENAME = ".vibe-target.json" unless defined?(MARKER_FILENAME)
+  MARKER_FILENAME = '.vibe-target.json' unless defined?(MARKER_FILENAME)
 
-  COMMAND_REGISTRY = {
-    "build" => :run_build,
-    "use" => :run_deploy,
-    "deploy" => :run_deploy,
-    "switch" => :run_apply,
-    "apply" => :run_apply,
-    "inspect" => :run_inspect,
-    "init" => :run_init_command,
-    "quickstart" => :run_quickstart_command,
-    "targets" => :run_targets_command,
-    "doctor" => :run_doctor_command,
-    "skills" => :run_skills_command,
-    "instinct" => :run_instinct_command,
-    "token" => :run_token_command,
-    "checkpoint" => :run_checkpoint_command,
-    "grade" => :run_grade_command,
-    "tasks" => :run_tasks_command,
-    "worktree" => :run_worktree_command,
-    "cascade" => :run_cascade_command,
-    "toolchain" => :run_toolchain_command,
-    "scan" => :run_scan_command,
-    "skill-craft" => :run_skill_craft_command
-  }.freeze unless defined?(COMMAND_REGISTRY)
+  unless defined?(COMMAND_REGISTRY)
+    COMMAND_REGISTRY = {
+      'build' => :run_build,
+      'use' => :run_deploy,
+      'deploy' => :run_deploy,
+      'switch' => :run_apply,
+      'apply' => :run_apply,
+      'inspect' => :run_inspect,
+      'init' => :run_init_command,
+      'quickstart' => :run_quickstart_command,
+      'targets' => :run_targets_command,
+      'doctor' => :run_doctor_command,
+      'skills' => :run_skills_command,
+      'instinct' => :run_instinct_command,
+      'token' => :run_token_command,
+      'checkpoint' => :run_checkpoint_command,
+      'grade' => :run_grade_command,
+      'tasks' => :run_tasks_command,
+      'worktree' => :run_worktree_command,
+      'cascade' => :run_cascade_command,
+      'toolchain' => :run_toolchain_command,
+      'scan' => :run_scan_command,
+      'skill-craft' => :run_skill_craft_command
+    }.freeze
+  end
 
   def initialize(repo_root)
     @repo_root = repo_root
@@ -89,7 +92,7 @@ class VibeCLI
 
   def run(argv)
     # Handle version flag before command processing
-    if argv.include?("--version") || argv.include?("-v")
+    if argv.include?('--version') || argv.include?('-v')
       puts "vibe #{Vibe::VERSION}"
       return
     end
@@ -119,40 +122,40 @@ class VibeCLI
     options = { force: false, platform: nil }
 
     parser = OptionParser.new do |opts|
-      opts.banner = "Usage: vibe apply PLATFORM [options]  (alias: switch)"
+      opts.banner = 'Usage: vibe apply PLATFORM [options]  (alias: switch)'
 
-      opts.on("--platform PLATFORM", "Target platform (claude-code, opencode)") do |value|
+      opts.on('--platform PLATFORM', 'Target platform (claude-code, opencode)') do |value|
         options[:platform] = value
       end
 
-      opts.on("--profile PROFILE", 
-"Explicit profile name from core/models/providers.yaml") do |value|
+      opts.on('--profile PROFILE',
+              'Explicit profile name from core/models/providers.yaml') do |value|
         options[:profile] = value
       end
 
-      opts.on("--output DIR", 
-"Write generated files to DIR instead of generated/<target>") do |value|
-        validate_path!(value, context: "output")
+      opts.on('--output DIR',
+              'Write generated files to DIR instead of generated/<target>') do |value|
+        validate_path!(value, context: 'output')
         options[:output] = value
       end
 
-      opts.on("--overlay FILE", "Apply a project overlay file while rendering") do |value|
-        validate_path!(value, context: "overlay")
+      opts.on('--overlay FILE', 'Apply a project overlay file while rendering') do |value|
+        validate_path!(value, context: 'overlay')
         options[:overlay] = value
       end
 
-      opts.on("--force", "Allow overwriting existing files") do
+      opts.on('--force', 'Allow overwriting existing files') do
         options[:force] = true
       end
 
-      opts.on("-h", "--help", "Show help") do
+      opts.on('-h', '--help', 'Show help') do
         puts opts
         puts
-        puts "Examples:"
-        puts "  vibe apply claude-code    # Apply Claude Code config to current project"
-        puts "  vibe apply opencode       # Apply OpenCode config to current project"
+        puts 'Examples:'
+        puts '  vibe apply claude-code    # Apply Claude Code config to current project'
+        puts '  vibe apply opencode       # Apply OpenCode config to current project'
         puts
-        puts "Note: Global configuration must be installed first with " \
+        puts 'Note: Global configuration must be installed first with ' \
              "'vibe init --platform PLATFORM'"
         exit 0
       end
@@ -161,18 +164,17 @@ class VibeCLI
     remaining = parser.parse(argv)
 
     # Support both: vibe apply TARGET and vibe apply --platform TARGET
-    if options[:platform].nil? && !remaining.empty?
-      options[:platform] = remaining.shift
-    end
+    options[:platform] = remaining.shift if options[:platform].nil? && !remaining.empty?
 
     unless remaining.empty?
-      raise Vibe::ValidationError, 
-"Unexpected arguments: #{remaining.join(' ')}\n\nRun 'vibe apply --help' for usage."
+      raise Vibe::ValidationError,
+            "Unexpected arguments: #{remaining.join(' ')}\n\n" \
+            "Run 'vibe apply --help' for usage."
     end
 
     unless options[:platform]
       raise Vibe::ValidationError,
-            "Missing required platform. Pass PLATFORM or --platform " \
+            'Missing required platform. Pass PLATFORM or --platform ' \
             "PLATFORM.\n\nRun 'vibe apply --help' for usage."
     end
 
@@ -186,7 +188,7 @@ class VibeCLI
       explicit_output: options[:output]
     )
     ensure_no_path_overlap!(output_root, destination_root)
-    overlay = resolve_overlay(explicit_path: options[:overlay], 
+    overlay = resolve_overlay(explicit_path: options[:overlay],
                               search_roots: [destination_root, @repo_root])
 
     global_dir = default_global_destination(target)
@@ -210,7 +212,7 @@ class VibeCLI
       destination_root: destination_root,
       manifest: manifest,
       output_root: output_root,
-      mode: "apply"
+      mode: 'apply'
     )
 
     puts "Applied #{target} (#{profile_name})#{overlay_label(manifest)} " \
@@ -235,74 +237,75 @@ class VibeCLI
     return if changes[:new_skills].empty?
 
     puts
-    puts "🔍 New skills available for this project!"
+    puts '🔍 New skills available for this project!'
     puts "   Found #{changes[:new_skills].length} skills not yet adapted."
     puts
     puts "   Run 'vibe skills check' to review and adapt them."
-    puts "   Or set VIBE_SKIP_SKILL_CHECK=1 to skip this message."
+    puts '   Or set VIBE_SKIP_SKILL_CHECK=1 to skip this message.'
     puts
   end
 
   def run_targets_command(_argv)
     puts "\n📋 Supported Targets"
-    puts "=" * 60
+    puts '=' * 60
     puts
-    
+
     # Platforms migrated to config-driven
     config_driven_targets = %w[claude-code opencode]
-    
+
     # All supported platforms
     all_targets = %w[
       claude-code
       opencode
     ]
-    
-    puts "✅ Config-driven (ready to use):"
+
+    puts '✅ Config-driven (ready to use):'
     config_driven_targets.each do |target|
       next unless SUPPORTED_TARGETS.include?(target)
+
       _profile_name, profile = resolve_profile(target, nil)
-      maturity = profile["maturity"] || "unknown"
+      maturity = profile['maturity'] || 'unknown'
       label = case maturity
-              when "active" then "active"
-              else "exploratory"
+              when 'active' then 'active'
+              else 'exploratory'
               end
       puts "  #{target.ljust(16)} #{label}"
     end
     puts
-    
-    puts "⏸️  Planned (migration pending):"
+
+    puts '⏸️  Planned (migration pending):'
     pending_targets = all_targets - config_driven_targets
     pending_targets.each do |target|
       puts "  #{target.ljust(16)} planned"
     end
     puts
-    
-    puts "💡 To use a platform:"
-    puts "   vibe init --platform <platform>     # Install globally"
-    puts "   vibe apply <platform>               # Apply to project"
+
+    puts '💡 To use a platform:'
+    puts '   vibe init --platform <platform>     # Install globally'
+    puts '   vibe apply <platform>               # Apply to project'
     puts
   end
 
   def run_doctor_command(_argv)
     puts "\n🔍 Vibe Environment Check"
-    puts "=" * 50
+    puts '=' * 50
     puts
 
     # Check Ruby version
     puts "Ruby version: #{RUBY_VERSION}"
-    if RUBY_VERSION < "2.6.0"
-      puts "  ⚠️  Ruby 2.6.0+ recommended"
+    if RUBY_VERSION < '2.6.0'
+      puts '  ⚠️  Ruby 2.6.0+ recommended'
     else
-      puts "  ✅ OK"
+      puts '  ✅ OK'
     end
     puts
 
     # Check installed platforms
-    puts "Installed platforms:"
+    puts 'Installed platforms:'
     SUPPORTED_TARGETS.each do |target|
       destination = default_global_destination(target)
       if Dir.exist?(destination)
-        marker_file = File.join(destination, ".vibe-target.json")
+        marker_file = File.join(destination, '.vibe-target.json')
         if File.exist?(marker_file)
           marker = JSON.parse(File.read(marker_file))
           puts "  ✅ #{platform_label(target)} (#{destination})"
@@ -318,7 +321,7 @@ class VibeCLI
     puts
 
     # Check optional integrations
-    puts "Optional integrations:"
+    puts 'Optional integrations:'
     status = integration_status
 
     status.each do |name, info|
@@ -337,31 +340,31 @@ class VibeCLI
           puts "  ⚠️  #{name.to_s.capitalize} (installed but not configured)"
           case name
           when :rtk
-            puts "     Run: rtk init --global"
+            puts '     Run: rtk init --global'
           when :superpowers
-            puts "     Platform integration needed"
+            puts '     Platform integration needed'
           end
         end
       else
         puts "  ❌ #{name.to_s.capitalize} (not installed)"
         case name
         when :rtk
-          puts "     Install: brew install rtk"
-          puts "     Or visit: https://github.com/runesleo/rtk"
+          puts '     Install: brew install rtk'
+          puts '     Or visit: https://github.com/runesleo/rtk'
         when :superpowers
-          puts "     Visit: https://github.com/obra/superpowers"
+          puts '     Visit: https://github.com/obra/superpowers'
         end
       end
     end
     puts
 
     # Check skill conflicts
-    puts "Skill conflict check:"
+    puts 'Skill conflict check:'
     check_skill_conflicts
     puts
 
     # Check project skill configuration
-    puts "Project skill configuration:"
+    puts 'Project skill configuration:'
     check_project_skills_status
     puts
 
@@ -370,7 +373,7 @@ class VibeCLI
     pending = status.select { |_name, s| s[:installed] && !s[:ready] }.keys
 
     if missing.any? || pending.any?
-      puts "Recommendations:"
+      puts 'Recommendations:'
       missing.each do |name|
         puts "  - Install #{name}"
       end
@@ -379,19 +382,19 @@ class VibeCLI
       end
       puts
       puts "Run 'vibe init --platform <platform>' to set up a platform " \
-           "with integration checks."
+           'with integration checks.'
     else
-      puts "✅ All checks passed!"
+      puts '✅ All checks passed!'
     end
     puts
   end
 
   # Check project skill configuration status
   def check_project_skills_status
-    config_path = File.join(Dir.pwd, ".vibe/skills.yaml")
+    config_path = File.join(Dir.pwd, '.vibe/skills.yaml')
 
     unless File.exist?(config_path)
-      puts "  ℹ️  No skill configuration found (.vibe/skills.yaml)"
+      puts '  ℹ️  No skill configuration found (.vibe/skills.yaml)'
       puts "     Run 'vibe skills check' to set up skill adaptation"
       return
     end
@@ -403,11 +406,11 @@ class VibeCLI
     skipped_count = skills[:skipped].length
     available_count = skills[:not_adapted].length
 
-    puts "  ✅ Skill configuration found"
+    puts '  ✅ Skill configuration found'
     puts "     Adapted: #{adapted_count} skills"
     puts "     Skipped: #{skipped_count} skills"
 
-    if available_count > 0
+    if available_count.positive?
       puts "     ⚠️  #{available_count} skills available but not adapted"
       puts "        Run 'vibe skills check' to review"
     end
@@ -430,8 +433,8 @@ class VibeCLI
     installed_packs << :gstack if status[:gstack]&.dig(:installed)
 
     if installed_packs.empty?
-      puts "  ℹ️  No external skill packs installed"
-      puts "     Install Superpowers or gstack for enhanced workflows"
+      puts '  ℹ️  No external skill packs installed'
+      puts '     Install Superpowers or gstack for enhanced workflows'
       return
     end
 
@@ -439,28 +442,29 @@ class VibeCLI
 
     # Define overlapping skill groups
     overlaps = {
-      "Review/Verification" => {
-        builtin: "verification-before-completion (P0 mandatory)",
-        gstack: "gstack/review (P1 suggest)",
-        superpowers: "superpowers/review (P2 manual)"
+      'Review/Verification' => {
+        builtin: 'verification-before-completion (P0 mandatory)',
+        gstack: 'gstack/review (P1 suggest)',
+        superpowers: 'superpowers/review (P2 manual)'
       },
-      "Debugging" => {
-        builtin: "systematic-debugging (P0 mandatory)",
-        gstack: "gstack/investigate (P1 suggest)"
+      'Debugging' => {
+        builtin: 'systematic-debugging (P0 mandatory)',
+        gstack: 'gstack/investigate (P1 suggest)'
       },
-      "Session/Retrospective" => {
-        builtin: "session-end (P0 mandatory)",
-        gstack: "gstack/retro (manual)"
+      'Session/Retrospective' => {
+        builtin: 'session-end (P0 mandatory)',
+        gstack: 'gstack/retro (manual)'
       }
     }
 
     conflicts_found = false
     overlaps.each do |category, skills|
-      applicable = skills.select { |pack, _|
+      applicable = skills.select do |pack, _|
         pack == :builtin || installed_packs.include?(pack)
-      }
+      end
 
       next unless applicable.length > 1
+
       conflicts_found = true
       puts
       puts "  ⚠️  #{category}: multiple skills available"
@@ -468,16 +472,14 @@ class VibeCLI
         puts "     • #{skill}"
       end
       priority_hint = if applicable[:builtin]
-        'builtin mandatory first'
-      else
-        applicable.values.first
-      end
+                        'builtin mandatory first'
+                      else
+                        applicable.values.first
+                      end
       puts "     → Priority: #{priority_hint}"
     end
 
-    unless conflicts_found
-      puts "  ✅ No conflicts detected"
-    end
+    puts '  ✅ No conflicts detected' unless conflicts_found
 
     puts
     puts "  Tip: See docs/integrations.md 'Skill Selection Guide' for usage advice"
@@ -547,15 +549,15 @@ class VibeCLI
         --version, -v    Show version number
 
       Supported platforms:
-        #{SUPPORTED_TARGETS.join(", ")}
+        #{SUPPORTED_TARGETS.join(', ')}
     TEXT
   end
 
   def run_build(argv)
     options, remaining = parse_common_options(
       argv,
-      banner: "Usage: bin/vibe build TARGET [--profile PROFILE] " \
-              "[--output DIR] [--overlay FILE]"
+      banner: 'Usage: bin/vibe build TARGET [--profile PROFILE] ' \
+              '[--output DIR] [--overlay FILE]'
     )
     extract_target_from_remaining!(options, remaining)
     ensure_no_remaining_args!(remaining)
@@ -565,9 +567,9 @@ class VibeCLI
     output_root = File.expand_path(options[:output] || default_output_root(target))
 
     # Validate output path if explicitly provided
-    validate_path!(options[:output], context: "output") if options[:output]
+    validate_path!(options[:output], context: 'output') if options[:output]
 
-    overlay = resolve_overlay(explicit_path: options[:overlay], 
+    overlay = resolve_overlay(explicit_path: options[:overlay],
                               search_roots: [@repo_root])
 
     manifest = build_target(
@@ -583,12 +585,12 @@ class VibeCLI
 
   def run_use(argv, project_mode: false)
     banner = if project_mode
-      "Usage: vibe apply TARGET [--profile PROFILE] [--output DIR] " \
-      "[--overlay FILE] [--force]"
-    else
-      "Usage: vibe deploy TARGET DESTINATION [--profile PROFILE] " \
-      "[--output DIR] [--overlay FILE] [--force]"
-    end
+               'Usage: vibe apply TARGET [--profile PROFILE] [--output DIR] ' \
+               '[--overlay FILE] [--force]'
+             else
+               'Usage: vibe deploy TARGET DESTINATION [--profile PROFILE] ' \
+               '[--output DIR] [--overlay FILE] [--force]'
+             end
 
     options, remaining = parse_common_options(argv, banner: banner)
     extract_target_from_remaining!(options, remaining)
@@ -600,12 +602,12 @@ class VibeCLI
     destination = options[:destination]
     if destination.nil? || destination.strip.empty?
       raise Vibe::ValidationError,
-            "Missing required destination. Pass DESTINATION or " \
-            "--destination DIR."
+            'Missing required destination. Pass DESTINATION or ' \
+            '--destination DIR.'
     end
 
     # Validate destination path
-    validate_path!(destination, context: "destination")
+    validate_path!(destination, context: 'destination')
 
     profile_name, profile = resolve_profile(target, options[:profile])
     destination_root = File.expand_path(destination)
@@ -615,7 +617,7 @@ class VibeCLI
       explicit_output: options[:output]
     )
     ensure_no_path_overlap!(output_root, destination_root)
-    overlay = resolve_overlay(explicit_path: options[:overlay], 
+    overlay = resolve_overlay(explicit_path: options[:overlay],
                               search_roots: [destination_root, @repo_root])
 
     global_dir = default_global_destination(target)
@@ -639,7 +641,7 @@ class VibeCLI
       destination_root: destination_root,
       manifest: manifest,
       output_root: output_root,
-      mode: project_mode ? "apply" : "deploy"
+      mode: project_mode ? 'apply' : 'deploy'
     )
 
     puts "Applied #{target} (#{profile_name})#{overlay_label(manifest)} " \
@@ -649,22 +651,22 @@ class VibeCLI
   def run_inspect(argv)
     options = { json: false }
     parser = OptionParser.new do |opts|
-      opts.banner = "Usage: bin/vibe inspect [TARGET] [--overlay FILE] [--json]"
+      opts.banner = 'Usage: bin/vibe inspect [TARGET] [--overlay FILE] [--json]'
 
-      opts.on("--target TARGET", "Limit inspection to one target") do |value|
+      opts.on('--target TARGET', 'Limit inspection to one target') do |value|
         options[:target] = normalize_target(value)
       end
 
-      opts.on("--overlay FILE", 
-"Apply a project overlay when previewing target resolution") do |value|
+      opts.on('--overlay FILE',
+              'Apply a project overlay when previewing target resolution') do |value|
         options[:overlay] = value
       end
 
-      opts.on("--json", "Output machine-readable JSON") do
+      opts.on('--json', 'Output machine-readable JSON') do
         options[:json] = true
       end
 
-      opts.on("-h", "--help", "Show help") do
+      opts.on('-h', '--help', 'Show help') do
         puts opts
         exit 0
       end
@@ -676,7 +678,7 @@ class VibeCLI
     end
     ensure_no_remaining_args!(remaining)
 
-    overlay = resolve_overlay(explicit_path: options[:overlay], 
+    overlay = resolve_overlay(explicit_path: options[:overlay],
                               search_roots: [@repo_root])
     payload = inspect_payload(target: options[:target], overlay: overlay)
     if options[:json]
@@ -689,8 +691,8 @@ class VibeCLI
   def run_quickstart_command(argv)
     options = { force: false }
     parser = OptionParser.new do |opts|
-      opts.banner = "Usage: bin/vibe quickstart [--force]"
-      opts.on("--force", "Overwrite existing configuration without asking") do
+      opts.banner = 'Usage: bin/vibe quickstart [--force]'
+      opts.on('--force', 'Overwrite existing configuration without asking') do
         options[:force] = true
       end
     end
@@ -710,24 +712,24 @@ class VibeCLI
     while i < argv.length
       arg = argv[i]
       case arg
-      when "--verify"
+      when '--verify'
         verify_only = true
-      when "--suggest"
+      when '--suggest'
         suggest_only = true
-      when "--force"
+      when '--force'
         force = true
-      when "--dry-run"
+      when '--dry-run'
         dry_run = true
       when /^--platform=(.+)$/
         platform = ::Regexp.last_match(1)
-      when "--platform"
+      when '--platform'
         i += 1
         if i >= argv.length
-          raise Vibe::ValidationError, 
-"--platform requires a value\n\nRun 'vibe init --help' for usage."
+          raise Vibe::ValidationError,
+                "--platform requires a value\n\nRun 'vibe init --help' for usage."
         end
         platform = argv[i]
-      when "--help", "-h"
+      when '--help', '-h'
         puts <<~HELP
           Usage: vibe init --platform PLATFORM [options]
 
@@ -754,8 +756,8 @@ class VibeCLI
         HELP
         exit 0
       else
-        raise Vibe::ValidationError, 
-"Unknown option: #{arg}\n\nRun 'vibe init --help' for usage."
+        raise Vibe::ValidationError,
+              "Unknown option: #{arg}\n\nRun 'vibe init --help' for usage."
       end
       i += 1
     end
@@ -763,11 +765,11 @@ class VibeCLI
     unless platform
       # In verify mode without platform, check all installed platforms
       if verify_only
-        puts "Verifying integrations..."
+        puts 'Verifying integrations...'
         verify_all_platforms
         return
       end
-      
+
       # Check if running in non-interactive mode
       if !$stdin.respond_to?(:tty?) || !$stdin.tty?
         raise Vibe::ValidationError,
@@ -778,11 +780,11 @@ class VibeCLI
                 or follow `docs/integrations.md` for manual installation steps.
               MSG
       end
-      raise Vibe::ValidationError, 
-"Missing required --platform option\n\nRun 'vibe init --help' for usage."
+      raise Vibe::ValidationError,
+            "Missing required --platform option\n\nRun 'vibe init --help' for usage."
     end
 
-    run_init(platform: platform, force: force, verify_only: verify_only, 
+    run_init(platform: platform, force: force, verify_only: verify_only,
              suggest_only: suggest_only, dry_run: dry_run)
   end
 
@@ -792,43 +794,43 @@ class VibeCLI
     parser = OptionParser.new do |opts|
       opts.banner = banner
 
-      opts.on("--target TARGET", 
-"Target name (#{SUPPORTED_TARGETS.join(', ')})") do |value|
+      opts.on('--target TARGET',
+              "Target name (#{SUPPORTED_TARGETS.join(', ')})") do |value|
         options[:target] = normalize_target(value)
       end
 
-      opts.on("--profile PROFILE", 
-"Explicit profile name from core/models/providers.yaml") do |value|
+      opts.on('--profile PROFILE',
+              'Explicit profile name from core/models/providers.yaml') do |value|
         options[:profile] = value
       end
 
-      opts.on("--output DIR", 
-"Write generated files to DIR instead of generated/<target>") do |value|
-        validate_path!(value, context: "output")
+      opts.on('--output DIR',
+              'Write generated files to DIR instead of generated/<target>') do |value|
+        validate_path!(value, context: 'output')
         options[:output] = value
       end
 
-      opts.on("--destination DIR", "Destination root for `use`") do |value|
-        validate_path!(value, context: "destination")
+      opts.on('--destination DIR', 'Destination root for `use`') do |value|
+        validate_path!(value, context: 'destination')
         options[:destination] = value
       end
 
-      opts.on("--overlay FILE", "Apply a project overlay file while rendering") do |value|
-        validate_path!(value, context: "overlay")
+      opts.on('--overlay FILE', 'Apply a project overlay file while rendering') do |value|
+        validate_path!(value, context: 'overlay')
         options[:overlay] = value
       end
 
-      opts.on("--force", 
-"Allow overwriting existing generated target files at the destination") do
+      opts.on('--force',
+              'Allow overwriting existing generated target files at the destination') do
         options[:force] = true
       end
 
-      opts.on("--skip-integrations", 
-"Disable automatic detection of external tools (Superpowers, RTK)") do
+      opts.on('--skip-integrations',
+              'Disable automatic detection of external tools (Superpowers, RTK)') do
         @skip_integrations = true
       end
 
-      opts.on("-h", "--help", "Show help") do
+      opts.on('-h', '--help', 'Show help') do
         puts opts
         exit 0
       end
@@ -843,7 +845,7 @@ class VibeCLI
     return if remaining.empty?
 
     candidate = remaining.first
-    return if candidate.start_with?("-")
+    return if candidate.start_with?('-')
 
     options[:target] = normalize_target(remaining.shift)
   end
@@ -853,7 +855,7 @@ class VibeCLI
     return if remaining.empty?
 
     candidate = remaining.first
-    return if candidate.start_with?("-")
+    return if candidate.start_with?('-')
 
     options[:destination] = remaining.shift
   end
@@ -866,8 +868,10 @@ class VibeCLI
 
   def require_target!(options)
     target = options[:target]
-    raise Vibe::ValidationError, 
-"Missing required target. Pass TARGET or --target TARGET." if target.nil?
+    if target.nil?
+      raise Vibe::ValidationError,
+            'Missing required target. Pass TARGET or --target TARGET.'
+    end
 
     target
   end
@@ -878,9 +882,9 @@ class VibeCLI
 end
 if __FILE__ == $PROGRAM_NAME
   begin
-    repo_root = ENV["VIBE_REPO_ROOT"] || File.expand_path("..", __dir__)
+    repo_root = ENV['VIBE_REPO_ROOT'] || File.expand_path('..', __dir__)
     VibeCLI.new(repo_root).run(ARGV)
-  rescue Vibe::PathSafetyError, Vibe::SecurityError, Vibe::ValidationError, 
+  rescue Vibe::PathSafetyError, Vibe::SecurityError, Vibe::ValidationError,
          Vibe::ConfigurationError => e
     warn "Error: #{e.message}"
     exit 1

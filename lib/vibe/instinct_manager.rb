@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "yaml"
-require "securerandom"
-require "time"
+require 'yaml'
+require 'securerandom'
+require 'time'
 
 module Vibe
   # Manages instinct learning system - automatic pattern extraction from sessions
@@ -19,7 +19,7 @@ module Vibe
     def load_data
       return default_structure unless File.exist?(@path)
 
-      YAML.safe_load(File.read(@path), permitted_classes: [Time, Symbol], 
+      YAML.safe_load(File.read(@path), permitted_classes: [Time, Symbol],
                                        aliases: true) || default_structure
     rescue StandardError => e
       warn "Failed to load instincts from #{@path}: #{e.message}"
@@ -28,12 +28,12 @@ module Vibe
 
     # Get all instincts
     def all
-      @data["instincts"] || []
+      @data['instincts'] || []
     end
 
     # Get single instinct by ID
     def get(instinct_id)
-      all.find { |i| i["id"] == instinct_id }
+      all.find { |i| i['id'] == instinct_id }
     end
 
     # List instincts with optional filters
@@ -49,15 +49,15 @@ module Vibe
       # Filter by tags
       if filters[:tags]
         tags = Array(filters[:tags])
-        results.select! { |i| (i["tags"] & tags).any? }
+        results.select! { |i| (i['tags'] & tags).any? }
       end
 
       # Filter by status
-      results.select! { |i| i["status"] == filters[:status] } if filters[:status]
+      results.select! { |i| i['status'] == filters[:status] } if filters[:status]
 
       # Filter by minimum confidence
       if filters[:min_confidence]
-        results.select! { |i| i["confidence"] >= filters[:min_confidence] }
+        results.select! { |i| i['confidence'] >= filters[:min_confidence] }
       end
 
       # Sort results
@@ -75,24 +75,24 @@ module Vibe
     # @return [Hash] Created instinct
     def create(attributes)
       instinct = {
-        "id" => SecureRandom.uuid,
-        "pattern" => attributes[:pattern] || attributes["pattern"],
-        "confidence" => attributes[:confidence] || attributes["confidence"] || 0.5,
-        "source_sessions" => attributes[:source_sessions] ||
-                             attributes["source_sessions"] || [],
-        "usage_count" => 0,
-        "success_count" => 0,
-        "success_rate" => 1.0,
-        "created_at" => Time.now.iso8601,
-        "updated_at" => Time.now.iso8601,
-        "tags" => attributes[:tags] || attributes["tags"] || [],
-        "context" => attributes[:context] || attributes["context"],
-        "examples" => attributes[:examples] || attributes["examples"] || [],
-        "status" => "active"
+        'id' => SecureRandom.uuid,
+        'pattern' => attributes[:pattern] || attributes['pattern'],
+        'confidence' => attributes[:confidence] || attributes['confidence'] || 0.5,
+        'source_sessions' => attributes[:source_sessions] ||
+                             attributes['source_sessions'] || [],
+        'usage_count' => 0,
+        'success_count' => 0,
+        'success_rate' => 1.0,
+        'created_at' => Time.now.iso8601,
+        'updated_at' => Time.now.iso8601,
+        'tags' => attributes[:tags] || attributes['tags'] || [],
+        'context' => attributes[:context] || attributes['context'],
+        'examples' => attributes[:examples] || attributes['examples'] || [],
+        'status' => 'active'
       }
 
       validate_instinct!(instinct)
-      @data["instincts"] << instinct
+      @data['instincts'] << instinct
       save
       instinct
     end
@@ -106,10 +106,10 @@ module Vibe
       return nil unless instinct
 
       attributes.each do |key, value|
-        instinct[key.to_s] = value unless key.to_s == "id"
+        instinct[key.to_s] = value unless key.to_s == 'id'
       end
 
-      instinct["updated_at"] = Time.now.iso8601
+      instinct['updated_at'] = Time.now.iso8601
       validate_instinct!(instinct)
       save
       instinct
@@ -120,7 +120,7 @@ module Vibe
     # @return [Boolean] True if deleted, false if not found
     def delete(instinct_id)
       initial_size = all.size
-      @data["instincts"].reject! { |i| i["id"] == instinct_id }
+      @data['instincts'].reject! { |i| i['id'] == instinct_id }
       deleted = all.size < initial_size
       save if deleted
       deleted
@@ -134,11 +134,11 @@ module Vibe
       instinct = get(instinct_id)
       return nil unless instinct
 
-      instinct["usage_count"] += 1
-      instinct["success_count"] = (instinct["success_count"] || 0) + (success ? 1 : 0)
-      instinct["success_rate"] = instinct["success_count"].to_f / instinct["usage_count"]
-      instinct["confidence"] = calculate_confidence(instinct)
-      instinct["updated_at"] = Time.now.iso8601
+      instinct['usage_count'] += 1
+      instinct['success_count'] = (instinct['success_count'] || 0) + (success ? 1 : 0)
+      instinct['success_rate'] = instinct['success_count'].to_f / instinct['usage_count']
+      instinct['confidence'] = calculate_confidence(instinct)
+      instinct['updated_at'] = Time.now.iso8601
 
       save
       instinct
@@ -149,15 +149,15 @@ module Vibe
     # @return [Float] Confidence score (0.0-1.0)
     def calculate_confidence(instinct)
       # Base score: success rate (60% weight)
-      base_score = instinct["success_rate"] * 0.6
+      base_score = instinct['success_rate'] * 0.6
 
       # Usage frequency score (30% weight)
       # More usage = higher confidence, but capped at 20 uses
-      usage_score = [instinct["usage_count"] / 20.0, 1.0].min * 0.3
+      usage_score = [instinct['usage_count'] / 20.0, 1.0].min * 0.3
 
       # Source diversity score (10% weight)
       # Multiple sessions = more reliable
-      diversity_score = [instinct["source_sessions"].size / 5.0, 1.0].min * 0.1
+      diversity_score = [instinct['source_sessions'].size / 5.0, 1.0].min * 0.1
 
       # Total confidence
       confidence = base_score + usage_score + diversity_score
@@ -171,9 +171,9 @@ module Vibe
     def export(file_path, filters = {})
       instincts_to_export = list(filters)
       export_data = {
-        "version" => @data["version"],
-        "exported_at" => Time.now.iso8601,
-        "instincts" => instincts_to_export
+        'version' => @data['version'],
+        'exported_at' => Time.now.iso8601,
+        'instincts' => instincts_to_export
       }
 
       File.write(file_path, YAML.dump(export_data))
@@ -188,24 +188,24 @@ module Vibe
     #   - :merge - Merge usage data
     # @return [Hash] Import statistics
     def import(file_path, merge_strategy = :skip)
-      import_data = YAML.safe_load(File.read(file_path), 
-permitted_classes: [Time, Symbol], aliases: true)
-      imported_instincts = import_data["instincts"] || []
+      import_data = YAML.safe_load(File.read(file_path),
+                                   permitted_classes: [Time, Symbol], aliases: true)
+      imported_instincts = import_data['instincts'] || []
 
       stats = { imported: 0, skipped: 0, merged: 0, errors: 0 }
 
       imported_instincts.each do |instinct|
-        existing = get(instinct["id"])
+        existing = get(instinct['id'])
 
         if existing.nil?
-          @data["instincts"] << instinct
+          @data['instincts'] << instinct
           stats[:imported] += 1
         else
           case merge_strategy
           when :skip
             stats[:skipped] += 1
           when :overwrite
-            update(instinct["id"], instinct)
+            update(instinct['id'], instinct)
             stats[:imported] += 1
           when :merge
             merge_instinct_data(existing, instinct)
@@ -217,7 +217,7 @@ permitted_classes: [Time, Symbol], aliases: true)
         stats[:errors] += 1
       end
 
-      save if stats[:imported] + stats[:merged] > 0
+      save if (stats[:imported] + stats[:merged]).positive?
       stats
     end
 
@@ -228,29 +228,33 @@ permitted_classes: [Time, Symbol], aliases: true)
     # @return [Hash] Result with :success, :skill_path, :message
     def evolve(instinct_id, skill_name: nil, output_dir: nil)
       instinct = get(instinct_id)
-      return { success: false, 
-               message: "Instinct not found: #{instinct_id}" } unless instinct
+      unless instinct
+        return { success: false,
+                 message: "Instinct not found: #{instinct_id}" }
+      end
 
       repo_root = find_repo_root || Dir.pwd
-      output_dir ||= File.join(repo_root, "skills")
+      output_dir ||= File.join(repo_root, 'skills')
       FileUtils.mkdir_p(output_dir)
 
-      name = skill_name || instinct["pattern"].downcase.gsub(/[^a-z0-9]+/, "-").gsub(
-        /^-|-$/, ""
+      name = skill_name || instinct['pattern'].downcase.gsub(/[^a-z0-9]+/, '-').gsub(
+        /^-|-$/, ''
       )
       skill_dir = File.join(output_dir, name)
-      skill_file = File.join(skill_dir, "SKILL.md")
+      skill_file = File.join(skill_dir, 'SKILL.md')
 
-      return { success: false, 
-               message: "Skill already exists: #{skill_file}" } if File.exist?(skill_file)
+      if File.exist?(skill_file)
+        return { success: false,
+                 message: "Skill already exists: #{skill_file}" }
+      end
 
       FileUtils.mkdir_p(skill_dir)
 
-      tags_line = instinct["tags"].any? ? "\nTags: #{instinct['tags'].join(', ')}" : ""
+      tags_line = instinct['tags'].any? ? "\nTags: #{instinct['tags'].join(', ')}" : ''
       content = <<~SKILL
-        # #{instinct["pattern"]}
+        # #{instinct['pattern']}
 
-        Evolved from instinct `#{instinct_id}` (confidence: #{instinct["confidence"].round(2)})#{tags_line}
+        Evolved from instinct `#{instinct_id}` (confidence: #{instinct['confidence'].round(2)})#{tags_line}
 
         ## When to use
 
@@ -262,14 +266,14 @@ permitted_classes: [Time, Symbol], aliases: true)
 
         ## Notes
 
-        - Usage count: #{instinct["usage_count"]}
-        - Success rate: #{(instinct["success_rate"] * 100).round}%
-        - Source sessions: #{instinct["source_sessions"].join(", ")}
+        - Usage count: #{instinct['usage_count']}
+        - Success rate: #{(instinct['success_rate'] * 100).round}%
+        - Source sessions: #{instinct['source_sessions'].join(', ')}
       SKILL
 
       File.write(skill_file, content)
 
-      update(instinct_id, "status" => "evolved")
+      update(instinct_id, 'status' => 'evolved')
 
       { success: true, skill_path: skill_file, message: "Skill created at #{skill_file}" }
     end
@@ -279,18 +283,18 @@ permitted_classes: [Time, Symbol], aliases: true)
     # @return [String] Formatted context string
     def load_to_context(filters = {})
       filters[:min_confidence] ||= 0.7
-      filters[:status] ||= "active"
+      filters[:status] ||= 'active'
       filters[:sort_by] ||= :confidence
 
       instincts = list(filters)
-      return "" if instincts.empty?
+      return '' if instincts.empty?
 
       lines = ["# Learned Instincts\n"]
       instincts.each do |instinct|
         lines << "- **#{instinct['pattern']}** " \
                  "(confidence: #{instinct['confidence'].round(2)})"
-        lines << "  Tags: #{instinct['tags'].join(', ')}" if instinct["tags"].any?
-        lines << "  Context: #{instinct['context']}" if instinct["context"]
+        lines << "  Tags: #{instinct['tags'].join(', ')}" if instinct['tags'].any?
+        lines << "  Context: #{instinct['context']}" if instinct['context']
       end
 
       lines.join("\n")
@@ -301,15 +305,17 @@ permitted_classes: [Time, Symbol], aliases: true)
     def default_storage_path
       # Try to find repo root
       repo_root = find_repo_root || Dir.pwd
-      File.join(repo_root, "memory", "instincts.yaml")
+      File.join(repo_root, 'memory', 'instincts.yaml')
     end
 
     def find_repo_root
       current = Dir.pwd
       loop do
-        return current if File.exist?(File.join(current, ".git"))
+        return current if File.exist?(File.join(current, '.git'))
+
         parent = File.dirname(current)
         break if parent == current
+
         current = parent
       end
       nil
@@ -317,8 +323,8 @@ permitted_classes: [Time, Symbol], aliases: true)
 
     def default_structure
       {
-        "version" => "1.0",
-        "instincts" => []
+        'version' => '1.0',
+        'instincts' => []
       }
     end
 
@@ -328,35 +334,43 @@ permitted_classes: [Time, Symbol], aliases: true)
     end
 
     def validate_instinct!(instinct)
-      raise ArgumentError, 
-"Pattern is required" if instinct["pattern"].nil? || instinct["pattern"].empty?
-      raise ArgumentError, 
-"Confidence must be between 0 and 1" unless (0.0..1.0).cover?(instinct["confidence"])
-      raise ArgumentError, 
-"Success rate must be between 0 and 1" unless (0.0..1.0).cover?(instinct["success_rate"])
-      raise ArgumentError, 
-"Usage count must be non-negative" if instinct["usage_count"] < 0
+      if instinct['pattern'].nil? || instinct['pattern'].empty?
+        raise ArgumentError,
+              'Pattern is required'
+      end
+      unless (0.0..1.0).cover?(instinct['confidence'])
+        raise ArgumentError,
+              'Confidence must be between 0 and 1'
+      end
+      unless (0.0..1.0).cover?(instinct['success_rate'])
+        raise ArgumentError,
+              'Success rate must be between 0 and 1'
+      end
+      return unless (instinct['usage_count']).negative?
+
+      raise ArgumentError,
+            'Usage count must be non-negative'
     end
 
     def merge_instinct_data(existing, imported)
       # Merge usage statistics
-      total_usage = existing["usage_count"] + imported["usage_count"]
-      total_successes = (existing["success_rate"] * existing["usage_count"]) +
-                        (imported["success_rate"] * imported["usage_count"])
+      total_usage = existing['usage_count'] + imported['usage_count']
+      total_successes = (existing['success_rate'] * existing['usage_count']) +
+                        (imported['success_rate'] * imported['usage_count'])
 
-      existing["usage_count"] = total_usage
-      existing["success_rate"] = total_successes / total_usage if total_usage > 0
-      existing["confidence"] = calculate_confidence(existing)
+      existing['usage_count'] = total_usage
+      existing['success_rate'] = total_successes / total_usage if total_usage.positive?
+      existing['confidence'] = calculate_confidence(existing)
 
       # Merge source sessions
-      existing["source_sessions"] = 
-        (existing["source_sessions"] + imported["source_sessions"]).uniq
+      existing['source_sessions'] =
+        (existing['source_sessions'] + imported['source_sessions']).uniq
 
       # Merge tags
-      existing["tags"] = (existing["tags"] + imported["tags"]).uniq
+      existing['tags'] = (existing['tags'] + imported['tags']).uniq
 
       # Update timestamp
-      existing["updated_at"] = Time.now.iso8601
+      existing['updated_at'] = Time.now.iso8601
     end
 
     def save

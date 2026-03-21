@@ -6,6 +6,7 @@ require_relative 'superpowers_installer'
 require_relative 'gstack_installer'
 
 module Vibe
+  # Orchestrates detection and setup of optional integrations (superpowers, gstack).
   module IntegrationManager
     include PlatformUtils
     include UserInteraction

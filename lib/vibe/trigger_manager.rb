@@ -168,19 +168,5 @@ module Vibe
       @state['session_count'] = 0
       save_state
     end
-
-    # Check if within quiet hours
-    def quiet_hours?
-      hour = Time.now.hour
-      start_hour = @config.dig('triggers', 'quiet_hours_start')
-      end_hour = @config.dig('triggers', 'quiet_hours_end')
-
-      # Handle overnight wrapping
-      if start_hour > end_hour
-        hour >= start_hour || hour < end_hour
-      else
-        hour >= start_hour && hour < end_hour
-      end
-    end
   end
 end

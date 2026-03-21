@@ -7,6 +7,7 @@ require 'rbconfig'
 require_relative 'platform_utils'
 
 module Vibe
+  # Installer for the gstack skill pack (clones repo and sets up skills directory).
   module GstackInstaller
     include PlatformUtils
 

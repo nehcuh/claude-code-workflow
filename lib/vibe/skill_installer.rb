@@ -34,16 +34,16 @@ module Vibe
       end
 
       puts "\n🚀 Installing #{pack_name} Skill Pack"
-      puts "=" * 60
+      puts '=' * 60
       puts
 
       # Execute installation
       success = case pack_name
                 when 'superpowers'
-        install_superpowers(platform)
-      else
-        false
-      end
+                  install_superpowers(platform)
+                else
+                  false
+                end
 
       return false unless success
 
@@ -62,7 +62,7 @@ module Vibe
     # @param platform [String] Target platform
     def preview_installation(pack_name, platform: nil)
       puts "\n🔍 DRY RUN - Preview of #{pack_name} installation"
-      puts "=" * 60
+      puts '=' * 60
       puts
 
       case pack_name
@@ -73,7 +73,7 @@ module Vibe
       end
 
       puts "\n✅ This was a dry run. No changes were made."
-      puts "   To actually install, run:"
+      puts '   To actually install, run:'
       puts "   vibe install #{pack_name}"
       puts
     end
@@ -84,8 +84,8 @@ module Vibe
     def install_superpowers(platform)
       platform ||= detect_current_platform
 
-      puts "📦 Skill Pack: superpowers"
-      puts "📍 Install Location: ~/.config/skills/superpowers"
+      puts '📦 Skill Pack: superpowers'
+      puts '📍 Install Location: ~/.config/skills/superpowers'
       puts "🔧 Platform: #{platform}"
       puts
 
@@ -105,32 +105,32 @@ module Vibe
     def preview_superpowers_installation(platform)
       platform ||= detect_current_platform
 
-      puts "📦 Skill Pack: superpowers"
-      puts "📍 Install Location: ~/.config/skills/superpowers"
+      puts '📦 Skill Pack: superpowers'
+      puts '📍 Install Location: ~/.config/skills/superpowers'
       puts "🔧 Platform: #{platform}"
       puts
 
-      puts "Installation steps:"
-      puts "  1. Clone from https://github.com/obra/superpowers.git"
-      puts "  2. Create symlinks in platform skills directory"
-      puts "  3. Detect available skills"
-      puts "  4. Prompt for skill adaptation"
+      puts 'Installation steps:'
+      puts '  1. Clone from https://github.com/obra/superpowers.git'
+      puts '  2. Create symlinks in platform skills directory'
+      puts '  3. Detect available skills'
+      puts '  4. Prompt for skill adaptation'
       puts
 
-      puts "Expected skills to be available:"
-      puts "  • superpowers/tdd"
-      puts "  • superpowers/brainstorm"
-      puts "  • superpowers/refactor"
-      puts "  • superpowers/debug"
-      puts "  • superpowers/architect"
-      puts "  • superpowers/review"
-      puts "  • superpowers/optimize"
+      puts 'Expected skills to be available:'
+      puts '  • superpowers/tdd'
+      puts '  • superpowers/brainstorm'
+      puts '  • superpowers/refactor'
+      puts '  • superpowers/debug'
+      puts '  • superpowers/architect'
+      puts '  • superpowers/review'
+      puts '  • superpowers/optimize'
       puts
 
-      if Dir.exist?(File.expand_path('~/.config/skills/superpowers'))
-        puts "⚠️  Note: Superpowers is already installed"
-        puts "   Skills will be detected and available for adaptation"
-      end
+      return unless Dir.exist?(File.expand_path('~/.config/skills/superpowers'))
+
+      puts '⚠️  Note: Superpowers is already installed'
+      puts '   Skills will be detected and available for adaptation'
     end
 
     # Adapt new skills from installed pack
@@ -153,20 +153,19 @@ module Vibe
 
       if auto_adapt
         # Auto-adapt all as suggest
-        puts "⚡ Auto-adapting all skills as suggest..."
+        puts '⚡ Auto-adapting all skills as suggest...'
         results = manager.adapter.adapt_all_as(new_skills, :suggest)
-        show_adaptation_summary(results)
       else
         # Interactive adaptation
         results = manager.adapter.adapt_interactively(new_skills)
-        show_adaptation_summary(results)
       end
+      show_adaptation_summary(results)
     end
 
     # Show adaptation summary
     def show_adaptation_summary(results)
       puts "\n📊 Adaptation Summary"
-      puts "=" * 60
+      puts '=' * 60
       puts
 
       if results[:adapted]&.any?
@@ -178,18 +177,18 @@ module Vibe
       if results[:skipped]&.any?
         puts "⏸️  Skipped (#{results[:skipped].length} skills):"
         results[:skipped].each { |id| puts "   • #{id}" }
-        puts "   You can adapt them later with: vibe skills adapt <id>"
+        puts '   You can adapt them later with: vibe skills adapt <id>'
         puts
       end
 
-      puts "📝 Project configuration updated!"
-      puts "   Configuration saved to: .vibe/skills.yaml"
+      puts '📝 Project configuration updated!'
+      puts '   Configuration saved to: .vibe/skills.yaml'
       puts
 
-      puts "🚀 Next Steps:"
-      puts "   1. Review adapted skills: vibe skills list"
-      puts "   2. Apply to project: vibe apply claude-code"
-      puts "   3. View skill docs: vibe skills docs <id>"
+      puts '🚀 Next Steps:'
+      puts '   1. Review adapted skills: vibe skills list'
+      puts '   2. Apply to project: vibe apply claude-code'
+      puts '   3. View skill docs: vibe skills docs <id>'
       puts
     end
 
