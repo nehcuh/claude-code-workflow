@@ -193,15 +193,17 @@ module Vibe
 
     # Mark all tasks that (transitively) depend on failed_id as skipped
     def skip_downstream(failed_id)
-      dependents = @mutex.synchronize do
-        @tasks.values.select { |t| t['depends_on'].include?(failed_id) }
-      end
-      dependents.each do |t|
-        next unless t['status'] == STATUS[:pending]
+      to_recurse = []
+      @mutex.synchronize do
+        @tasks.each_value do |t|
+          next unless t['depends_on'].include?(failed_id)
+          next unless t['status'] == STATUS[:pending]
 
-        @mutex.synchronize { t['status'] = STATUS[:skipped] }
-        skip_downstream(t['id'])
+          t['status'] = STATUS[:skipped]
+          to_recurse << t['id']
+        end
       end
+      to_recurse.each { |id| skip_downstream(id) }
     end
 
     def build_summary

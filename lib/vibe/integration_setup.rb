@@ -74,6 +74,13 @@ module Vibe
         return
       end
 
+      known = %w[superpowers rtk gstack]
+      unless known.include?(name)
+        puts "   ⚠ Unknown integration: #{name}"
+        puts
+        return
+      end
+
       info = send("verify_#{name}")
       puts "   Status: #{setup_status_message(name, info)}"
 

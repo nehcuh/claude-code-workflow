@@ -336,7 +336,7 @@ module Vibe
     private
 
     def bun_available?
-      system('which bun > /dev/null 2>&1')
+      cmd_exist?('bun')
     end
 
     def gstack_markers_present?(dir)
@@ -430,7 +430,7 @@ module Vibe
 
     # Clear cached integration status (call after install/configure actions)
     def reset_integration_status!
-      @_integration_status_cache = nil
+      @integration_status = nil
     end
 
     def all_integrations_installed?

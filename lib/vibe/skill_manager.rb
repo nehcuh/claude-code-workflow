@@ -115,8 +115,8 @@ module Vibe
                            else
                              (skipped ? :skipped : :not_adapted)
                            end,
-        adaptation_mode: adapted & [:mode],
-        adapted_at: adapted & [:adapted_at]
+        adaptation_mode: adapted&.dig(:mode),
+        adapted_at: adapted&.dig(:adapted_at)
       )
     end
 

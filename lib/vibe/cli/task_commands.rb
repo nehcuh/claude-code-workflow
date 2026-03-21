@@ -42,7 +42,7 @@ module Vibe
         exit 1
       end
 
-      manager = BackgroundTaskManager.new
+      manager = Vibe::TaskRunner.new
       task_id = manager.submit(options[:command],
                                priority: options[:priority],
                                description: options[:description],
@@ -62,13 +62,13 @@ module Vibe
     # vibe tasks list - List all tasks
     def run_tasks_list(argv)
       options = parse_tasks_list_options(argv)
-      manager = BackgroundTaskManager.new
+      manager = Vibe::TaskRunner.new
 
       filters = {}
       filters[:status] = options[:status] if options[:status]
       if options[:priority]
         filters[:priority] =
-          BackgroundTaskManager::PRIORITY[options[:priority]]
+          Vibe::TaskRunner::PRIORITY[options[:priority]]
       end
 
       tasks = manager.list(filters)
@@ -116,7 +116,7 @@ module Vibe
         exit 1
       end
 
-      manager = BackgroundTaskManager.new
+      manager = Vibe::TaskRunner.new
       task = manager.status(task_id)
 
       unless task
@@ -161,7 +161,7 @@ module Vibe
         exit 1
       end
 
-      manager = BackgroundTaskManager.new
+      manager = Vibe::TaskRunner.new
 
       if manager.cancel(task_id)
         puts "\n✅ Task cancelled: #{task_id}\n"
@@ -175,7 +175,7 @@ module Vibe
     def run_tasks_cleanup(argv)
       older_than = argv.shift&.to_i || 86_400
 
-      manager = BackgroundTaskManager.new
+      manager = Vibe::TaskRunner.new
       removed = manager.cleanup(older_than)
 
       puts "\n🧹 Task Cleanup\n"

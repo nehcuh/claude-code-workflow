@@ -102,9 +102,7 @@ module Vibe
     # Project completion trigger: Detect git merge/push to main
     def project_completion_trigger?(context)
       return false unless @config.dig('triggers', 'project_completion')
-
-      # Check for git events indicating completion
-      return false unless context[:git_event]
+      return false unless context[:git_event].is_a?(String)
 
       %w[merge push].any? { |event| context[:git_event].downcase.include?(event) }
     end

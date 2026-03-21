@@ -7,10 +7,10 @@ require 'open3'
 require 'shellwords'
 
 module Vibe
-  # Background task manager for long-running operations
-  # TODO: Runs synchronously in CLI mode. submit/cancel/stop_worker API reflects
-  # a former async design that was removed. Consider simplifying the interface.
-  class BackgroundTaskManager
+  # Synchronous task runner for CLI task management.
+  # Note: despite the historical "background" naming, tasks run synchronously.
+  # The submit/cancel/stop_worker API reflects a former async design.
+  class TaskRunner
     attr_reader :tasks, :storage_path
 
     # Task status values

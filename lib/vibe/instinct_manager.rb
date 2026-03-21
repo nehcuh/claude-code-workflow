@@ -346,10 +346,12 @@ module Vibe
         raise ArgumentError,
               'Success rate must be between 0 and 1'
       end
-      return unless (instinct['usage_count']).negative?
-
-      raise ArgumentError,
-            'Usage count must be non-negative'
+      # rubocop:disable Style/GuardClause
+      if (instinct['usage_count']).negative?
+        raise ArgumentError,
+              'Usage count must be non-negative'
+      end
+      # rubocop:enable Style/GuardClause
     end
 
     def merge_instinct_data(existing, imported)

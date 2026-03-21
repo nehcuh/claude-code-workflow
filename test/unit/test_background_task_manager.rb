@@ -5,11 +5,11 @@ require "fileutils"
 require "tmpdir"
 require_relative "../../lib/vibe/background_task_manager"
 
-class TestBackgroundTaskManager < Minitest::Test
+class TestTaskRunner < Minitest::Test
   def setup
     @temp_dir = Dir.mktmpdir
     @storage_path = File.join(@temp_dir, "tasks.yaml")
-    @manager = Vibe::BackgroundTaskManager.new(@storage_path)
+    @manager = Vibe::TaskRunner.new(@storage_path)
   end
 
   def teardown
@@ -33,7 +33,7 @@ class TestBackgroundTaskManager < Minitest::Test
     task_id = @manager.submit("echo 'high priority'", priority: :high)
 
     task = @manager.status(task_id)
-    assert_equal Vibe::BackgroundTaskManager::PRIORITY[:high], task["priority"]
+    assert_equal Vibe::TaskRunner::PRIORITY[:high], task["priority"]
   end
 
   def test_task_execution
@@ -79,7 +79,7 @@ class TestBackgroundTaskManager < Minitest::Test
     @manager.submit("echo 'low'", priority: :low)
     @manager.submit("echo 'high'", priority: :high)
 
-    high_priority = @manager.list(priority: Vibe::BackgroundTaskManager::PRIORITY[:normal])
+    high_priority = @manager.list(priority: Vibe::TaskRunner::PRIORITY[:normal])
     assert_equal 1, high_priority.size
   end
 
@@ -120,7 +120,7 @@ class TestBackgroundTaskManager < Minitest::Test
     task_id = @manager.submit("echo 'persist'")
 
     # Create new manager instance
-    manager2 = Vibe::BackgroundTaskManager.new(@storage_path)
+    manager2 = Vibe::TaskRunner.new(@storage_path)
     task = manager2.status(task_id)
 
     refute_nil task

@@ -215,7 +215,8 @@ module Vibe
     end
 
     def write_temp_candidate(code, index)
-      temp_file = File.join(Dir.tmpdir, "candidate_#{index}_#{SecureRandom.hex(4)}.rb")
+      ext = @language ? ".#{@language}" : '.rb'
+      temp_file = File.join(Dir.tmpdir, "candidate_#{index}_#{SecureRandom.hex(4)}#{ext}")
       File.write(temp_file, code)
       temp_file
     end

@@ -85,7 +85,7 @@ module Vibe
       # Split by language
       words = text.split
       chinese_chars = text.scan(/[\u4e00-\u9fa5]/).size
-      english_words = words.size - (chinese_chars / 2) # Rough adjustment
+      english_words = [words.size - (chinese_chars / 2), 0].max
 
       (english_words / TOKENS_PER_WORD_EN + chinese_chars / TOKENS_PER_WORD_ZH).round
     end

@@ -141,6 +141,10 @@ adapted_skills:
     mode: suggest
     adapted_at: '2026-03-20T13:23:10+0800'
     adapted_by: user_choice
+  skill-craft:
+    mode: suggest
+    adapted_at: '2026-03-21T23:38:31+0800'
+    adapted_by: user_choice
 skipped_skills: []
 installed_packs: {}
-last_checked: '2026-03-20T13:23:10+0800'
+last_checked: '2026-03-21T23:38:31+0800'
