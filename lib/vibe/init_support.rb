@@ -1,20 +1,20 @@
 # frozen_string_literal: true
 
-require "json"
-require "yaml"
-require_relative "errors"
-require_relative "platform_utils"
-require_relative "user_interaction"
-require_relative "platform_verifier"
-require_relative "platform_installer"
-require_relative "rtk_installer"
-require_relative "integration_manager"
-require_relative "quickstart_runner"
-require_relative "superpowers_installer"
-require_relative "integration_setup"
-require_relative "integration_recommendations"
-require_relative "integration_verifier"
-require_relative "hook_installer"
+require 'json'
+require 'yaml'
+require_relative 'errors'
+require_relative 'platform_utils'
+require_relative 'user_interaction'
+require_relative 'platform_verifier'
+require_relative 'platform_installer'
+require_relative 'rtk_installer'
+require_relative 'integration_manager'
+require_relative 'quickstart_runner'
+require_relative 'superpowers_installer'
+require_relative 'integration_setup'
+require_relative 'integration_recommendations'
+require_relative 'integration_verifier'
+require_relative 'hook_installer'
 
 module Vibe
   # Initialization and setup support for global platform configuration.
@@ -51,12 +51,13 @@ module Vibe
     include HookInstaller
 
     # Main initialization flow - installs global configuration
-    def run_init(platform:, force: false, verify_only: false, suggest_only: false, dry_run: false)
+    def run_init(platform:, force: false, verify_only: false, suggest_only: false,
+                 dry_run: false)
       @target_platform = platform
       platform_name = platform_label(platform)
 
       puts "\n🚀 #{platform_name} Global Configuration Setup"
-      puts "=" * 50
+      puts '=' * 50
       puts
 
       if verify_only
@@ -82,31 +83,31 @@ module Vibe
       target = normalize_target(platform)
       destination_root = default_global_destination(target)
 
-      puts "🔍 DRY RUN - Preview of what would be installed:"
+      puts '🔍 DRY RUN - Preview of what would be installed:'
       puts
       puts "Target platform: #{platform_label(platform)}"
       puts "Install location: #{destination_root}"
       puts
 
       if Dir.exist?(destination_root)
-        puts "⚠️  Configuration already exists at this location"
-        puts "   (Would be overwritten with --force)"
+        puts '⚠️  Configuration already exists at this location'
+        puts '   (Would be overwritten with --force)'
         puts
       end
 
-      puts "Files that would be created:"
+      puts 'Files that would be created:'
       puts "  📄 #{config_entrypoint(target)}"
       puts "  📁 .vibe/#{target}/"
-      puts "  📁 rules/"
-      puts "  📁 docs/"
-      puts "  📁 skills/"
-      puts "  📁 agents/"
-      puts "  📁 commands/"
-      puts "  📁 memory/"
+      puts '  📁 rules/'
+      puts '  📁 docs/'
+      puts '  📁 skills/'
+      puts '  📁 agents/'
+      puts '  📁 commands/'
+      puts '  📁 memory/'
       puts
 
-      puts "✅ This was a dry run. No changes were made."
-      puts "   To actually install, run:"
+      puts '✅ This was a dry run. No changes were made.'
+      puts '   To actually install, run:'
       puts "   vibe init --platform #{platform}"
       puts
     end
@@ -114,15 +115,16 @@ module Vibe
     private
 
     def normalize_platform(platform)
-      return "claude-code" if platform.nil?
+      return 'claude-code' if platform.nil?
 
       normalize_target(platform, strict: true)
     end
 
     def detect_current_platform
-      return "claude-code" if Dir.exist?(File.expand_path("~/.claude"))
-      return "opencode" if Dir.exist?(File.expand_path("~/.config/opencode"))
-      "claude-code"
+      return 'claude-code' if Dir.exist?(File.expand_path('~/.claude'))
+      return 'opencode' if Dir.exist?(File.expand_path('~/.config/opencode'))
+
+      'claude-code'
     end
   end
 end

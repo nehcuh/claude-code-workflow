@@ -3,7 +3,7 @@
 # CLI commands for grader system
 # These methods are included in VibeCLI class
 
-require_relative "../grader"
+require_relative '../grader'
 
 module Vibe
   module GradeCommands
@@ -12,16 +12,17 @@ module Vibe
       subcommand = argv.shift
 
       case subcommand
-      when "run"
+      when 'run'
         run_grade_run(argv)
-      when "pass-at-k"
+      when 'pass-at-k'
         run_grade_pass_at_k(argv)
-      when "summary"
+      when 'summary'
         run_grade_summary(argv)
-      when nil, "help", "--help", "-h"
+      when nil, 'help', '--help', '-h'
         puts grade_usage
       else
-        raise Vibe::ValidationError, "Unknown grade subcommand: #{subcommand}\n\n#{grade_usage}"
+        raise Vibe::ValidationError,
+              "Unknown grade subcommand: #{subcommand}\n\n#{grade_usage}"
       end
     end
 
@@ -30,7 +31,7 @@ module Vibe
       options = parse_grade_run_options(argv)
 
       unless options[:type] && options[:command]
-        puts "Error: Type and command required"
+        puts 'Error: Type and command required'
         puts
         puts grade_usage
         exit 1
@@ -38,12 +39,11 @@ module Vibe
 
       grader = Grader.new
       result = grader.run(options[:type].to_sym, options[:command],
-        description: options[:description],
-        working_dir: options[:working_dir]
-      )
+                          description: options[:description],
+                          working_dir: options[:working_dir])
 
       puts "\n🎯 Grade Result\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
       puts "Type: #{result[:type]}"
       puts "Grade: #{colorize_grade(result[:grade])}"
@@ -52,7 +52,7 @@ module Vibe
       puts
 
       if result[:output] && !result[:output].empty?
-        puts "Output:"
+        puts 'Output:'
         puts result[:output]
         puts
       end
@@ -62,7 +62,7 @@ module Vibe
         puts
       end
 
-      exit 1 if result[:grade] == "fail"
+      exit 1 if result[:grade] == 'fail'
     end
 
     # vibe grade pass-at-k - Run pass@k evaluation
@@ -70,33 +70,34 @@ module Vibe
       config_file = argv.shift
 
       unless config_file && File.exist?(config_file)
-        puts "Error: Config file required"
+        puts 'Error: Config file required'
         puts
         puts grade_usage
         exit 1
       end
 
-      config = YAML.safe_load(File.read(config_file), permitted_classes: [Symbol], aliases: true)
-      candidates = config["candidates"] || []
-      grader_config = config["grader"] || {}
+      config = YAML.safe_load(File.read(config_file), permitted_classes: [Symbol],
+                                                      aliases: true)
+      candidates = config['candidates'] || []
+      grader_config = config['grader'] || {}
 
       unless candidates.any?
-        puts "Error: No candidates found in config"
+        puts 'Error: No candidates found in config'
         exit 1
       end
 
       grader = Grader.new
       result = grader.pass_at_k(
-        candidates.map { |c| { code: c["code"], description: c["description"] } },
+        candidates.map { |c| { code: c['code'], description: c['description'] } },
         {
-          type: grader_config["type"].to_sym,
-          command: grader_config["command"],
-          k: grader_config["k"]
+          type: grader_config['type'].to_sym,
+          command: grader_config['command'],
+          k: grader_config['k']
         }
       )
 
       puts "\n📊 pass@#{result[:k]} Evaluation\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
       puts "Total candidates: #{result[:total_candidates]}"
       puts "Evaluated: #{result[:evaluated]}"
@@ -105,23 +106,23 @@ module Vibe
       puts "Pass rate: #{result[:pass_rate]}%"
       puts
 
-      if result[:results].any?
-        puts "Results:"
-        result[:results].each_with_index do |r, i|
-          grade_icon = r[:grade] == "pass" ? "✅" : "❌"
-          puts "  #{i + 1}. #{grade_icon} #{r[:description]} (#{r[:duration]}s)"
-        end
-        puts
+      return unless result[:results].any?
+
+      puts 'Results:'
+      result[:results].each_with_index do |r, i|
+        grade_icon = r[:grade] == 'pass' ? '✅' : '❌'
+        puts "  #{i + 1}. #{grade_icon} #{r[:description]} (#{r[:duration]}s)"
       end
+      puts
     end
 
     # vibe grade summary - Show grading summary
-    def run_grade_summary(argv)
+    def run_grade_summary(_argv)
       grader = Grader.new
       summary = grader.summary
 
       puts "\n📈 Grading Summary\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
       puts "Total runs: #{summary[:total_runs]}"
       puts "Passes: #{summary[:passes]}"
@@ -130,19 +131,19 @@ module Vibe
       puts "Pass rate: #{summary[:pass_rate]}%"
       puts
 
-      if summary[:recent_results].any?
-        puts "Recent results:"
-        summary[:recent_results].each do |r|
-          grade_icon = case r[:grade]
-                       when "pass" then "✅"
-                       when "fail" then "❌"
-                       when "warning" then "⚠️"
-                       else "❓"
-                       end
-          puts "  #{grade_icon} #{r[:type]} - #{r[:description]}"
-        end
-        puts
+      return unless summary[:recent_results].any?
+
+      puts 'Recent results:'
+      summary[:recent_results].each do |r|
+        grade_icon = case r[:grade]
+                     when 'pass' then '✅'
+                     when 'fail' then '❌'
+                     when 'warning' then '⚠️'
+                     else '❓'
+                     end
+        puts "  #{grade_icon} #{r[:type]} - #{r[:description]}"
       end
+      puts
     end
 
     private
@@ -157,11 +158,11 @@ module Vibe
 
       while (arg = argv.shift)
         case arg
-        when "--type", "-t"
+        when '--type', '-t'
           options[:type] = argv.shift
-        when "--desc", "-d"
+        when '--desc', '-d'
           options[:description] = argv.shift
-        when "--dir"
+        when '--dir'
           options[:working_dir] = argv.shift
         else
           options[:command] = arg
@@ -173,10 +174,10 @@ module Vibe
 
     def colorize_grade(grade)
       case grade
-      when "pass" then "✅ PASS"
-      when "fail" then "❌ FAIL"
-      when "warning" then "⚠️  WARNING"
-      when "skip" then "⏭️  SKIP"
+      when 'pass' then '✅ PASS'
+      when 'fail' then '❌ FAIL'
+      when 'warning' then '⚠️  WARNING'
+      when 'skip' then '⏭️  SKIP'
       else grade
       end
     end

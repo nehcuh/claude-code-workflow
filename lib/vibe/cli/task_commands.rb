@@ -3,7 +3,7 @@
 # CLI commands for background task management
 # These methods are included in VibeCLI class
 
-require_relative "../background_task_manager"
+require_relative '../background_task_manager'
 
 module Vibe
   module TaskCommands
@@ -12,20 +12,21 @@ module Vibe
       subcommand = argv.shift
 
       case subcommand
-      when "submit"
+      when 'submit'
         run_tasks_submit(argv)
-      when "list"
+      when 'list'
         run_tasks_list(argv)
-      when "status"
+      when 'status'
         run_tasks_status(argv)
-      when "cancel"
+      when 'cancel'
         run_tasks_cancel(argv)
-      when "cleanup"
+      when 'cleanup'
         run_tasks_cleanup(argv)
-      when nil, "help", "--help", "-h"
+      when nil, 'help', '--help', '-h'
         puts tasks_usage
       else
-        raise Vibe::ValidationError, "Unknown tasks subcommand: #{subcommand}\n\n#{tasks_usage}"
+        raise Vibe::ValidationError,
+              "Unknown tasks subcommand: #{subcommand}\n\n#{tasks_usage}"
       end
     end
 
@@ -34,7 +35,7 @@ module Vibe
       options = parse_tasks_submit_options(argv)
 
       unless options[:command]
-        puts "Error: Command required"
+        puts 'Error: Command required'
         puts
         puts tasks_usage
         exit 1
@@ -42,13 +43,12 @@ module Vibe
 
       manager = BackgroundTaskManager.new
       task_id = manager.submit(options[:command],
-        priority: options[:priority],
-        description: options[:description],
-        timeout: options[:timeout]
-      )
+                               priority: options[:priority],
+                               description: options[:description],
+                               timeout: options[:timeout])
 
       puts "\n✅ Task submitted: #{task_id}\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
       puts "Command: #{options[:command]}"
       puts "Priority: #{options[:priority]}"
@@ -65,32 +65,38 @@ module Vibe
 
       filters = {}
       filters[:status] = options[:status] if options[:status]
-      filters[:priority] = BackgroundTaskManager::PRIORITY[options[:priority]] if options[:priority]
+      if options[:priority]
+        filters[:priority] =
+          BackgroundTaskManager::PRIORITY[options[:priority]]
+      end
 
       tasks = manager.list(filters)
 
       puts "\n📋 Background Tasks\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
 
       if tasks.empty?
-        puts "No tasks found."
+        puts 'No tasks found.'
         puts
         return
       end
 
       tasks.each do |task|
-        status_icon = case task["status"]
-                      when "pending" then "⏳"
-                      when "running" then "🔄"
-                      when "completed" then "✅"
-                      when "failed" then "❌"
-                      when "cancelled" then "🚫"
-                      else "❓"
+        status_icon = case task['status']
+                      when 'pending' then '⏳'
+                      when 'running' then '🔄'
+                      when 'completed' then '✅'
+                      when 'failed' then '❌'
+                      when 'cancelled' then '🚫'
+                      else '❓'
                       end
 
         puts "#{status_icon} #{task['id'][0..7]}... - #{task['description']}"
-        puts "   Status: #{task['status']} | Priority: #{task['priority']} | Created: #{task['created_at']}"
+        status_line = "   Status: #{task['status']} | " \
+                      "Priority: #{task['priority']} | " \
+                      "Created: #{task['created_at']}"
+        puts status_line
         puts
       end
 
@@ -103,7 +109,7 @@ module Vibe
       task_id = argv.shift
 
       unless task_id
-        puts "Error: Task ID required"
+        puts 'Error: Task ID required'
         puts
         puts tasks_usage
         exit 1
@@ -118,7 +124,7 @@ module Vibe
       end
 
       puts "\n📊 Task Status\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
       puts "ID: #{task['id']}"
       puts "Command: #{task['command']}"
@@ -132,15 +138,15 @@ module Vibe
       puts
 
       if task['output'] && !task['output'].empty?
-        puts "Output:"
+        puts 'Output:'
         puts task['output']
         puts
       end
 
-      if task['error']
-        puts "Error: #{task['error']}"
-        puts
-      end
+      return unless task['error']
+
+      puts "Error: #{task['error']}"
+      puts
     end
 
     # vibe tasks cancel - Cancel a task
@@ -148,7 +154,7 @@ module Vibe
       task_id = argv.shift
 
       unless task_id
-        puts "Error: Task ID required"
+        puts 'Error: Task ID required'
         puts
         puts tasks_usage
         exit 1
@@ -159,20 +165,20 @@ module Vibe
       if manager.cancel(task_id)
         puts "\n✅ Task cancelled: #{task_id}\n"
       else
-        puts "Error: Cannot cancel task (not found or already completed)"
+        puts 'Error: Cannot cancel task (not found or already completed)'
         exit 1
       end
     end
 
     # vibe tasks cleanup - Clean up old tasks
     def run_tasks_cleanup(argv)
-      older_than = argv.shift&.to_i || 86400
+      older_than = argv.shift&.to_i || 86_400
 
       manager = BackgroundTaskManager.new
       removed = manager.cleanup(older_than)
 
       puts "\n🧹 Task Cleanup\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
       puts "Removed: #{removed} task(s)"
       puts "Older than: #{older_than / 3600} hours"
@@ -191,11 +197,11 @@ module Vibe
 
       while (arg = argv.shift)
         case arg
-        when "--priority", "-p"
+        when '--priority', '-p'
           options[:priority] = argv.shift&.to_sym || :normal
-        when "--desc", "-d"
+        when '--desc', '-d'
           options[:description] = argv.shift
-        when "--timeout", "-t"
+        when '--timeout', '-t'
           options[:timeout] = argv.shift&.to_i
         else
           options[:command] = arg
@@ -210,9 +216,9 @@ module Vibe
 
       while (arg = argv.shift)
         case arg
-        when "--status", "-s"
+        when '--status', '-s'
           options[:status] = argv.shift
-        when "--priority", "-p"
+        when '--priority', '-p'
           options[:priority] = argv.shift&.to_sym
         end
       end

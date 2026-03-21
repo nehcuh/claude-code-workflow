@@ -147,6 +147,8 @@ module Vibe
 
       set('registry_skills', skills)
       set('registry_loaded_at', Time.now)
+    rescue StandardError => e
+      warn "Failed to preload skill registry: #{e.message}"
     end
 
     # Get cached registry or load if not cached
@@ -166,20 +168,24 @@ module Vibe
     # @return [Hash] Project skill configuration
     def get_project_config(project_root)
       cache_key = "project_config:#{project_root}"
+      default_config = {
+        'schema_version' => 1,
+        'adapted_skills' => {},
+        'skipped_skills' => [],
+        'installed_packs' => {}
+      }
 
       fetch(cache_key, 60) do # 1 minute TTL for project config
         config_path = File.join(project_root, ".vibe/skills.yaml")
 
         if File.exist?(config_path)
-          YAML.safe_load(File.read(config_path), aliases: true) || {}
+          YAML.safe_load(File.read(config_path), aliases: true) || default_config
         else
-          {
-            'schema_version' => 1,
-            'adapted_skills' => {},
-            'skipped_skills' => [],
-            'installed_packs' => {}
-          }
+          default_config
         end
+      rescue StandardError => e
+        warn "Failed to load project skill config: #{e.message}"
+        default_config
       end
     end
 

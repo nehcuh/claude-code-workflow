@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "yaml"
-require "time"
-require "fileutils"
+require 'yaml'
+require 'time'
+require 'fileutils'
 
 module Vibe
   # Manages skill-craft triggers
@@ -17,28 +17,31 @@ module Vibe
 
     def default_config
       {
-        "triggers" => {
-          "accumulation_threshold" => 10,
-          "periodic_interval" => 7,
-          "periodic_day" => 5, # Friday
-          "project_completion" => true,
-          "max_prompts_per_day" => 2,
-          "quiet_hours_start" => 22,
-          "quiet_hours_end" => 8
+        'triggers' => {
+          'accumulation_threshold' => 10,
+          'periodic_interval' => 7,
+          'periodic_day' => 5, # Friday
+          'project_completion' => true,
+          'max_prompts_per_day' => 2,
+          'quiet_hours_start' => 22,
+          'quiet_hours_end' => 8
         }
       }
     end
 
     def state_path
-      File.expand_path("~/.claude/.skill-craft-state.yaml")
+      File.expand_path('~/.claude/.skill-craft-state.yaml')
     end
 
     def load_state
-      return { "version" => "1.0", "last_review" => nil, "session_count" => 0 } unless File.exist?(@state_file)
+      unless File.exist?(@state_file)
+        return { 'version' => '1.0', 'last_review' => nil,
+                 'session_count' => 0 }
+      end
 
       YAML.safe_load(File.read(@state_file))
     rescue StandardError
-      { "version" => "1.0", "last_review" => nil, "session_count" => 0 }
+      { 'version' => '1.0', 'last_review' => nil, 'session_count' => 0 }
     end
 
     def save_state
@@ -49,81 +52,79 @@ module Vibe
     # Check if any trigger should fire
     def check_triggers(context = {})
       triggers = []
-      
+
       # Accumulation trigger
       if accumulation_trigger?(context)
         triggers << { type: :accumulation, message: accumulation_message }
       end
-      
+
       # Periodic trigger
-      if periodic_trigger?
-        triggers << { type: :periodic, message: periodic_message }
-      end
-      
+      triggers << { type: :periodic, message: periodic_message } if periodic_trigger?
+
       # Project completion trigger
       if project_completion_trigger?(context)
         triggers << { type: :project_completion, message: project_completion_message }
       end
-      
+
       triggers
     end
 
     # Accumulation trigger: N sessions since last review
-    def accumulation_trigger?(context)
-      session_count = @state["session_count"] || 0
-      threshold = @config.dig("triggers", "accumulation_threshold")
-      
+    def accumulation_trigger?(_context)
+      session_count = @state['session_count'] || 0
+      threshold = @config.dig('triggers', 'accumulation_threshold')
+
       session_count >= threshold
     end
 
     # Periodic trigger: Check if it's time for periodic review
     def periodic_trigger?
-      return false unless @state["last_review"]
+      return false unless @state['last_review']
 
-      last_review = Time.parse(@state["last_review"])
-      interval_days = @config.dig("triggers", "periodic_interval")
+      last_review = Time.parse(@state['last_review'])
+      interval_days = @config.dig('triggers', 'periodic_interval')
       today = Date.today
 
       # Check if enough time has passed since last review
       return false if (today - last_review.to_date) < interval_days
 
       # Check day of week
-      periodic_day = @config.dig("triggers", "periodic_day")
+      periodic_day = @config.dig('triggers', 'periodic_day')
       return false unless today.wday == periodic_day
 
       # Check if already prompted today
-      prompts_today = (@state["prompts_today"] || []).count(today.to_s)
-      max_prompts = @config.dig("triggers", "max_prompts_per_day")
+      prompts_today = (@state['prompts_today'] || []).count(today.to_s)
+      max_prompts = @config.dig('triggers', 'max_prompts_per_day')
 
       prompts_today < max_prompts
     end
 
     # Project completion trigger: Detect git merge/push to main
     def project_completion_trigger?(context)
-      return false unless @config.dig("triggers", "project_completion")
-      
+      return false unless @config.dig('triggers', 'project_completion')
+
       # Check for git events indicating completion
       return false unless context[:git_event]
-      
+
       %w[merge push].any? { |event| context[:git_event].downcase.include?(event) }
     end
 
     def accumulation_message
-      sessions = @state["session_count"] || 0
-      threshold = @config.dig("triggers", "accumulation_threshold") || 10
+      sessions = @state['session_count'] || 0
+      threshold = @config.dig('triggers', 'accumulation_threshold') || 10
       <<~MSG
         📊 Session Milestone
-        
+
         Sessions completed: #{sessions} (threshold: #{threshold})
-        
+
         Consider crafting personal skills from your successful patterns.
-        
+
         Run `/skill-craft` to review and extract patterns.
       MSG
     end
 
     def periodic_message
-      days_since = (Date.today - Time.parse(@state["last_review"]).to_date).to_i
+      days_since = (Date.today - Time.parse(@state['last_review']).to_date).to_i
       <<~MSG
         📅 Weekly Review
 
@@ -134,46 +135,46 @@ module Vibe
     end
 
     def project_completion_message
-      event = @state["git_event"] || "project completion"
+      event = @state['git_event'] || 'project completion'
       <<~MSG
         🎉 Project Completion Detected
-        
+
         #{event} completed successfully!
-        
+
         Would you like to review and extract skills from this work?
-        
+
         Run `/skill-craft` to start crafting.
       MSG
     end
 
     # Increment session counter
     def increment_session_count
-      @state["session_count"] ||= 0
-      @state["session_count"] += 1
+      @state['session_count'] ||= 0
+      @state['session_count'] += 1
       save_state
     end
 
     # Record prompt shown
     def record_prompt
       today = Date.today.to_s
-      @state["prompts_today"] ||= []
-      @state["prompts_today"] << today
+      @state['prompts_today'] ||= []
+      @state['prompts_today'] << today
       save_state
     end
 
     # Record review completed
     def record_review
-      @state["last_review"] = Date.today.to_s
-      @state["session_count"] = 0
+      @state['last_review'] = Date.today.to_s
+      @state['session_count'] = 0
       save_state
     end
 
     # Check if within quiet hours
     def quiet_hours?
       hour = Time.now.hour
-      start_hour = @config.dig("triggers", "quiet_hours_start")
-      end_hour = @config.dig("triggers", "quiet_hours_end")
-      
+      start_hour = @config.dig('triggers', 'quiet_hours_start')
+      end_hour = @config.dig('triggers', 'quiet_hours_end')
+
       # Handle overnight wrapping
       if start_hour > end_hour
         hour >= start_hour || hour < end_hour

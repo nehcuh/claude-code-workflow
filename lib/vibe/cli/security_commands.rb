@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative "../security_scanner"
-require_relative "../tdd_enforcer"
-require_relative "../context_optimizer"
+require_relative '../security_scanner'
+require_relative '../tdd_enforcer'
+require_relative '../context_optimizer'
 
 module Vibe
   module SecurityCommands
@@ -10,22 +10,23 @@ module Vibe
       subcommand = argv.shift
 
       case subcommand
-      when "text"   then run_scan_text(argv)
-      when "file"   then run_scan_file(argv)
-      when "tdd"    then run_tdd_audit(argv)
-      when "ctx"    then run_ctx_stats(argv)
-      when nil, "help", "--help", "-h" then puts security_usage
+      when 'text'   then run_scan_text(argv)
+      when 'file'   then run_scan_file(argv)
+      when 'tdd'    then run_tdd_audit(argv)
+      when 'ctx'    then run_ctx_stats(argv)
+      when nil, 'help', '--help', '-h' then puts security_usage
       else
-        raise Vibe::ValidationError, "Unknown scan subcommand: #{subcommand}\n\n#{security_usage}"
+        raise Vibe::ValidationError,
+              "Unknown scan subcommand: #{subcommand}\n\n#{security_usage}"
       end
     end
 
     private
 
     def run_scan_text(argv)
-      text = argv.join(" ")
+      text = argv.join(' ')
       if text.strip.empty?
-        warn "Usage: vibe scan text <text to scan>"
+        warn 'Usage: vibe scan text <text to scan>'
         exit 1
       end
 
@@ -47,7 +48,7 @@ module Vibe
     def run_scan_file(argv)
       path = argv.shift
       unless path && File.exist?(path)
-        warn "Usage: vibe scan file <path>"
+        warn 'Usage: vibe scan file <path>'
         exit 1
       end
 
@@ -71,7 +72,7 @@ module Vibe
       enforcer = TddEnforcer.new(dir)
       result   = enforcer.audit
 
-      puts "\n🧪 TDD Audit: #{dir}\n#{"=" * 60}"
+      puts "\n🧪 TDD Audit: #{dir}\n#{'=' * 60}"
       puts result[:summary]
       puts
 
@@ -106,7 +107,7 @@ module Vibe
       words     = input.split(/\s+/).length
       chars     = input.length
 
-      puts "Context stats:"
+      puts 'Context stats:'
       puts "  Characters : #{chars}"
       puts "  Words      : #{words}"
       puts "  Est. tokens: #{tokens}"

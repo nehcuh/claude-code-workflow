@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "thread"
 require "digest"
 require "time"
 
@@ -13,7 +12,8 @@ module Vibe
   #   @yaml_mutex  [Mutex]  — mutex for thread-safe YAML loading
   #
   # Depends on methods from:
-  #   Vibe::Utils          — read_yaml, write_json, display_path, deep_merge, deep_copy, validate_path!
+  #   Vibe::Utils          — read_yaml, write_json, display_path, deep_merge,
+  #                          deep_copy, validate_path!
   #   Vibe::DocRendering   — render_target_summary, core_policies
   #   Vibe::OverlaySupport — overlay_*, effective_policies
   #   Vibe::PathSafety     — ensure_safe_output_path!
@@ -92,9 +92,11 @@ module Vibe
       destination_digest = Digest::SHA256.hexdigest(destination_root)[0, 12]
 
       home_dir = Dir.home
-      raise Vibe::ConfigurationError, "Cannot determine home directory for external staging" if home_dir.nil? || home_dir.empty?
+      raise Vibe::ConfigurationError, 
+"Cannot determine home directory for external staging" if home_dir.nil? || home_dir.empty?
 
-      File.join(home_dir, ".vibe-generated", "#{destination_name}-#{destination_digest}", target)
+      File.join(home_dir, ".vibe-generated", "#{destination_name}-#{destination_digest}", 
+target)
     end
 
     def sanitize_directory_name(name)
@@ -113,8 +115,12 @@ module Vibe
 
       if requested_profile
         profile = profiles[requested_profile]
-        raise Vibe::ConfigurationError, "Unknown profile: #{requested_profile}" if profile.nil?
-        raise Vibe::ValidationError, "Profile #{requested_profile} does not target #{target}" unless profile["target"] == target
+        raise Vibe::ConfigurationError, 
+"Unknown profile: #{requested_profile}" if profile.nil?
+        unless profile["target"] == target
+          raise Vibe::ValidationError,
+                "Profile #{requested_profile} does not target #{target}"
+        end
 
         return [requested_profile, profile]
       end
@@ -123,21 +129,25 @@ module Vibe
     end
 
     def default_profile_for_target(target)
-      profiles = providers.fetch("profiles").select { |_name, profile| profile["target"] == target }
-      raise Vibe::ConfigurationError, "No profile found for target #{target}" if profiles.empty?
+      profiles = providers.fetch("profiles").select { |_name, profile|
+ profile["target"] == target
+}
+      raise Vibe::ConfigurationError, 
+"No profile found for target #{target}" if profiles.empty?
 
-      profiles.sort_by do |_name, profile|
+      profiles.min_by do |_name, profile|
         case profile["maturity"]
         when "active" then 0
         when "planned" then 1
         else 2
         end
-      end.first
+      end
     end
 
     # --- Build and manifest ---
 
-    def build_target(target:, profile_name:, profile:, output_root:, overlay:, project_level: false)
+    def build_target(target:, profile_name:, profile:, output_root:, overlay:, 
+                     project_level: false)
       ensure_safe_output_path!(output_root)
 
       manifest = build_manifest(
@@ -163,13 +173,16 @@ module Vibe
       vibe_dir = File.join(output_root, ".vibe")
       FileUtils.mkdir_p(vibe_dir)
       write_json(File.join(vibe_dir, "manifest.json"), manifest)
-      File.write(File.join(vibe_dir, "target-summary.md"), render_target_summary(manifest))
+      File.write(File.join(vibe_dir, "target-summary.md"), 
+render_target_summary(manifest))
       manifest
     end
 
     def build_manifest(target:, profile_name:, profile:, output_root:, overlay:)
-      profile_mapping = deep_merge(profile.fetch("mapping"), overlay_profile_mapping_overrides(overlay))
-      profile_notes = (Array(profile["notes"]) + overlay_profile_note_append(overlay)).uniq
+      profile_mapping = deep_merge(profile.fetch("mapping"), 
+overlay_profile_mapping_overrides(overlay))
+      profile_notes = (Array(profile["notes"]) +
+                       overlay_profile_note_append(overlay)).uniq
       policies = effective_policies(overlay)
       native_config_overlay = overlay_target_patch(overlay, target)
 
@@ -243,14 +256,16 @@ module Vibe
         "overlay" => overlay_overview(overlay),
         "base_policy_count" => core_policies.length,
         "effective_policy_count" => effective_policies(overlay).length,
-        "current_repo_target" => read_json_if_exists(File.join(@repo_root, self.class::MARKER_FILENAME)),
+        "current_repo_target" => read_json_if_exists(File.join(@repo_root, 
+self.class::MARKER_FILENAME)),
         "targets" => targets.map { |item| inspect_target_payload(item, overlay: overlay) }
       }
     end
 
     def inspect_target_payload(target, overlay:)
       default_profile_name, default_profile = default_profile_for_target(target)
-      generated_manifest = read_json_if_exists(File.join(default_output_root(target), ".vibe", "manifest.json"))
+      generated_manifest = read_json_if_exists(File.join(default_output_root(target), 
+".vibe", "manifest.json"))
       preview_manifest = build_manifest(
         target: target,
         profile_name: default_profile_name,

@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/draft-06/schema#",
   "$id": "https://vibesop/schemas/skills.schema.json",
   "title": "Skills Registry",
   "description": "Schema for core/skills/registry.yaml",
@@ -10,6 +10,27 @@
       "type": "integer",
       "minimum": 1
     },
+    "status": {
+      "type": "string"
+    },
+    "_templates": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/skill_template"
+      }
+    },
+    "namespaces": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/namespace_metadata"
+      }
+    },
+    "merge_policy": {
+      "$ref": "#/definitions/merge_policy"
+    },
+    "external_pack_template": {
+      "$ref": "#/definitions/external_pack_template"
+    },
     "skills": {
       "type": "array",
       "items": {
@@ -18,18 +39,128 @@
     }
   },
   "definitions": {
+    "skill_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*(/[a-z][a-z0-9-]*)?$"
+    },
+    "priority_value": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        {
+          "type": "string",
+          "enum": ["P0", "P1", "P2"]
+        }
+      ]
+    },
+    "target_support_map": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z][a-z0-9-]*$": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "skill_template": {
+      "type": "object",
+      "required": ["namespace", "entrypoint", "priority", "supported_targets", "safety_level"],
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "entrypoint": {
+          "type": "string"
+        },
+        "priority": {
+          "$ref": "#/definitions/priority_value"
+        },
+        "supported_targets": {
+          "$ref": "#/definitions/target_support_map"
+        },
+        "safety_level": {
+          "type": "string"
+        },
+        "conditional": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "namespace_metadata": {
+      "type": "object",
+      "required": ["owner", "default_trust", "purpose"],
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "default_trust": {
+          "type": "string"
+        },
+        "purpose": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "merge_policy": {
+      "type": "object",
+      "required": ["precedence", "name_collision", "default_external_trigger_mode", "mandatory_external_security_review"],
+      "properties": {
+        "precedence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "name_collision": {
+          "type": "string"
+        },
+        "default_external_trigger_mode": {
+          "type": "string",
+          "enum": ["mandatory", "suggest", "manual", "never"]
+        },
+        "mandatory_external_security_review": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "external_pack_template": {
+      "type": "object",
+      "properties": {
+        "namespace_examples": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/skill_id"
+          }
+        },
+        "onboarding_rules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "skill": {
       "type": "object",
       "required": ["id", "namespace", "intent", "trigger_mode"],
       "properties": {
         "id": {
-          "type": "string",
-          "pattern": "^[a-z][a-z0-9-]*$"
+          "$ref": "#/definitions/skill_id"
         },
         "namespace": {
           "type": "string"
         },
         "name": {
+          "type": "string"
+        },
+        "entrypoint": {
           "type": "string"
         },
         "intent": {
@@ -43,9 +174,7 @@
           "enum": ["mandatory", "suggest", "manual", "never"]
         },
         "priority": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 10
+          "$ref": "#/definitions/priority_value"
         },
         "severity": {
           "type": "string",
@@ -54,11 +183,26 @@
         "how_to_invoke": {
           "type": "string"
         },
+        "supported_targets": {
+          "$ref": "#/definitions/target_support_map"
+        },
+        "requires_tools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "allowed_tools": {
           "type": "array",
           "items": {
             "type": "string"
           }
+        },
+        "safety_level": {
+          "type": "string"
+        },
+        "conditional": {
+          "type": "string"
         }
       },
       "additionalProperties": false

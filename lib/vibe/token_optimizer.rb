@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "set"
+require 'set'
 
 module Vibe
   # Token optimization for reducing prompt size and API costs
@@ -48,12 +48,21 @@ module Vibe
       optimized = content.dup
 
       # Selective load should be done first, before other optimizations
-      optimized = selective_load(optimized, options[:selective_load]) if options[:selective_load]
+      if options[:selective_load]
+        optimized = selective_load(optimized,
+                                   options[:selective_load])
+      end
       optimized = remove_redundancies(optimized) if options[:remove_redundancies]
       optimized = compress_whitespace(optimized) if options[:compress_whitespace]
 
       optimized_tokens = estimate_tokens(optimized)
-      savings_pct = original_tokens > 0 ? ((original_tokens - optimized_tokens).to_f / original_tokens * 100).round(1) : 0
+      savings_pct = if original_tokens.positive?
+                      savings_ratio = (original_tokens - optimized_tokens).to_f /
+                                      original_tokens
+                      (savings_ratio * 100).round(1)
+                    else
+                      0
+                    end
 
       @stats[:total_optimized] += 1
       @stats[:savings] << savings_pct
@@ -89,11 +98,11 @@ module Vibe
       current_section = nil
 
       content.split("\n").each do |line|
-        if line.start_with?("#")
+        if line.start_with?('#')
           sections << current_section if current_section
-          current_section = { title: line, content: "" }
+          current_section = { title: line, content: '' }
         elsif current_section
-          current_section[:content] += line + "\n"
+          current_section[:content] += "#{line}\n"
         end
       end
 
@@ -161,10 +170,10 @@ module Vibe
     # Compress whitespace
     def compress_whitespace(content)
       content
-        .gsub(/[ \t]+/, " ")           # Multiple spaces/tabs -> single space
+        .gsub(/[ \t]+/, ' ')           # Multiple spaces/tabs -> single space
         .gsub(/\n{3,}/, "\n\n")        # Multiple newlines -> double newline
-        .gsub(/^ +/, "")               # Leading spaces
-        .gsub(/ +$/, "")               # Trailing spaces
+        .gsub(/^ +/, '')               # Leading spaces
+        .gsub(/ +$/, '')               # Trailing spaces
     end
 
     # Selective section loading
@@ -179,9 +188,9 @@ module Vibe
         end
       end
 
-      return "" if selected.empty?
+      return '' if selected.empty?
 
-      selected.map { |s| s[:title] + "\n" + s[:content] }.join("\n")
+      selected.map { |s| "#{s[:title]}\n#{s[:content]}" }.join("\n")
     end
   end
 end

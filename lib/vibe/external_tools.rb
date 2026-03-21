@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "json"
-require "yaml"
-require "open3"
-require "pathname"
-require "rbconfig"
-require_relative "errors"
+require 'json'
+require 'yaml'
+require 'open3'
+require 'pathname'
+require 'rbconfig'
+require_relative 'errors'
 
 module Vibe
   # External tool detection and integration support.
@@ -16,7 +16,11 @@ module Vibe
     # Cross-platform command existence check.
     # Uses 'where' on Windows, 'which' on Unix.
     def cmd_exist?(cmd)
-      finder = RbConfig::CONFIG["host_os"] =~ /mswin|msys|mingw|cygwin/i ? "where" : "which"
+      finder = if RbConfig::CONFIG['host_os'] =~ /mswin|msys|mingw|cygwin/i
+                 'where'
+               else
+                 'which'
+               end
       system(finder, cmd, out: File::NULL, err: File::NULL)
     end
 
@@ -33,12 +37,12 @@ module Vibe
 
     # Get all available integration configs
     def list_integrations
-      integrations_dir = File.join(@repo_root, "core/integrations")
+      integrations_dir = File.join(@repo_root, 'core/integrations')
       return [] unless Dir.exist?(integrations_dir)
 
-      Dir.glob(File.join(integrations_dir, "*.yaml")).map do |path|
-        File.basename(path, ".yaml")
-      end.reject { |name| name == "README" }
+      Dir.glob(File.join(integrations_dir, '*.yaml')).map do |path|
+        File.basename(path, '.yaml')
+      end.reject { |name| name == 'README' }
     end
 
     # --- Superpowers Detection ---
@@ -47,15 +51,15 @@ module Vibe
     # skills_dir: directory where individual skill symlinks are created.
     # skills_source: the superpowers skills source directory that symlinks point into.
     SUPERPOWERS_PLATFORM_PATHS = {
-      "claude-code" => {
-        plugin: "~/.claude/plugins/superpowers",
-        skills_dir: "~/.claude/skills",
-        skills_source: "~/.config/skills/superpowers/skills"
+      'claude-code' => {
+        plugin: '~/.claude/plugins/superpowers',
+        skills_dir: '~/.claude/skills',
+        skills_source: '~/.config/skills/superpowers/skills'
       },
-      "opencode" => {
-        plugin: "~/.config/opencode/plugins/superpowers.js",
-        skills_dir: "~/.config/opencode/skills",
-        skills_source: "~/.config/skills/superpowers/skills"
+      'opencode' => {
+        plugin: '~/.config/opencode/plugins/superpowers.js',
+        skills_dir: '~/.config/opencode/skills',
+        skills_source: '~/.config/skills/superpowers/skills'
       }
     }.freeze
 
@@ -78,21 +82,22 @@ module Vibe
         if paths[:skills_dir] && paths[:skills_source]
           skills_dir = File.expand_path(paths[:skills_dir])
           source_dir = File.expand_path(paths[:skills_source])
-          if Dir.exist?(skills_dir) && superpowers_symlinks_in(skills_dir, source_dir).any?
+          if Dir.exist?(skills_dir) && superpowers_symlinks_in(skills_dir,
+                                                               source_dir).any?
             return :platform_skills
           end
         end
       end
 
       # Cross-platform fallback: check common locations
-      claude_plugins = File.expand_path("~/.claude/plugins/superpowers")
+      claude_plugins = File.expand_path('~/.claude/plugins/superpowers')
       return :claude_plugin if Dir.exist?(claude_plugins)
 
       # Check XDG-compliant shared location
-      shared_clone = File.expand_path("~/.config/skills/superpowers")
+      shared_clone = File.expand_path('~/.config/skills/superpowers')
       return :shared_clone if Dir.exist?(shared_clone)
 
-      local_clone = File.expand_path("~/superpowers")
+      local_clone = File.expand_path('~/superpowers')
       return :local_clone if Dir.exist?(local_clone)
 
       :not_installed
@@ -110,13 +115,11 @@ module Vibe
         paths = SUPERPOWERS_PLATFORM_PATHS[platform]
         File.expand_path(paths[:skills_dir]) if paths
       when :claude_plugin
-        File.expand_path("~/.claude/plugins/superpowers")
+        File.expand_path('~/.claude/plugins/superpowers')
       when :shared_clone
-        File.expand_path("~/.config/skills/superpowers")
+        File.expand_path('~/.config/skills/superpowers')
       when :local_clone
-        File.expand_path("~/superpowers")
-      else
-        nil
+        File.expand_path('~/superpowers')
       end
     end
 
@@ -135,7 +138,7 @@ module Vibe
       end
 
       # Fallback: count skills in the shared clone
-      shared_skills = File.expand_path("~/.config/skills/superpowers/skills")
+      shared_skills = File.expand_path('~/.config/skills/superpowers/skills')
       return Dir.children(shared_skills).size if Dir.exist?(shared_skills)
 
       0
@@ -156,13 +159,19 @@ module Vibe
           # Resolve symlink target to absolute path
           target = File.readlink(link_path)
           # Handle relative symlinks by resolving from the link's directory
-          absolute_target = Pathname.new(target).absolute? ? target : File.expand_path(target, skills_dir)
+          absolute_target = if Pathname.new(target).absolute?
+                              target
+                            else
+                              File.expand_path(
+                                target, skills_dir
+                              )
+                            end
 
           # Check if target is inside source_dir
           absolute_target.start_with?(normalized_source)
         rescue Errno::ENOENT, Errno::ELOOP
           # Skip broken or circular symlinks
-          warn "Warning: Broken symlink detected: #{link_path}" if ENV["VIBE_DEBUG"]
+          warn "Warning: Broken symlink detected: #{link_path}" if ENV['VIBE_DEBUG']
           false
         end
       end
@@ -175,7 +184,7 @@ module Vibe
       return :not_installed if skip_integrations
 
       # Method 1: Check if rtk binary is in PATH
-      return :installed if cmd_exist?("rtk")
+      return :installed if cmd_exist?('rtk')
 
       # Method 2: Check Claude settings.json for hook
       return :hook_configured if rtk_hook_configured?
@@ -186,48 +195,53 @@ module Vibe
     def rtk_version
       return nil unless detect_rtk == :installed
 
-      version_output, status = Open3.capture2("rtk", "--version", err: File::NULL)
+      version_output, status = Open3.capture2('rtk', '--version', err: File::NULL)
       status.success? && !version_output.strip.empty? ? version_output.strip : nil
     rescue StandardError => e
-      warn "Warning: Failed to get RTK version: #{e.message}" if ENV["VIBE_DEBUG"]
+      warn "Warning: Failed to get RTK version: #{e.message}" if ENV['VIBE_DEBUG']
       nil
     end
 
     def rtk_binary_path
       return nil unless detect_rtk == :installed
 
-      finder = RbConfig::CONFIG["host_os"] =~ /mswin|msys|mingw|cygwin/i ? "where" : "which"
-      path_output, status = Open3.capture2(finder, "rtk", err: File::NULL)
+      finder = if RbConfig::CONFIG['host_os'] =~ /mswin|msys|mingw|cygwin/i
+                 'where'
+               else
+                 'which'
+               end
+      path_output, status = Open3.capture2(finder, 'rtk', err: File::NULL)
       status.success? ? path_output.strip : nil
     rescue StandardError => e
-      warn "Warning: Failed to get RTK binary path: #{e.message}" if ENV["VIBE_DEBUG"]
+      warn "Warning: Failed to get RTK binary path: #{e.message}" if ENV['VIBE_DEBUG']
       nil
     end
 
     def rtk_hook_configured?
-      settings_path = File.expand_path("~/.claude/settings.json")
+      settings_path = File.expand_path('~/.claude/settings.json')
       return false unless File.exist?(settings_path)
 
       begin
         settings = JSON.parse(File.read(settings_path))
-        
+
         # Check new PreToolUse hook format (RTK 0.27+)
-        pre_tool_use = settings.dig("hooks", "PreToolUse")
+        pre_tool_use = settings.dig('hooks', 'PreToolUse')
         if pre_tool_use.is_a?(Array)
           pre_tool_use.each do |hook_config|
-            next unless hook_config["matcher"] == "Bash"
-            hooks = hook_config["hooks"]
-            if hooks.is_a?(Array)
-              hooks.each do |h|
-                return true if h["command"]&.include?("rtk")
-              end
+            next unless hook_config['matcher'] == 'Bash'
+
+            hooks = hook_config['hooks']
+            next unless hooks.is_a?(Array)
+
+            hooks.each do |h|
+              return true if h['command']&.include?('rtk')
             end
           end
         end
-        
+
         # Fallback: check old bashCommandPrepare format
-        hook = settings.dig("hooks", "bashCommandPrepare")
-        hook.is_a?(String) && hook.include?("rtk")
+        hook = settings.dig('hooks', 'bashCommandPrepare')
+        hook.is_a?(String) && hook.include?('rtk')
       rescue JSON::ParserError
         false
       end
@@ -236,26 +250,25 @@ module Vibe
     # --- Installation Helpers ---
 
     def install_rtk_via_homebrew
-      return false unless cmd_exist?("brew")
+      return false unless cmd_exist?('brew')
 
-      puts "Installing RTK via Homebrew..."
-      system("brew", "install", "rtk")
+      puts 'Installing RTK via Homebrew...'
+      system('brew', 'install', 'rtk')
     end
-
 
     def configure_rtk_hook
       return false unless detect_rtk == :installed
 
-      puts "Configuring RTK hook..."
-      system("rtk", "init", "--global")
+      puts 'Configuring RTK hook...'
+      system('rtk', 'init', '--global')
     end
 
     # --- gstack Detection ---
 
     GSTACK_DETECTION_PATHS = [
-      "~/.claude/skills/gstack",
-      ".claude/skills/gstack",
-      "~/.config/opencode/skills/gstack"
+      '~/.claude/skills/gstack',
+      '.claude/skills/gstack',
+      '~/.config/opencode/skills/gstack'
     ].freeze
 
     GSTACK_MARKER_FILES = %w[SKILL.md VERSION setup].freeze
@@ -266,9 +279,7 @@ module Vibe
 
       GSTACK_DETECTION_PATHS.each do |path|
         expanded = File.expand_path(path)
-        if Dir.exist?(expanded) && gstack_markers_present?(expanded)
-          return :installed
-        end
+        return :installed if Dir.exist?(expanded) && gstack_markers_present?(expanded)
       end
 
       :not_installed
@@ -288,7 +299,7 @@ module Vibe
 
       # Count subdirectories that contain a SKILL.md
       Dir.children(location).count do |entry|
-        skill_path = File.join(location, entry, "SKILL.md")
+        skill_path = File.join(location, entry, 'SKILL.md')
         File.directory?(File.join(location, entry)) && File.exist?(skill_path)
       end
     end
@@ -297,7 +308,7 @@ module Vibe
       location = gstack_location
       return nil unless location
 
-      version_file = File.join(location, "VERSION")
+      version_file = File.join(location, 'VERSION')
       return nil unless File.exist?(version_file)
 
       File.read(version_file).strip
@@ -325,7 +336,7 @@ module Vibe
     private
 
     def bun_available?
-      system("which bun > /dev/null 2>&1")
+      system('which bun > /dev/null 2>&1')
     end
 
     def gstack_markers_present?(dir)
@@ -339,14 +350,14 @@ module Vibe
     def verify_superpowers(target_platform = nil)
       current_platform = defined?(@target_platform) ? @target_platform : nil
       platform = target_platform || current_platform
-      
+
       status = detect_superpowers(platform)
       return { installed: false } if status == :not_installed
 
       location = superpowers_location(platform)
 
       # For platform-specific detection, it's both installed and ready
-      if status == :platform_plugin || status == :platform_skills
+      if %i[platform_plugin platform_skills].include?(status)
         return {
           installed: true,
           ready: true,
@@ -388,13 +399,13 @@ module Vibe
     def verify_rtk(target_platform = nil)
       current_platform = defined?(@target_platform) ? @target_platform : nil
       platform = target_platform || current_platform
-      
+
       status = detect_rtk
       hook_configured = rtk_hook_configured?
       binary_installed = (status == :installed)
 
       # For non-claude-code platforms, hook is not required
-      rtk_needs_hook = platform.nil? || platform == "claude-code"
+      rtk_needs_hook = platform.nil? || platform == 'claude-code'
       ready = binary_installed && (rtk_needs_hook ? hook_configured : true)
 
       {
@@ -429,12 +440,12 @@ module Vibe
 
     def missing_integrations
       status = integration_status
-      status.select { |_name, s| !s[:installed] }.keys
+      status.reject { |_name, s| s[:installed] }.keys
     end
 
     def pending_integrations
       status = integration_status
-      status.select { |_name, s| !s[:ready] }.keys
+      status.reject { |_name, s| s[:ready] }.keys
     end
 
     def all_integrations_ready?
@@ -443,4 +454,3 @@ module Vibe
     end
   end
 end
-

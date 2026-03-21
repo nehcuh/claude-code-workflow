@@ -16,9 +16,9 @@ module Vibe
   class SkillDetector
     include Vibe::Utils
 
-    SKILL_REGISTRY_PATH = "core/skills/registry.yaml".freeze
-    USER_SKILLS_DIR = File.expand_path("~/.config/skills").freeze
-    PROJECT_SKILLS_CONFIG = ".vibe/skills.yaml".freeze
+    SKILL_REGISTRY_PATH = 'core/skills/registry.yaml'
+    USER_SKILLS_DIR = File.expand_path('~/.config/skills').freeze
+    PROJECT_SKILLS_CONFIG = '.vibe/skills.yaml'
 
     attr_reader :repo_root, :project_root, :cache
 
@@ -36,12 +36,10 @@ module Vibe
       project_skills = load_project_skills
 
       # Find skills in registry but not in project
-      new_skills = registry_skills.reject do |skill|
+      registry_skills.reject do |skill|
         project_skills[:adapted].any? { |s| s[:id] == skill[:id] } ||
-        project_skills[:skipped].any? { |s| s[:id] == skill[:id] }
+          project_skills[:skipped].any? { |s| s[:id] == skill[:id] }
       end
-
-      new_skills
     end
 
     # Detect newly installed skill packs since last check
@@ -53,11 +51,9 @@ module Vibe
       current_packs = scan_installed_packs
       last_check_time = load_last_check_time
 
-      new_packs = current_packs.select do |pack|
+      current_packs.select do |pack|
         pack[:installed_at] > last_check_time
       end
-
-      new_packs
     end
 
     # Check if there are any skill changes that need attention
@@ -124,20 +120,23 @@ module Vibe
 
     # Load project skill configuration (with caching)
     def load_project_skills
-      cache.get_project_config(project_root).tap do |config|
-        return {
-          adapted: config['adapted_skills']&.map { |id, info| { id: id, **info.transform_keys(&:to_sym) } } || [],
-          skipped: config['skipped_skills'] || [],
-          installed_packs: config['installed_packs'] || {}
-        }
-      end
+      config = cache.get_project_config(project_root)
+      {
+        adapted: config['adapted_skills']&.map do |id, info|
+                   { id: id, **info.transform_keys(&:to_sym) }
+                 end || [],
+        skipped: config['skipped_skills'] || [],
+        installed_packs: config['installed_packs'] || {}
+      }
     end
 
     # Scan user skills directory for installed packs
     def scan_installed_packs
       return [] unless Dir.exist?(USER_SKILLS_DIR)
 
-      Dir.glob(File.join(USER_SKILLS_DIR, "*")).select { |f| File.directory?(f) }.map do |pack_dir|
+      Dir.glob(File.join(USER_SKILLS_DIR, '*')).select do |f|
+        File.directory?(f)
+      end.map do |pack_dir|
         pack_name = File.basename(pack_dir)
         {
           name: pack_name,

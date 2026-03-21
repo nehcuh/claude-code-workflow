@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "yaml"
+require 'yaml'
 
 module Vibe
   # Configuration-driven target renderers.
@@ -10,13 +10,18 @@ module Vibe
     def platform_configs
       @platform_configs ||= begin
         # Try current repo root first, then fall back to original repo
-        config_path = File.join(@repo_root, "config", "platforms.yaml")
+        config_path = File.join(@repo_root, 'config', 'platforms.yaml')
         unless File.exist?(config_path)
           # Fall back to original workflow repo
-          original_repo = File.expand_path("../../..", __FILE__)
-          config_path = File.join(original_repo, "config", "platforms.yaml")
+          original_repo = File.expand_path('../..', __dir__)
+          config_path = File.join(original_repo, 'config', 'platforms.yaml')
         end
-        YAML.safe_load(File.read(config_path), aliases: true)["platforms"]
+        doc = YAML.safe_load(File.read(config_path), aliases: true)
+        unless doc.is_a?(Hash) && doc['platforms']
+          raise ConfigurationError,
+                "platforms.yaml missing 'platforms' key"
+        end
+        doc['platforms']
       end
     end
 
@@ -25,37 +30,47 @@ module Vibe
       config = platform_configs[platform_id]
       raise ArgumentError, "Unknown platform: #{platform_id}" unless config
 
-      mode = project_level ? "project" : "global"
-      path_config = config.dig("output_paths", mode)
-      doc_types = config.dig("doc_types", mode) || []
+      mode = project_level ? 'project' : 'global'
+      path_config = config.dig('output_paths', mode)
+      doc_types = config.dig('doc_types', mode) || []
 
       # Write target docs
-      vibe_dir = File.join(output_root, path_config["vibe_subdir"])
+      vibe_dir = File.join(output_root, path_config['vibe_subdir'])
       FileUtils.mkdir_p(vibe_dir)
       write_target_docs(vibe_dir, manifest, doc_types.map(&:to_sym))
 
       # Generate README.md in vibe directory
-      File.write(File.join(vibe_dir, "README.md"), generate_vibe_readme(manifest, platform_id))
+      File.write(File.join(vibe_dir, 'README.md'),
+                 generate_vibe_readme(manifest, platform_id))
 
       # Copy runtime directories if configured
-      if config["runtime_dirs"] && !config["runtime_dirs"].empty?
-        copy_runtime_dirs(output_root, config["runtime_dirs"], mode)
+      if config['runtime_dirs'] && !config['runtime_dirs'].empty?
+        copy_runtime_dirs(output_root, config['runtime_dirs'], mode)
       end
 
       # Generate native config if configured
-      native_config = config.dig("native_config", mode)
-      if native_config
-        generate_native_config(output_root, manifest, native_config, mode)
-      end
+      native_config = config.dig('native_config', mode)
+      generate_native_config(output_root, manifest, native_config, mode) if native_config
 
       # Generate entrypoint
-      generate_entrypoint(output_root, manifest, path_config["entrypoint_name"], mode, platform_id)
+      generate_entrypoint(output_root, manifest, path_config['entrypoint_name'], mode,
+                          platform_id)
 
       # Platform-specific hooks
-      send("after_render_#{platform_id}", output_root, manifest, mode) if respond_to?("after_render_#{platform_id}", true)
+      send("after_render_#{platform_id}", output_root, manifest, mode) if respond_to?(
+        "after_render_#{platform_id}", true
+      )
     end
 
     private
+
+    def platform_config_dir(platform_id)
+      case platform_id
+      when 'claude-code' then '~/.claude'
+      when 'opencode' then '~/.config/opencode'
+      else "~/.#{platform_id}"
+      end
+    end
 
     # Copy runtime directories based on configuration
     def copy_runtime_dirs(output_root, dirs_config, mode)
@@ -80,20 +95,21 @@ module Vibe
     end
 
     # Generate native configuration file
-    def generate_native_config(output_root, manifest, config, mode)
-      config_path = File.join(output_root, config["filename"])
-      builder_method = config["builder"]
+    def generate_native_config(output_root, manifest, config, _mode)
+      config_path = File.join(output_root, config['filename'])
+      builder_method = config['builder']
 
       unless builder_method
-        raise ArgumentError, "Native config builder not specified for #{config['filename']}"
+        raise ArgumentError,
+              "Native config builder not specified for #{config['filename']}"
       end
 
       unless respond_to?(builder_method)
         raise ArgumentError, "Native config builder method not found: #{builder_method}"
       end
 
-      case config["type"]
-      when "json"
+      case config['type']
+      when 'json'
         content = send(builder_method, manifest)
         write_json(config_path, content)
       else
@@ -106,10 +122,11 @@ module Vibe
       entrypoint_path = File.join(output_root, filename)
 
       content = case File.extname(filename)
-                when ".md"
-                  if mode == "project"
+                when '.md'
+                  if mode == 'project'
                     # Use platform-specific project renderer
-                    project_renderer_method = "render_#{platform_id.gsub('-', '_')}_project_md"
+                    project_renderer_method = "render_#{platform_id.gsub('-',
+                                                                         '_')}_project_md"
                     if respond_to?(project_renderer_method)
                       send(project_renderer_method, manifest)
                     else
@@ -120,11 +137,11 @@ module Vibe
                     # Global mode
                     render_target_entrypoint_md(platform_label(platform_id), manifest)
                   end
-                when ".json"
+                when '.json'
                   # JSON entrypoints are handled by native_config
                   return
                 else
-                  "# #{manifest["target"]} configuration\n"
+                  "# #{manifest['target']} configuration\n"
                 end
 
       File.write(entrypoint_path, content)
@@ -133,16 +150,12 @@ module Vibe
     # Generic project template for platforms without specific renderers
     def render_generic_project_md(platform_id, manifest)
       target_label = platform_label(platform_id)
-      config_dir = case platform_id
-                   when "claude-code" then "~/.claude"
-                   when "opencode" then "~/.config/opencode"
-                   else "~/.#{platform_id}"
-                   end
+      config_dir = platform_config_dir(platform_id)
 
       <<~MD
         # Project #{target_label} Configuration
 
-        Generated from the portable `core/` spec with profile `#{manifest["profile"]}`.  
+        Generated from the portable `core/` spec with profile `#{manifest['profile']}`.
         Applied overlay: #{overlay_sentence(manifest)}
 
         Global workflow rules are loaded from `#{config_dir}/`. This file adds project-specific context only.
@@ -168,45 +181,40 @@ module Vibe
     # Generate README for .vibe/<target>/ directory
     def generate_vibe_readme(manifest, platform_id)
       target_label = platform_label(platform_id)
-      profile = manifest["profile"]
+      profile = manifest['profile']
       overlay = overlay_sentence(manifest)
       config = platform_configs[platform_id]
-
-      # Platform-specific config directory hints
-      config_dir = case platform_id
-                   when "claude-code" then "~/.claude"
-                   when "opencode" then "~/.config/opencode"
-                   else "~/.#{platform_id}"
-                   end
+      config_dir = platform_config_dir(platform_id)
 
       # Build asset list dynamically from platform config
       assets = []
 
       # Entrypoint
-      entrypoint = config.dig("output_paths", "global", "entrypoint_name")
+      entrypoint = config.dig('output_paths', 'global', 'entrypoint_name')
       assets << "- `#{entrypoint}`" if entrypoint
 
       # Runtime directories
-      rt_dirs = config["runtime_dirs"]
-      global_dirs = rt_dirs.is_a?(Hash) ? (rt_dirs["global"] || []) : (rt_dirs || [])
+      rt_dirs = config['runtime_dirs']
+      global_dirs = rt_dirs.is_a?(Hash) ? (rt_dirs['global'] || []) : (rt_dirs || [])
       global_dirs.each { |d| assets << "- `#{d}/`" }
 
       # Native config
-      native_filename = config.dig("native_config", "global", "filename")
+      native_filename = config.dig('native_config', 'global', 'filename')
       assets << "- `#{native_filename}`" if native_filename
 
       lines = [
         "# #{target_label} target",
-        "",
-        "This output is intended to be copied into a #{target_label} config directory such as `#{config_dir}`.",
-        "",
-        "Included runtime assets:",
+        '',
+        "This output is intended to be copied into a #{target_label} " \
+          "config directory such as `#{config_dir}`.",
+        '',
+        'Included runtime assets:',
         *assets,
-        "",
+        '',
         "Active profile: `#{profile}`",
         "Applied overlay: #{overlay}",
-        "Generated summary: `.vibe/target-summary.md`",
-        ""
+        'Generated summary: `.vibe/target-summary.md`',
+        ''
       ]
 
       lines.join("\n")

@@ -39,7 +39,7 @@ module Vibe
 
       # Execute installation
       success = case pack_name
-      when 'superpowers'
+                when 'superpowers'
         install_superpowers(platform)
       else
         false

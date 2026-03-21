@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../toolchain_detector"
+require_relative '../toolchain_detector'
 
 module Vibe
   module ToolchainCommands
@@ -8,11 +8,12 @@ module Vibe
       subcommand = argv.shift
 
       case subcommand
-      when "detect"  then run_toolchain_detect(argv)
-      when "suggest" then run_toolchain_suggest(argv)
-      when nil, "help", "--help", "-h" then puts toolchain_usage
+      when 'detect'  then run_toolchain_detect(argv)
+      when 'suggest' then run_toolchain_suggest(argv)
+      when nil, 'help', '--help', '-h' then puts toolchain_usage
       else
-        raise Vibe::ValidationError, "Unknown toolchain subcommand: #{subcommand}\n\n#{toolchain_usage}"
+        raise Vibe::ValidationError,
+              "Unknown toolchain subcommand: #{subcommand}\n\n#{toolchain_usage}"
       end
     end
 
@@ -21,13 +22,13 @@ module Vibe
       detector = ToolchainDetector.new(dir)
       result = detector.detect
 
-      puts "\n🔍 Toolchain Detection: #{dir}\n#{"=" * 60}"
+      puts "\n🔍 Toolchain Detection: #{dir}\n#{'=' * 60}"
       puts "Primary language: #{result[:primary_language]}"
       puts
 
-      print_toolchain_section("Package managers", result[:package_managers])
-      print_toolchain_section("Build tools",      result[:build_tools])
-      print_toolchain_section("Test frameworks",  result[:test_frameworks])
+      print_toolchain_section('Package managers', result[:package_managers])
+      print_toolchain_section('Build tools',      result[:build_tools])
+      print_toolchain_section('Test frameworks',  result[:test_frameworks])
     end
 
     def run_toolchain_suggest(argv)
@@ -35,10 +36,10 @@ module Vibe
       detector = ToolchainDetector.new(dir)
       cmds = detector.suggested_commands
 
-      puts "\n💡 Suggested Commands: #{dir}\n#{"=" * 60}"
+      puts "\n💡 Suggested Commands: #{dir}\n#{'=' * 60}"
 
       if cmds.empty?
-        puts "No toolchain detected in this directory."
+        puts 'No toolchain detected in this directory.'
         return
       end
 
@@ -55,7 +56,7 @@ module Vibe
 
       puts "#{title}:"
       items.each do |item|
-        files = item[:matched_files].join(", ")
+        files = item[:matched_files].join(', ')
         puts "  ✅ #{item[:name]}  [#{item[:ecosystem]}]  (#{files})"
       end
       puts

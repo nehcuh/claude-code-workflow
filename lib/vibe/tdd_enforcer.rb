@@ -11,17 +11,17 @@ module Vibe
   #   puts result[:message]  # => "No test file found for lib/foo/bar.rb"
   class TddEnforcer
     STATUS = {
-      ok:             :ok,
-      missing_tests:  :missing_tests,
-      skipped:        :skipped,
-      not_impl_file:  :not_impl_file
+      ok: :ok,
+      missing_tests: :missing_tests,
+      skipped: :skipped,
+      not_impl_file: :not_impl_file
     }.freeze
 
     # Patterns that identify implementation files by path
     IMPL_PATTERNS = [
-      /\Alib\//,
-      /\Aapp\//,
-      /\Asrc\//,
+      %r{\Alib/},
+      %r{\Aapp/},
+      %r{\Asrc/},
       /\.rb\z/,
       /\.py\z/,
       /\.ts\z/,
@@ -30,9 +30,9 @@ module Vibe
 
     # Patterns that identify test files — these are never checked
     TEST_PATTERNS = [
-      /\Atest\//,
-      /\Aspec\//,
-      /\A__tests__\//,
+      %r{\Atest/},
+      %r{\Aspec/},
+      %r{\A__tests__/},
       /_test\.rb\z/,
       /_spec\.rb\z/,
       /\.test\.(ts|js)\z/,
@@ -45,19 +45,36 @@ module Vibe
     # Each lambda returns nil when the pattern does not apply to the given path.
     TEST_PATH_RESOLVERS = [
       # Ruby (lib/): lib/vibe/foo.rb → test/unit/test_foo.rb
-      ->(p) { p.match?(/\Alib\/.*\.rb\z/) ? "test/unit/test_#{File.basename(p)}" : nil },
+      ->(p) { p.match?(%r{\Alib/.*\.rb\z}) ? "test/unit/test_#{File.basename(p)}" : nil },
       # Ruby (lib/): lib/vibe/foo.rb → spec/vibe/foo_spec.rb
-      ->(p) { p.match?(/\Alib\/.*\.rb\z/) ? p.sub(/\Alib\//, "spec/").sub(/\.rb\z/, "_spec.rb") : nil },
+      lambda { |p|
+        if p.match?(%r{\Alib/.*\.rb\z})
+          p.sub(%r{\Alib/}, 'spec/').sub(/\.rb\z/,
+                                         '_spec.rb')
+        end
+      },
       # Ruby (lib/): lib/vibe/foo.rb → test/vibe/foo_test.rb
-      ->(p) { p.match?(/\Alib\/.*\.rb\z/) ? p.sub(/\Alib\//, "test/").sub(/\.rb\z/, "_test.rb") : nil },
+      lambda { |p|
+        if p.match?(%r{\Alib/.*\.rb\z})
+          p.sub(%r{\Alib/}, 'test/').sub(/\.rb\z/,
+                                         '_test.rb')
+        end
+      },
       # Python: any .py → tests/test_<basename>
       ->(p) { p.match?(/\.py\z/) ? "tests/test_#{File.basename(p)}" : nil },
       # Python (src/): src/foo/bar.py → tests/test_foo/bar.py
-      ->(p) { p.match?(/\Asrc\/.*\.py\z/) ? p.sub(/\Asrc\//, "tests/test_") : nil },
+      ->(p) { p.match?(%r{\Asrc/.*\.py\z}) ? p.sub(%r{\Asrc/}, 'tests/test_') : nil },
       # JS/TS: foo/bar.ts → foo/bar.test.ts
-      ->(p) { (m = p.match(/\.(ts|js)\z/)) ? p.sub(/\.(ts|js)\z/, ".test.#{m[1]}") : nil },
+      lambda { |p|
+        (m = p.match(/\.(ts|js)\z/)) ? p.sub(/\.(ts|js)\z/, ".test.#{m[1]}") : nil
+      },
       # JS/TS: foo/bar.ts → __tests__/bar.test.ts
-      ->(p) { (m = p.match(/\.(ts|js)\z/)) ? "__tests__/#{File.basename(p, m[0])}.test.#{m[1]}" : nil }
+      lambda { |p|
+        if (m = p.match(/\.(ts|js)\z/))
+          "__tests__/#{File.basename(p,
+                                     m[0])}.test.#{m[1]}"
+        end
+      }
     ].freeze
 
     attr_reader :project_root
@@ -70,14 +87,18 @@ module Vibe
     # @param file_path [String] relative path from project root
     # @return [Hash] { status:, file:, test_candidates:, found_test: }
     def check(file_path)
-      rel = file_path.sub(/\A#{Regexp.escape(@project_root)}\//, "")
+      rel = file_path.sub(%r{\A#{Regexp.escape(@project_root)}/}, '')
 
       # Test files are never checked — return :skipped before impl_file? check
-      return { status: STATUS[:skipped], file: rel, test_candidates: [], found_test: nil } \
-        if test_file?(rel)
+      if test_file?(rel)
+        return { status: STATUS[:skipped], file: rel, test_candidates: [],
+                 found_test: nil }
+      end
 
-      return { status: STATUS[:not_impl_file], file: rel, test_candidates: [], found_test: nil } \
-        unless impl_file?(rel)
+      unless impl_file?(rel)
+        return { status: STATUS[:not_impl_file], file: rel, test_candidates: [],
+                 found_test: nil }
+      end
 
       candidates = TEST_PATH_RESOLVERS.map { |r| r.call(rel) }.compact.uniq
       found = candidates.find { |c| File.exist?(File.join(@project_root, c)) }
@@ -85,7 +106,8 @@ module Vibe
       if found
         { status: STATUS[:ok], file: rel, test_candidates: candidates, found_test: found }
       else
-        { status: STATUS[:missing_tests], file: rel, test_candidates: candidates, found_test: nil }
+        { status: STATUS[:missing_tests], file: rel, test_candidates: candidates,
+          found_test: nil }
       end
     end
 
@@ -96,9 +118,11 @@ module Vibe
       results = files.map { |f| check(f) }
 
       {
-        ok:      results.select { |r| r[:status] == STATUS[:ok] },
+        ok: results.select { |r| r[:status] == STATUS[:ok] },
         missing: results.select { |r| r[:status] == STATUS[:missing_tests] },
-        skipped: results.select { |r| r[:status] == STATUS[:skipped] || r[:status] == STATUS[:not_impl_file] },
+        skipped: results.select do |r|
+                   r[:status] == STATUS[:skipped] || r[:status] == STATUS[:not_impl_file]
+                 end,
         summary: build_summary(results)
       }
     end
@@ -121,10 +145,10 @@ module Vibe
     end
 
     def find_impl_files
-      Dir.glob(File.join(@project_root, "**", "*.{rb,py,ts,js}"))
-         .map { |f| f.sub("#{@project_root}/", "") }
+      Dir.glob(File.join(@project_root, '**', '*.{rb,py,ts,js}'))
+         .map { |f| f.sub("#{@project_root}/", '') }
          .reject { |f| test_file?(f) }
-         .reject { |f| f.include?("node_modules/") || f.include?("vendor/") }
+         .reject { |f| f.include?('node_modules/') || f.include?('vendor/') }
     end
 
     def build_summary(results)

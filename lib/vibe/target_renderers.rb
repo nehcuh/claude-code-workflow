@@ -13,7 +13,8 @@ module Vibe
   #
   # Depends on methods from:
   #   Vibe::Utils          — write_json, format_backtick_list
-  #   Vibe::DocRendering   — render_*_doc, bullet_*, filtered_policies, mandatory/optional_skills
+  #   Vibe::DocRendering   — render_*_doc, bullet_*, filtered_policies,
+  #                          mandatory/optional_skills
   #   Vibe::NativeConfigs  — claude_settings_config, opencode_config
   #   Vibe::OverlaySupport — overlay_sentence
   #   Vibe::PathSafety     — copy_tree_contents
@@ -62,31 +63,7 @@ module Vibe
     end
 
     def render_opencode_project_md(manifest)
-      <<~MD
-        # Project OpenCode Configuration
-
-        Generated from the portable `core/` spec with profile `#{manifest["profile"]}`.
-        Applied overlay: #{overlay_sentence(manifest)}
-
-        Global workflow rules are loaded from `~/.config/opencode/`. This file adds project-specific context only.
-
-        ## Project Context
-
-        <!-- Describe your project: tech stack, architecture, key constraints -->
-
-        ## Project-specific rules
-
-        <!-- Add rules that apply only to this project -->
-
-        ## Reference docs
-
-        Supporting notes are under `.vibe/opencode/`:
-        - `behavior-policies.md` — portable behavior baseline
-        - `safety.md` — safety policy
-        - `routing.md` — capability tier routing
-        - `skills.md` — portable skill registry
-        - `execution.md` — execution and review protocol
-      MD
+      render_generic_project_md("opencode", manifest)
     end
 
     def render_target_entrypoint_md(target_name, manifest, extra_sections: nil)
@@ -125,13 +102,14 @@ module Vibe
     private
 
     def render_claude_project_md(manifest)
+      config_dir = platform_config_dir("claude-code")
       <<~MD
         # Project Claude Code Configuration
 
         Generated from the portable `core/` spec with profile `#{manifest["profile"]}`.
         Applied overlay: #{overlay_sentence(manifest)}
 
-        Global workflow rules are loaded from `~/.claude/`. This file adds project-specific context only.
+        Global workflow rules are loaded from `#{config_dir}/`. This file adds project-specific context only.
 
         ## Project Context
 
@@ -153,8 +131,15 @@ module Vibe
 
     def target_entrypoint_intent(target_name)
       case target_name
-      when "OpenCode" then "Project rules are split into modular instruction files loaded from `opencode.json`.\n\nKeep repository files as the single source of truth, verify before claiming completion, and follow the generated safety policy."
-      else "Keep repository files as the SSOT, verify before claiming completion, and follow the generated routing + safety rules."
+      when "OpenCode"
+        <<~TEXT.chomp
+          Project rules are split into modular instruction files loaded from `opencode.json`.
+
+          Keep repository files as the single source of truth, verify before claiming completion, and follow the generated safety policy.
+        TEXT
+      else
+        "Keep repository files as the SSOT, verify before claiming completion, " \
+          "and follow the generated routing + safety rules."
       end
     end
 
@@ -175,7 +160,7 @@ module Vibe
     # Data-driven templates for integration section rendering
     # Reduces conditional complexity and makes target-specific customization declarative
     INTEGRATION_TEMPLATES = {
-      :default => {
+      default: {
         superpowers: {
           header_style: :nested,
           install_note_template: :generic,
@@ -218,10 +203,12 @@ module Vibe
 
       # Get target-specific template configuration
       target_key = target_name.downcase.gsub(' ', '-')
-      template_config = INTEGRATION_TEMPLATES[target_key] || INTEGRATION_TEMPLATES[:default]
+      template_config = INTEGRATION_TEMPLATES[target_key] ||
+                        INTEGRATION_TEMPLATES[:default]
 
       # Render Superpowers section
-      sections << render_superpowers_integration(target_name, sp_info, skill_bullets, template_config[:superpowers])
+      sections << render_superpowers_integration(target_name, sp_info, skill_bullets, 
+template_config[:superpowers])
 
       # Render RTK section
       sections << render_rtk_integration(target_name, rtk_info, template_config[:rtk])
@@ -237,18 +224,19 @@ module Vibe
       if sp_info[:installed]
         render_installed_superpowers(target_name, sp_info, skill_bullets, is_standalone)
       else
-        render_not_installed_superpowers(target_name, skill_bullets, config, is_standalone)
+        render_not_installed_superpowers(target_name, skill_bullets, config, 
+is_standalone)
       end
     end
 
-    def render_installed_superpowers(target_name, sp_info, skill_bullets, is_standalone)
+    def render_installed_superpowers(_target_name, sp_info, skill_bullets, is_standalone)
       location = sp_info[:location] || "Unknown"
 
-      if is_standalone
-        header = "## Superpowers Skill Pack Integration"
+      header = if is_standalone
+        "## Superpowers Skill Pack Integration"
       else
-        header = "## Optional Integrations\n\n### Superpowers Skill Pack"
-      end
+        "## Optional Integrations\n\n### Superpowers Skill Pack"
+               end
 
       <<~SP
         #{header}
@@ -260,17 +248,23 @@ module Vibe
       SP
     end
 
-    def render_not_installed_superpowers(target_name, skill_bullets, config, is_standalone)
+    def render_not_installed_superpowers(target_name, skill_bullets, config, 
+                                         is_standalone)
       target_display = " for #{target_name}"
 
-      if is_standalone
-        header = "## Optional: Superpowers Skill Pack"
+      header = if is_standalone
+        "## Optional: Superpowers Skill Pack"
       else
-        header = "## Optional Integrations\n\n### Superpowers Skill Pack"
-      end
+        "## Optional Integrations\n\n### Superpowers Skill Pack"
+               end
 
-      install_note = get_superpowers_install_note(config[:install_note_template], target_name)
-      full_details_note = config[:show_full_details] ? "\nSee `core/integrations/superpowers.yaml` for full details." : ""
+      install_note = get_superpowers_install_note(config[:install_note_template], 
+target_name)
+      full_details_note = if config[:show_full_details]
+        "\nSee `core/integrations/superpowers.yaml` for full details."
+      else
+        ""
+      end
 
       <<~SP
         #{header}
@@ -303,18 +297,22 @@ module Vibe
       end
     end
 
-    def render_installed_rtk(target_name, rtk_info, config)
+    def render_installed_rtk(_target_name, rtk_info, config)
       is_standalone = config[:header_style] == :standalone
 
       hook_status = rtk_info[:hook_configured] ? "✅ Configured" : "⚠️ Not configured"
 
-      if is_standalone
-        header = "## RTK Token Optimizer"
+      header = if is_standalone
+        "## RTK Token Optimizer"
       else
-        header = "### RTK Token Optimizer"
-      end
+        "### RTK Token Optimizer"
+               end
 
-      config_note = !rtk_info[:hook_configured] ? "\n\n**To configure**: Run `rtk init --global`" : ""
+      config_note = if !rtk_info[:hook_configured]
+        "\n\n**To configure**: Run `rtk init --global`"
+      else
+        ""
+      end
 
       <<~RTK
         #{header}
@@ -330,15 +328,17 @@ module Vibe
     def render_not_installed_rtk(target_name, config)
       is_standalone = config[:header_style] == :standalone
 
-      if is_standalone
-        header = "## Optional: RTK Token Optimizer"
+      header = if is_standalone
+        "## Optional: RTK Token Optimizer"
       else
-        header = "### RTK Token Optimizer"
-      end
+        "### RTK Token Optimizer"
+               end
 
       install_cmd = RTK_INSTALL_TEMPLATES[config[:install_template]]
       config_step = "\n\n# Then configure\nrtk init --global"
-      generic_note = "\n\n\n**Note**: RTK works best with Claude Code. For #{target_name}, you may need to manually prefix commands with `rtk`."
+      generic_note = "\n\n\n**Note**: RTK works best with Claude Code. " \
+                     "For #{target_name}, you may need to manually prefix " \
+                     "commands with `rtk`."
 
       benefits_section = if config[:show_benefits]
         <<~BENEFITS

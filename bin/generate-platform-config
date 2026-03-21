@@ -6,6 +6,7 @@
 
 require 'erb'
 require 'yaml'
+require 'json'
 require 'optparse'
 
 def generate_platform_config(options)
@@ -20,9 +21,12 @@ def generate_platform_config(options)
   
   doc_types = options[:doc_types] || %w[behavior safety task_routing test_standards]
   runtime_dirs = options[:runtime_dirs] || []
-  copy_mode = options[:copy_mode] || "minimal"
+  copy_mode_global = options[:copy_mode_global] || "minimal"
+  copy_mode_project = options[:copy_mode_project] || "minimal"
   has_native_config = options[:has_native_config] || false
   native_config_filename = options[:native_config_filename]
+  native_config_builder = options[:native_config_builder]
+  native_config_project_builder = options[:native_config_project_builder]
   special_handling = options[:special_handling] || {}
   
   # Render template
@@ -33,9 +37,12 @@ def generate_platform_config(options)
     entrypoint_name: entrypoint_name,
     doc_types: doc_types,
     runtime_dirs: runtime_dirs,
-    copy_mode: copy_mode,
+    copy_mode_global: copy_mode_global,
+    copy_mode_project: copy_mode_project,
     has_native_config: has_native_config,
     native_config_filename: native_config_filename,
+    native_config_builder: native_config_builder,
+    native_config_project_builder: native_config_project_builder,
     special_handling: special_handling
   )
   
@@ -46,7 +53,8 @@ def parse_options
   options = {
     doc_types: %w[behavior safety task_routing test_standards],
     runtime_dirs: [],
-    copy_mode: "minimal",
+    copy_mode_global: "minimal",
+    copy_mode_project: "minimal",
     special_handling: {}
   }
   
@@ -80,13 +88,33 @@ def parse_options
       options[:runtime_dirs] = dirs
     end
     
-    opts.on("--copy-mode MODE", %w[full minimal none], "Copy mode (full/minimal/none)") do |mode|
-      options[:copy_mode] = mode
+    opts.on("--copy-mode MODE", %w[full minimal none], "Copy mode for both global and project") do |mode|
+      options[:copy_mode_global] = mode
+      options[:copy_mode_project] = mode
+    end
+
+    opts.on("--copy-mode-global MODE", %w[full minimal none], "Copy mode for global config") do |mode|
+      options[:copy_mode_global] = mode
+    end
+
+    opts.on("--copy-mode-project MODE", %w[full minimal none], "Copy mode for project config") do |mode|
+      options[:copy_mode_project] = mode
     end
     
     opts.on("--native-config FILE", "Generate native config with filename") do |file|
       options[:has_native_config] = true
       options[:native_config_filename] = file
+      platform_key = options[:platform_id]&.tr('-', '_') || "platform"
+      options[:native_config_builder] ||= "#{platform_key}_config"
+      options[:native_config_project_builder] ||= "#{platform_key}_project_config"
+    end
+
+    opts.on("--native-config-builder METHOD", "Global native config builder method") do |method|
+      options[:native_config_builder] = method
+    end
+
+    opts.on("--native-config-project-builder METHOD", "Project native config builder method") do |method|
+      options[:native_config_project_builder] = method
     end
     
     opts.on("--special HANDLING", "Special handling flags (JSON format)") do |json|
@@ -117,6 +145,11 @@ def parse_options
   end
   
   options[:platform_id] = ARGV.first
+  if options[:has_native_config]
+    platform_key = options[:platform_id].tr('-', '_')
+    options[:native_config_builder] ||= "#{platform_key}_config"
+    options[:native_config_project_builder] ||= "#{platform_key}_project_config"
+  end
   options
 end
 

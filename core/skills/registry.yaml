@@ -321,3 +321,18 @@ skills:
     requires_tools:
       - Bash
     safety_level: trusted_builtin
+
+  - id: skill-craft
+    namespace: builtin
+    entrypoint: skills/skill-craft/SKILL.md
+    intent: Automatically detect recurring patterns and generate reusable skills.
+    trigger_mode: suggest
+    priority: P2
+    supported_targets:
+      claude-code: native-skill
+      opencode: native-skill
+    requires_tools:
+      - Read
+      - Write
+      - Bash
+    safety_level: trusted_builtin

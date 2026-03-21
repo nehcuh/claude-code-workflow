@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# CLI commands for instinct learning system
+# CLI commands for instinct learning subsystem
 # These methods are included in VibeCLI class
 
 require_relative "../instinct_manager"
@@ -27,7 +27,8 @@ module Vibe
       when nil, "help", "--help", "-h"
         puts instinct_usage
       else
-        raise Vibe::ValidationError, "Unknown instinct subcommand: #{subcommand}\n\n#{instinct_usage}"
+        raise Vibe::ValidationError,
+              "Unknown instinct subcommand: #{subcommand}\n\n#{instinct_usage}"
       end
     end
 
@@ -51,7 +52,8 @@ module Vibe
         puts "  echo '<yaml>' | vibe instinct learn --stdin"
         puts
         puts "Or manually create an instinct:"
-        puts "  vibe instinct learn --pattern 'Run tests before committing' --tags ruby,testing"
+        puts "  vibe instinct learn --pattern " \
+             "'Run tests before committing' --tags ruby,testing"
         puts
 
         # Manual mode: create instinct directly
@@ -88,7 +90,8 @@ module Vibe
       end
 
       puts "Use 'vibe instinct learn-eval' to review and save these patterns."
-      puts "Or use 'vibe instinct learn --pattern \"...\" --tags tag1,tag2' to create manually."
+      puts "Or use 'vibe instinct learn --pattern \\\"...\\\" --tags " \
+           "tag1,tag2' to create manually."
     end
 
     # vibe instinct learn-eval - Evaluate and save instinct candidates
@@ -132,11 +135,16 @@ module Vibe
       puts "=" * 60
       puts
 
-      instincts.each_with_index do |instinct, idx|
-        confidence = instinct["confidence"].round(2)
-        label = confidence >= 0.8 ? "High" : confidence >= 0.6 ? "Medium" : "Low"
-        puts "  #{idx + 1}. [#{label}] #{instinct['pattern']} (#{confidence})"
-        puts "     Uses: #{instinct['usage_count']} | Success: #{(instinct['success_rate'] * 100).round}%"
+      instincts.each_with_index do |entry, idx|
+        confidence = entry["confidence"].round(2)
+        label = if confidence >= 0.8
+                  "High"
+                else
+                  confidence >= 0.6 ? "Medium" : "Low"
+                end
+        puts "  #{idx + 1}. [#{label}] #{entry['pattern']} (#{confidence})"
+        puts "     Uses: #{entry['usage_count']} | " \
+             "Success: #{(entry['success_rate'] * 100).round}%"
         puts
       end
     end
@@ -189,13 +197,13 @@ module Vibe
         puts
       end
 
-      if low.any?
+      return unless low.any?
         puts "Low Confidence (< 0.6):"
         low.each_with_index do |instinct, idx|
           print_instinct_summary(instinct, high.size + medium.size + idx + 1)
         end
         puts
-      end
+
     end
 
     # vibe instinct export - Export instincts to file
@@ -259,9 +267,9 @@ module Vibe
       puts "=" * 60
       puts
       puts "  ✓ Imported: #{stats[:imported]} new instincts"
-      puts "  ⊘ Skipped: #{stats[:skipped]} duplicates" if stats[:skipped] > 0
-      puts "  🔀 Merged: #{stats[:merged]} instincts" if stats[:merged] > 0
-      puts "  ⚠ Errors: #{stats[:errors]}" if stats[:errors] > 0
+      puts "  ⊘ Skipped: #{stats[:skipped]} duplicates" if (stats[:skipped]).positive?
+      puts "  🔀 Merged: #{stats[:merged]} instincts" if (stats[:merged]).positive?
+      puts "  ⚠ Errors: #{stats[:errors]}" if (stats[:errors]).positive?
       puts
     rescue StandardError => e
       puts "\n✗ Import failed: #{e.message}"
@@ -282,16 +290,19 @@ module Vibe
       puts "=" * 60
       puts
 
-      # TODO: Implement evolution logic
-      puts "⚠️  Instinct evolution not yet implemented"
-      puts
-      puts "This command will:"
-      puts "  1. Aggregate related instincts"
-      puts "  2. Generate skill markdown file"
-      puts "  3. Save to skills/ directory"
-      puts "  4. Mark instinct as 'evolved'"
-      puts
-      puts "Coming soon in Phase 1 Week 5-6!"
+      manager = InstinctManager.new
+      result = manager.evolve(instinct_id, skill_name: skill_name)
+
+      if result[:success]
+        puts "✅ #{result[:message]}"
+        puts
+        puts "Next steps:"
+        puts "  1. Edit #{result[:skill_path]} to add detailed instructions"
+        puts "  2. Register in core/skills/registry.yaml if needed"
+      else
+        puts "✗ #{result[:message]}"
+        exit 1
+      end
     end
 
     private
@@ -301,7 +312,8 @@ module Vibe
       tags = instinct["tags"].join(", ")
       puts "  #{number}. #{instinct['pattern']} (#{confidence})"
       puts "     Tags: [#{tags}]" unless tags.empty?
-      puts "     Usage: #{instinct['usage_count']} times, Success: #{(instinct['success_rate'] * 100).round}%"
+      puts "     Usage: #{instinct['usage_count']} times, " \
+           "Success: #{(instinct['success_rate'] * 100).round}%"
     end
 
     def parse_instinct_status_options(argv)
@@ -409,7 +421,8 @@ module Vibe
         return nil
       end
 
-      YAML.safe_load(File.read(file_path), permitted_classes: [Time, Symbol], aliases: true)
+      YAML.safe_load(File.read(file_path), permitted_classes: [Time, Symbol],
+                                           aliases: true)
     rescue StandardError => e
       puts "Failed to load session data: #{e.message}"
       nil
@@ -447,13 +460,17 @@ module Vibe
 
     def build_candidate(sequence, session_data)
       tools = sequence.map { |c| c["tool"] || c[:tool] }.compact
-      commands = sequence.map { |c| c["command"] || c[:command] || c["tool"] || c[:tool] }.compact
+      commands = sequence.map do |c|
+  c["command"] || c[:command] || c["tool"] || c[:tool]
+end.compact
 
       # Extract tags from context
       context = session_data["context"] || session_data[:context] || {}
       tags = []
-      tags << (context["language"] || context[:language]) if context["language"] || context[:language]
-      tags << (context["framework"] || context[:framework]) if context["framework"] || context[:framework]
+      language = context["language"] || context[:language]
+      framework = context["framework"] || context[:framework]
+      tags << language if language
+      tags << framework if framework
       tags.compact!
 
       {

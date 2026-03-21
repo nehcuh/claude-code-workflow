@@ -68,7 +68,7 @@ module Vibe
     # Finish the progress indicator
     #
     # @param message [String] Final message
-    def finish(message = "Complete")
+    def finish(message = 'Complete')
       return unless @running
 
       elapsed = Time.now - @start_time
@@ -97,13 +97,13 @@ module Vibe
 
       begin
         result = yield
-        finish("Done")
+        finish('Done')
         result
       rescue StandardError => e
-        finish("Failed")
+        finish('Failed')
         raise e
       ensure
-        spinner_thread.kill if spinner_thread
+        spinner_thread&.kill
       end
     end
 
@@ -117,10 +117,10 @@ module Vibe
 
       begin
         result = yield(self)
-        finish("Done")
+        finish('Done')
         result
       rescue StandardError => e
-        finish("Failed")
+        finish('Failed')
         raise e
       end
     end
@@ -135,11 +135,12 @@ module Vibe
       filled = (width * percentage / 100.0).round
       empty = width - filled
 
-      "[#{('=' * filled)}#{'>' if filled < width && percentage > 0}#{'.' * [empty - 1, 0].max}]"
+      "[#{'=' * filled}#{'>' if filled < width && percentage.positive?}#{'.' * [empty - 1,
+                                                                                0].max}]"
     end
 
     def calculate_eta(elapsed)
-      return nil unless @total && @current > 0
+      return nil unless @total && @current.positive?
 
       rate = @current.to_f / elapsed
       remaining = @total - @current
@@ -150,7 +151,7 @@ module Vibe
 
     def format_duration(seconds)
       if seconds < 1
-        "#{ (seconds * 1000).round }ms"
+        "#{(seconds * 1000).round}ms"
       elsif seconds < 60
         "#{seconds.round(1)}s"
       else
@@ -181,7 +182,7 @@ module Vibe
     # @param enumerable [Enumerable] Collection to iterate
     # @param title [String] Progress title
     # @yield Block to execute for each item
-    def with_progress(enumerable, title = "Processing")
+    def with_progress(enumerable, title = 'Processing')
       items = enumerable.to_a
       indicator = ProgressIndicator.new(title, items.length)
 
@@ -197,9 +198,9 @@ module Vibe
     #
     # @param title [String] Spinner title
     # @yield Block to execute
-    def with_spinner(title = "Loading")
+    def with_spinner(title = 'Loading', &block)
       indicator = ProgressIndicator.new(title)
-      indicator.with_spinner { yield }
+      indicator.with_spinner(&block)
     end
   end
 end

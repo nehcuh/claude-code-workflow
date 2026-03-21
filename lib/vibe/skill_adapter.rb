@@ -17,7 +17,7 @@ module Vibe
   class SkillAdapter
     include Vibe::Utils
 
-    PROJECT_SKILLS_CONFIG = ".vibe/skills.yaml".freeze
+    PROJECT_SKILLS_CONFIG = '.vibe/skills.yaml'
 
     attr_reader :repo_root, :project_root, :detector
 
@@ -36,14 +36,14 @@ module Vibe
 
       puts "\n🤔 How would you like to adapt these #{skills.length} skills?"
       puts
-      puts "[1] ⚡ Quick Setup - Adapt all as suggest (recommended)"
-      puts "[2] 🔒 Strict Mode - Adapt all as mandatory"
-      puts "[3] 🔍 Review Each - Decide individually"
+      puts '[1] ⚡ Quick Setup - Adapt all as suggest (recommended)'
+      puts '[2] 🔒 Strict Mode - Adapt all as mandatory'
+      puts '[3] 🔍 Review Each - Decide individually'
       puts "[4] ⏭️  Skip - Don't adapt now"
-      puts "[5] ❓ Help - Learn more about skill adaptation"
+      puts '[5] ❓ Help - Learn more about skill adaptation'
       puts
 
-      choice = ask_user("Your choice [1/2/3/4/5]: ", %w[1 2 3 4 5])
+      choice = ask_user('Your choice [1/2/3/4/5]: ', %w[1 2 3 4 5])
 
       case choice
       when '1'
@@ -90,7 +90,9 @@ module Vibe
         }
 
         # Remove from skipped if present
-        config['skipped_skills'] = config['skipped_skills'].reject { |s| s['id'] == skill_id }
+        config['skipped_skills'] = (config['skipped_skills'] || []).reject do |s|
+          s['id'] == skill_id
+        end
 
       when :skip
         config['skipped_skills'] ||= []
@@ -126,7 +128,7 @@ module Vibe
 
       # Use progress indicator if TTY and multiple skills
       if skills.length > 1 && $stdout.tty?
-        indicator = ProgressIndicator.new("Adapting skills", skills.length)
+        indicator = ProgressIndicator.new('Adapting skills', skills.length)
         indicator.with_progress(skills.length) do |progress|
           skills.each do |skill|
             if adapt_skill(skill[:id], mode)
@@ -164,13 +166,11 @@ module Vibe
 
       skipped = []
       skills.each do |skill|
-        if adapt_skill(skill[:id], :skip)
-          skipped << skill[:id]
-        end
+        skipped << skill[:id] if adapt_skill(skill[:id], :skip)
       end
 
       puts "\n⏸️  Skipped #{skipped.length} skills"
-      puts "   You can adapt them later with: vibe skills adapt <id>"
+      puts '   You can adapt them later with: vibe skills adapt <id>'
 
       { adapted: [], skipped: skipped }
     end
@@ -178,30 +178,30 @@ module Vibe
     # Show adaptation help
     def show_adaptation_help
       puts "\n📖 Skill Adaptation Help"
-      puts "=" * 60
+      puts '=' * 60
       puts
-      puts "What is skill adaptation?"
-      puts "  Skill adaptation determines how a skill is triggered in your"
-      puts "  project. You can choose from three modes:"
+      puts 'What is skill adaptation?'
+      puts '  Skill adaptation determines how a skill is triggered in your'
+      puts '  project. You can choose from three modes:'
       puts
-      puts "🔹 Suggest Mode (recommended)"
-      puts "   The skill is suggested when relevant to your current task."
-      puts "   Best for: Most skills, especially optional workflows"
+      puts '🔹 Suggest Mode (recommended)'
+      puts '   The skill is suggested when relevant to your current task.'
+      puts '   Best for: Most skills, especially optional workflows'
       puts
-      puts "🔹 Mandatory Mode"
-      puts "   The skill is always active and enforced."
-      puts "   Best for: Critical skills like safety checks, verification"
+      puts '🔹 Mandatory Mode'
+      puts '   The skill is always active and enforced.'
+      puts '   Best for: Critical skills like safety checks, verification'
       puts
-      puts "🔹 Skip"
-      puts "   The skill is not adapted to this project."
-      puts "   Best for: Skills not relevant to your project type"
+      puts '🔹 Skip'
+      puts '   The skill is not adapted to this project.'
+      puts '   Best for: Skills not relevant to your project type'
       puts
-      puts "Examples:"
-      puts "  • TDD skill → Suggest (only when writing tests)"
-      puts "  • Security audit → Mandatory (always check)"
-      puts "  • Mobile optimization → Skip (for backend projects)"
+      puts 'Examples:'
+      puts '  • TDD skill → Suggest (only when writing tests)'
+      puts '  • Security audit → Mandatory (always check)'
+      puts '  • Mobile optimization → Skip (for backend projects)'
       puts
-      puts "Press Enter to continue..."
+      puts 'Press Enter to continue...'
       $stdin.gets
     end
 
@@ -229,9 +229,9 @@ module Vibe
       skipped = []
 
       skills.each_with_index do |skill, index|
-        puts "\n" + "=" * 60
+        puts "\n#{'=' * 60}"
         puts "📦 Skill #{index + 1}/#{skills.length}: #{skill[:id]}"
-        puts "=" * 60
+        puts '=' * 60
         puts
         puts "Name: #{skill[:name]}"
         puts "Intent: #{skill[:intent]}"
@@ -239,7 +239,7 @@ module Vibe
         puts
 
         if skill[:description]
-          puts "Description:"
+          puts 'Description:'
           puts "  #{skill[:description]}"
           puts
         end
@@ -249,15 +249,15 @@ module Vibe
         puts
 
         loop do
-          puts "Adapt this skill as:"
-          puts "  [s] Suggest    - Recommend when relevant"
-          puts "  [m] Mandatory  - Always use this skill"
-          puts "  [i] Ignore     - Skip this skill"
-          puts "  [v] View Docs  - Read full documentation"
-          puts "  [?] Help       - Explain adaptation modes"
+          puts 'Adapt this skill as:'
+          puts '  [s] Suggest    - Recommend when relevant'
+          puts '  [m] Mandatory  - Always use this skill'
+          puts '  [i] Ignore     - Skip this skill'
+          puts '  [v] View Docs  - Read full documentation'
+          puts '  [?] Help       - Explain adaptation modes'
           puts
 
-          choice = ask_user("Your choice [s/m/i/v/?]: ", %w[s m i v ?])
+          choice = ask_user('Your choice [s/m/i/v/?]: ', %w[s m i v ?])
 
           case choice
           when 's'
@@ -302,7 +302,7 @@ module Vibe
     # Show skill documentation
     def show_skill_docs(skill)
       puts "\n📚 Skill Documentation: #{skill[:id]}"
-      puts "=" * 60
+      puts '=' * 60
       puts
       puts "ID: #{skill[:id]}"
       puts "Namespace: #{skill[:namespace]}"
@@ -312,13 +312,13 @@ module Vibe
       puts
 
       if skill[:requires_tools]&.any?
-        puts "Required Tools:"
+        puts 'Required Tools:'
         skill[:requires_tools].each { |tool| puts "  • #{tool}" }
         puts
       end
 
       if skill[:supported_targets]&.any?
-        puts "Supported Targets:"
+        puts 'Supported Targets:'
         skill[:supported_targets].each do |target, mode|
           puts "  • #{target}: #{mode}"
         end
@@ -328,12 +328,12 @@ module Vibe
       if skill[:entrypoint]
         entry_path = File.join(repo_root, skill[:entrypoint])
         if File.exist?(entry_path)
-          puts "Documentation:"
-          puts "-" * 60
+          puts 'Documentation:'
+          puts '-' * 60
           content = File.read(entry_path)
           # Show first 30 lines
           content.lines.first(30).each { |line| puts line }
-          puts "-" * 60
+          puts '-' * 60
           puts "  (... see full docs at #{skill[:entrypoint]})"
         end
       end
@@ -345,7 +345,7 @@ module Vibe
     # Load project skill configuration
     def load_project_config
       config_path = File.join(project_root, PROJECT_SKILLS_CONFIG)
-      
+
       if File.exist?(config_path)
         YAML.safe_load(File.read(config_path), aliases: true) || {}
       else
@@ -381,7 +381,7 @@ module Vibe
         input = $stdin.gets&.strip
 
         if input.nil? || input.empty?
-          puts "Please enter a value."
+          puts 'Please enter a value.'
           next
         end
 

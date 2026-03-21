@@ -30,7 +30,8 @@ module Vibe
       when nil, 'help', '--help', '-h'
         puts skills_usage
       else
-        raise Vibe::ValidationError, "Unknown skills subcommand: #{subcommand}\n\n#{skills_usage}"
+        raise Vibe::ValidationError,
+              "Unknown skills subcommand: #{subcommand}\n\n#{skills_usage}"
       end
     end
 
@@ -42,7 +43,7 @@ module Vibe
 
       if options[:update_timestamp]
         manager.update_check_timestamp
-        puts "✓ Updated last check timestamp"
+        puts '✓ Updated last check timestamp'
         return
       end
 
@@ -67,12 +68,12 @@ module Vibe
     end
 
     # vibe skills list - List all skills
-    def run_skills_list(argv)
+    def run_skills_list(_argv)
       manager = SkillManager.new(@repo_root, Dir.pwd)
       skills = manager.list_skills
 
       puts "\n📋 Skill Status"
-      puts "=" * 60
+      puts '=' * 60
       puts
 
       # Mandatory skills
@@ -120,7 +121,11 @@ module Vibe
 
       # Summary
       total_active = mandatory.length + suggest.length
-      puts "📊 Summary: #{total_active} active, #{skills[:skipped].length} skipped, #{skills[:not_adapted].length} available"
+      puts(
+        "📊 Summary: #{total_active} active, " \
+          "#{skills[:skipped].length} skipped, " \
+          "#{skills[:not_adapted].length} available"
+      )
       puts
     end
 
@@ -129,14 +134,16 @@ module Vibe
       skill_id = argv.shift
 
       unless skill_id
-        raise Vibe::ValidationError, "Missing skill ID\n\nUsage: vibe skills adapt <skill-id> [mode]"
+        raise Vibe::ValidationError,
+              "Missing skill ID\n\nUsage: vibe skills adapt <skill-id> [mode]"
       end
 
       mode = argv.shift || 'suggest'
       mode = mode.to_sym
 
       unless %i[suggest mandatory skip].include?(mode)
-        raise Vibe::ValidationError, "Invalid mode: #{mode}\n\nValid modes: suggest, mandatory, skip"
+        raise Vibe::ValidationError,
+              "Invalid mode: #{mode}\n\nValid modes: suggest, mandatory, skip"
       end
 
       manager = SkillManager.new(@repo_root, Dir.pwd)
@@ -154,7 +161,8 @@ module Vibe
       skill_id = argv.shift
 
       unless skill_id
-        raise Vibe::ValidationError, "Missing skill ID\n\nUsage: vibe skills skip <skill-id>"
+        raise Vibe::ValidationError,
+              "Missing skill ID\n\nUsage: vibe skills skip <skill-id>"
       end
 
       manager = SkillManager.new(@repo_root, Dir.pwd)
@@ -173,7 +181,8 @@ module Vibe
       skill_id = argv.shift
 
       unless skill_id
-        raise Vibe::ValidationError, "Missing skill ID\n\nUsage: vibe skills docs <skill-id>"
+        raise Vibe::ValidationError,
+              "Missing skill ID\n\nUsage: vibe skills docs <skill-id>"
       end
 
       manager = SkillManager.new(@repo_root, Dir.pwd)
@@ -186,7 +195,7 @@ module Vibe
       end
 
       puts "\n📚 Skill Documentation: #{skill_id}"
-      puts "=" * 60
+      puts '=' * 60
       puts
       puts "ID: #{skill[:id]}"
       puts "Namespace: #{skill[:namespace]}"
@@ -198,13 +207,13 @@ module Vibe
       puts
 
       if skill[:requires_tools]&.any?
-        puts "Required Tools:"
+        puts 'Required Tools:'
         skill[:requires_tools].each { |tool| puts "  • #{tool}" }
         puts
       end
 
       if skill[:supported_targets]&.any?
-        puts "Supported Targets:"
+        puts 'Supported Targets:'
         skill[:supported_targets].each do |target, mode|
           puts "  • #{target}: #{mode}"
         end
@@ -214,12 +223,12 @@ module Vibe
       if skill[:entrypoint]
         entry_path = File.join(@repo_root, skill[:entrypoint])
         if File.exist?(entry_path)
-          puts "Documentation:"
-          puts "-" * 60
+          puts 'Documentation:'
+          puts '-' * 60
           content = File.read(entry_path)
           content.lines.first(50).each { |line| puts line }
           if content.lines.count > 50
-            puts "..."
+            puts '...'
             puts "(See full documentation at: #{skill[:entrypoint]})"
           end
         end
@@ -233,7 +242,8 @@ module Vibe
       pack_name = argv.shift
 
       unless pack_name
-        raise Vibe::ValidationError, "Missing skill pack name\n\nUsage: vibe skills install <pack-name>"
+        raise Vibe::ValidationError,
+              "Missing skill pack name\n\nUsage: vibe skills install <pack-name>"
       end
 
       options = parse_skills_install_options(argv)
@@ -243,10 +253,9 @@ module Vibe
       if options[:dry_run]
         installer.preview_installation(pack_name, platform: options[:platform])
       else
-        success = installer.install(pack_name, 
-          platform: options[:platform], 
-          auto_adapt: options[:auto_adapt]
-        )
+        success = installer.install(pack_name,
+                                    platform: options[:platform],
+                                    auto_adapt: options[:auto_adapt])
         exit 1 unless success
       end
     end
@@ -337,14 +346,14 @@ module Vibe
         'just now'
       when 60..3600
         "#{diff / 60} minutes ago"
-      when 3600..86400
+      when 3600..86_400
         "#{diff / 3600} hours ago"
-      when 86400..604800
-        "#{diff / 86400} days ago"
+      when 86_400..604_800
+        "#{diff / 86_400} days ago"
       else
         time.strftime('%Y-%m-%d')
       end
-    rescue
+    rescue StandardError
       'unknown'
     end
   end

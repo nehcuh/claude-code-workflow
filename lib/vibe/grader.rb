@@ -1,27 +1,28 @@
 # frozen_string_literal: true
 
-require "yaml"
-require "time"
-require "securerandom"
+require 'yaml'
+require 'time'
+require 'securerandom'
+require 'open3'
 
 module Vibe
   # Grader system for continuous code quality evaluation
   class Grader
     # Grader types
     TYPES = {
-      unit_test: "unit_test",
-      integration_test: "integration_test",
-      linter: "linter",
-      security: "security",
-      custom: "custom"
+      unit_test: 'unit_test',
+      integration_test: 'integration_test',
+      linter: 'linter',
+      security: 'security',
+      custom: 'custom'
     }.freeze
 
     # Grade levels
     GRADE = {
-      pass: "pass",
-      fail: "fail",
-      warning: "warning",
-      skip: "skip"
+      pass: 'pass',
+      fail: 'fail',
+      warning: 'warning',
+      skip: 'skip'
     }.freeze
 
     attr_reader :results, :stats
@@ -67,13 +68,14 @@ module Vibe
 
       begin
         # Execute command
-        output = if options[:working_dir]
-                   Dir.chdir(options[:working_dir]) { `#{command} 2>&1` }
-                 else
-                   `#{command} 2>&1`
-                 end
+        output, status = if options[:working_dir]
+                           Open3.capture2e('/bin/sh', '-c', command,
+                                           chdir: options[:working_dir])
+                         else
+                           Open3.capture2e('/bin/sh', '-c', command)
+                         end
 
-        exit_code = $?.exitstatus
+        exit_code = status.exitstatus
         duration = Time.now - start_time
 
         # Determine grade based on exit code and output
@@ -120,7 +122,7 @@ module Vibe
         temp_file = write_temp_candidate(candidate[:code], index)
 
         # Run grader with candidate
-        command = grader_config[:command].gsub("{code_file}", temp_file)
+        command = grader_config[:command].gsub('{code_file}', temp_file)
         result = run(grader_config[:type], command, description: candidate[:description])
 
         # Cleanup temp file

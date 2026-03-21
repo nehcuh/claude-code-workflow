@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require "yaml"
-require "securerandom"
-require "time"
-require "fileutils"
+require 'yaml'
+require 'securerandom'
+require 'time'
+require 'fileutils'
 
 module Vibe
   # Checkpoint manager for code snapshots and rollback
@@ -13,7 +13,7 @@ module Vibe
     def initialize(storage_path = nil)
       @storage_path = storage_path || default_storage_path
       @checkpoints = load_checkpoints
-      @snapshots_dir = File.join(File.dirname(@storage_path), "checkpoints")
+      @snapshots_dir = File.join(File.dirname(@storage_path), 'checkpoints')
       FileUtils.mkdir_p(@snapshots_dir)
     end
 
@@ -35,23 +35,27 @@ module Vibe
       files.each do |file_path|
         next unless File.exist?(file_path)
 
-        relative_path = file_path.start_with?("/") ? file_path : File.expand_path(file_path)
+        relative_path = if file_path.start_with?('/')
+                          file_path
+                        else
+                          File.expand_path(file_path)
+                        end
         snapshot_path = File.join(snapshot_dir, File.basename(file_path))
         FileUtils.cp(relative_path, snapshot_path)
 
         file_snapshots[file_path] = {
-          "snapshot_path" => snapshot_path,
-          "size" => File.size(relative_path),
-          "mtime" => File.mtime(relative_path).iso8601
+          'snapshot_path' => snapshot_path,
+          'size' => File.size(relative_path),
+          'mtime' => File.mtime(relative_path).iso8601
         }
       end
 
       checkpoint = {
-        "id" => checkpoint_id,
-        "description" => description,
-        "created_at" => timestamp.iso8601,
-        "files" => file_snapshots,
-        "metadata" => options[:metadata] || {}
+        'id' => checkpoint_id,
+        'description' => description,
+        'created_at' => timestamp.iso8601,
+        'files' => file_snapshots,
+        'metadata' => options[:metadata] || {}
       }
 
       @checkpoints[checkpoint_id] = checkpoint
@@ -76,10 +80,10 @@ module Vibe
       results = @checkpoints.values
 
       if filters[:since]
-        results = results.select { |cp| Time.parse(cp["created_at"]) >= filters[:since] }
+        results = results.select { |cp| Time.parse(cp['created_at']) >= filters[:since] }
       end
 
-      results = results.sort_by { |cp| cp["created_at"] }.reverse
+      results = results.sort_by { |cp| cp['created_at'] }.reverse
 
       filters[:limit] ? results.take(filters[:limit]) : results
     end
@@ -95,25 +99,27 @@ module Vibe
 
       changes = []
 
-      checkpoint["files"].each do |original_path, snapshot_info|
-        snapshot_path = snapshot_info["snapshot_path"]
+      checkpoint['files'].each do |original_path, snapshot_info|
+        snapshot_path = snapshot_info['snapshot_path']
 
         unless File.exist?(snapshot_path)
-          changes << { file: original_path, action: "skip", reason: "snapshot missing" }
+          changes << { file: original_path, action: 'skip', reason: 'snapshot missing' }
           next
         end
 
         if options[:dry_run]
-          changes << { file: original_path, action: "restore", size: snapshot_info["size"] }
+          changes << { file: original_path, action: 'restore',
+                       size: snapshot_info['size'] }
         else
           FileUtils.cp(snapshot_path, original_path)
-          changes << { file: original_path, action: "restored", size: snapshot_info["size"] }
+          changes << { file: original_path, action: 'restored',
+                       size: snapshot_info['size'] }
         end
       end
 
       {
         checkpoint_id: checkpoint_id,
-        description: checkpoint["description"],
+        description: checkpoint['description'],
         changes: changes,
         dry_run: options[:dry_run] || false
       }
@@ -130,31 +136,31 @@ module Vibe
       raise "Checkpoint not found: #{checkpoint_id1}" unless cp1
       raise "Checkpoint not found: #{checkpoint_id2}" unless cp2
 
-      all_files = (cp1["files"].keys + cp2["files"].keys).uniq
+      all_files = (cp1['files'].keys + cp2['files'].keys).uniq
       differences = []
 
       all_files.each do |file_path|
-        file1 = cp1["files"][file_path]
-        file2 = cp2["files"][file_path]
+        file1 = cp1['files'][file_path]
+        file2 = cp2['files'][file_path]
 
         if file1 && file2
-          if file1["size"] != file2["size"] || file1["mtime"] != file2["mtime"]
+          if file1['size'] != file2['size'] || file1['mtime'] != file2['mtime']
             differences << {
               file: file_path,
-              status: "modified",
-              size_change: file2["size"] - file1["size"]
+              status: 'modified',
+              size_change: file2['size'] - file1['size']
             }
           end
         elsif file1
-          differences << { file: file_path, status: "removed" }
+          differences << { file: file_path, status: 'removed' }
         elsif file2
-          differences << { file: file_path, status: "added", size: file2["size"] }
+          differences << { file: file_path, status: 'added', size: file2['size'] }
         end
       end
 
       {
-        checkpoint1: { id: checkpoint_id1, created_at: cp1["created_at"] },
-        checkpoint2: { id: checkpoint_id2, created_at: cp2["created_at"] },
+        checkpoint1: { id: checkpoint_id1, created_at: cp1['created_at'] },
+        checkpoint2: { id: checkpoint_id2, created_at: cp2['created_at'] },
         differences: differences,
         total_changes: differences.size
       }
@@ -182,11 +188,11 @@ module Vibe
       all_checkpoints = list
       return 0 if all_checkpoints.size <= keep_count
 
-      to_remove = all_checkpoints[keep_count..-1]
+      to_remove = all_checkpoints[keep_count..]
       removed = 0
 
       to_remove.each do |cp|
-        delete(cp["id"])
+        delete(cp['id'])
         removed += 1
       end
 
@@ -196,13 +202,28 @@ module Vibe
     private
 
     def default_storage_path
-      File.join(Dir.home, ".claude", "projects", "-Users-huchen-Projects-claude-code-workflow", "memory", "checkpoints.yaml")
+      repo_root = find_repo_root || Dir.pwd
+      File.join(repo_root, 'memory', 'checkpoints.yaml')
+    end
+
+    def find_repo_root
+      current = Dir.pwd
+      loop do
+        return current if File.exist?(File.join(current, '.git'))
+
+        parent = File.dirname(current)
+        break if parent == current
+
+        current = parent
+      end
+      nil
     end
 
     def load_checkpoints
       return {} unless File.exist?(@storage_path)
 
-      YAML.safe_load(File.read(@storage_path), permitted_classes: [Time, Symbol], aliases: true) || {}
+      YAML.safe_load(File.read(@storage_path), permitted_classes: [Time, Symbol],
+                                               aliases: true) || {}
     rescue StandardError => e
       warn "Failed to load checkpoints from #{@storage_path}: #{e.message}"
       {}

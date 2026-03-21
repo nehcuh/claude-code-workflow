@@ -19,7 +19,8 @@ module Vibe
     def load_data
       return default_structure unless File.exist?(@path)
 
-      YAML.safe_load(File.read(@path), permitted_classes: [Time, Symbol], aliases: true) || default_structure
+      YAML.safe_load(File.read(@path), permitted_classes: [Time, Symbol], 
+                                       aliases: true) || default_structure
     rescue StandardError => e
       warn "Failed to load instincts from #{@path}: #{e.message}"
       default_structure
@@ -77,8 +78,10 @@ module Vibe
         "id" => SecureRandom.uuid,
         "pattern" => attributes[:pattern] || attributes["pattern"],
         "confidence" => attributes[:confidence] || attributes["confidence"] || 0.5,
-        "source_sessions" => attributes[:source_sessions] || attributes["source_sessions"] || [],
+        "source_sessions" => attributes[:source_sessions] ||
+                             attributes["source_sessions"] || [],
         "usage_count" => 0,
+        "success_count" => 0,
         "success_rate" => 1.0,
         "created_at" => Time.now.iso8601,
         "updated_at" => Time.now.iso8601,
@@ -132,9 +135,8 @@ module Vibe
       return nil unless instinct
 
       instinct["usage_count"] += 1
-      total_successes = (instinct["success_rate"] * (instinct["usage_count"] - 1)).round
-      total_successes += 1 if success
-      instinct["success_rate"] = total_successes.to_f / instinct["usage_count"]
+      instinct["success_count"] = (instinct["success_count"] || 0) + (success ? 1 : 0)
+      instinct["success_rate"] = instinct["success_count"].to_f / instinct["usage_count"]
       instinct["confidence"] = calculate_confidence(instinct)
       instinct["updated_at"] = Time.now.iso8601
 
@@ -186,7 +188,8 @@ module Vibe
     #   - :merge - Merge usage data
     # @return [Hash] Import statistics
     def import(file_path, merge_strategy = :skip)
-      import_data = YAML.safe_load(File.read(file_path), permitted_classes: [Time, Symbol], aliases: true)
+      import_data = YAML.safe_load(File.read(file_path), 
+permitted_classes: [Time, Symbol], aliases: true)
       imported_instincts = import_data["instincts"] || []
 
       stats = { imported: 0, skipped: 0, merged: 0, errors: 0 }
@@ -218,6 +221,59 @@ module Vibe
       stats
     end
 
+    # Evolve an instinct into a reusable skill file
+    # @param instinct_id [String] ID of the instinct to evolve
+    # @param skill_name [String] Optional custom skill name
+    # @param output_dir [String] Directory to write skill file (default: skills/)
+    # @return [Hash] Result with :success, :skill_path, :message
+    def evolve(instinct_id, skill_name: nil, output_dir: nil)
+      instinct = get(instinct_id)
+      return { success: false, 
+               message: "Instinct not found: #{instinct_id}" } unless instinct
+
+      repo_root = find_repo_root || Dir.pwd
+      output_dir ||= File.join(repo_root, "skills")
+      FileUtils.mkdir_p(output_dir)
+
+      name = skill_name || instinct["pattern"].downcase.gsub(/[^a-z0-9]+/, "-").gsub(
+        /^-|-$/, ""
+      )
+      skill_dir = File.join(output_dir, name)
+      skill_file = File.join(skill_dir, "SKILL.md")
+
+      return { success: false, 
+               message: "Skill already exists: #{skill_file}" } if File.exist?(skill_file)
+
+      FileUtils.mkdir_p(skill_dir)
+
+      tags_line = instinct["tags"].any? ? "\nTags: #{instinct['tags'].join(', ')}" : ""
+      content = <<~SKILL
+        # #{instinct["pattern"]}
+
+        Evolved from instinct `#{instinct_id}` (confidence: #{instinct["confidence"].round(2)})#{tags_line}
+
+        ## When to use
+
+        <!-- Describe when this skill should be applied -->
+
+        ## Steps
+
+        <!-- Add step-by-step instructions -->
+
+        ## Notes
+
+        - Usage count: #{instinct["usage_count"]}
+        - Success rate: #{(instinct["success_rate"] * 100).round}%
+        - Source sessions: #{instinct["source_sessions"].join(", ")}
+      SKILL
+
+      File.write(skill_file, content)
+
+      update(instinct_id, "status" => "evolved")
+
+      { success: true, skill_path: skill_file, message: "Skill created at #{skill_file}" }
+    end
+
     # Load high-confidence instincts to context
     # @param filters [Hash] Optional filters
     # @return [String] Formatted context string
@@ -231,7 +287,8 @@ module Vibe
 
       lines = ["# Learned Instincts\n"]
       instincts.each do |instinct|
-        lines << "- **#{instinct['pattern']}** (confidence: #{instinct['confidence'].round(2)})"
+        lines << "- **#{instinct['pattern']}** " \
+                 "(confidence: #{instinct['confidence'].round(2)})"
         lines << "  Tags: #{instinct['tags'].join(', ')}" if instinct["tags"].any?
         lines << "  Context: #{instinct['context']}" if instinct["context"]
       end
@@ -271,10 +328,14 @@ module Vibe
     end
 
     def validate_instinct!(instinct)
-      raise ArgumentError, "Pattern is required" if instinct["pattern"].nil? || instinct["pattern"].empty?
-      raise ArgumentError, "Confidence must be between 0 and 1" unless (0.0..1.0).cover?(instinct["confidence"])
-      raise ArgumentError, "Success rate must be between 0 and 1" unless (0.0..1.0).cover?(instinct["success_rate"])
-      raise ArgumentError, "Usage count must be non-negative" if instinct["usage_count"] < 0
+      raise ArgumentError, 
+"Pattern is required" if instinct["pattern"].nil? || instinct["pattern"].empty?
+      raise ArgumentError, 
+"Confidence must be between 0 and 1" unless (0.0..1.0).cover?(instinct["confidence"])
+      raise ArgumentError, 
+"Success rate must be between 0 and 1" unless (0.0..1.0).cover?(instinct["success_rate"])
+      raise ArgumentError, 
+"Usage count must be non-negative" if instinct["usage_count"] < 0
     end
 
     def merge_instinct_data(existing, imported)
@@ -288,7 +349,8 @@ module Vibe
       existing["confidence"] = calculate_confidence(existing)
 
       # Merge source sessions
-      existing["source_sessions"] = (existing["source_sessions"] + imported["source_sessions"]).uniq
+      existing["source_sessions"] = 
+        (existing["source_sessions"] + imported["source_sessions"]).uniq
 
       # Merge tags
       existing["tags"] = (existing["tags"] + imported["tags"]).uniq
@@ -302,4 +364,3 @@ module Vibe
     end
   end
 end
-

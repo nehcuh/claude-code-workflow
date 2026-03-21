@@ -7,7 +7,8 @@ validate:
 
 schema:
 	@echo "🔍 Validating YAML files against JSON Schema..."
-	@bin/validate-schemas
+	@bundle exec bin/validate-schemas
+	@bundle exec bin/validate-platform-config
 
 generate:
 	@rake build

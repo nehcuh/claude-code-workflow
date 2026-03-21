@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
-require "yaml"
-require "securerandom"
-require "time"
-require "thread"
-require "open3"
-require "shellwords"
+require 'yaml'
+require 'securerandom'
+require 'time'
+require 'open3'
+require 'shellwords'
 
 module Vibe
   # Background task manager for long-running operations
@@ -14,11 +13,11 @@ module Vibe
 
     # Task status values
     STATUS = {
-      pending: "pending",
-      running: "running",
-      completed: "completed",
-      failed: "failed",
-      cancelled: "cancelled"
+      pending: 'pending',
+      running: 'running',
+      completed: 'completed',
+      failed: 'failed',
+      cancelled: 'cancelled'
     }.freeze
 
     # Priority levels
@@ -48,18 +47,18 @@ module Vibe
       task_id = SecureRandom.uuid
 
       task = {
-        "id" => task_id,
-        "command" => command,
-        "description" => options[:description] || command,
-        "status" => STATUS[:pending],
-        "priority" => PRIORITY[options[:priority] || :normal],
-        "timeout" => options[:timeout],
-        "created_at" => Time.now.iso8601,
-        "started_at" => nil,
-        "completed_at" => nil,
-        "output" => nil,
-        "error" => nil,
-        "exit_code" => nil
+        'id' => task_id,
+        'command' => command,
+        'description' => options[:description] || command,
+        'status' => STATUS[:pending],
+        'priority' => PRIORITY[options[:priority] || :normal],
+        'timeout' => options[:timeout],
+        'created_at' => Time.now.iso8601,
+        'started_at' => nil,
+        'completed_at' => nil,
+        'output' => nil,
+        'error' => nil,
+        'exit_code' => nil
       }
 
       @mutex.synchronize do
@@ -89,10 +88,18 @@ module Vibe
       @mutex.synchronize do
         results = @tasks.values
 
-        results = results.select { |t| t["status"] == filters[:status] } if filters[:status]
-        results = results.select { |t| t["priority"] >= filters[:priority] } if filters[:priority]
+        if filters[:status]
+          results = results.select do |t|
+            t['status'] == filters[:status]
+          end
+        end
+        if filters[:priority]
+          results = results.select do |t|
+            t['priority'] >= filters[:priority]
+          end
+        end
 
-        results.sort_by { |t| [-t["priority"], t["created_at"]] }
+        results.sort_by { |t| [-t['priority'], t['created_at']] }
       end
     end
 
@@ -103,10 +110,11 @@ module Vibe
       @mutex.synchronize do
         task = @tasks[task_id]
         return false unless task
-        return false if [STATUS[:completed], STATUS[:failed], STATUS[:cancelled]].include?(task["status"])
+        return false if [STATUS[:completed], STATUS[:failed],
+                         STATUS[:cancelled]].include?(task['status'])
 
-        task["status"] = STATUS[:cancelled]
-        task["completed_at"] = Time.now.iso8601
+        task['status'] = STATUS[:cancelled]
+        task['completed_at'] = Time.now.iso8601
         @queue.delete(task_id)
         save_tasks
         true
@@ -116,14 +124,15 @@ module Vibe
     # Clean up completed/failed/cancelled tasks
     # @param older_than [Integer] Remove tasks older than N seconds (default: 24 hours)
     # @return [Integer] Number of tasks removed
-    def cleanup(older_than = 86400)
+    def cleanup(older_than = 86_400)
       cutoff_time = Time.now - older_than
       removed = 0
 
       @mutex.synchronize do
         @tasks.delete_if do |_id, task|
-          completed = [STATUS[:completed], STATUS[:failed], STATUS[:cancelled]].include?(task["status"])
-          old = Time.parse(task["created_at"]) < cutoff_time
+          completed = [STATUS[:completed], STATUS[:failed],
+                       STATUS[:cancelled]].include?(task['status'])
+          old = Time.parse(task['created_at']) < cutoff_time
 
           if completed && old
             removed += 1
@@ -133,7 +142,7 @@ module Vibe
           end
         end
 
-        save_tasks if removed > 0
+        save_tasks if removed.positive?
       end
 
       removed
@@ -148,15 +157,17 @@ module Vibe
 
     def default_storage_path
       repo_root = find_repo_root || Dir.pwd
-      File.join(repo_root, "memory", "background_tasks.yaml")
+      File.join(repo_root, 'memory', 'background_tasks.yaml')
     end
 
     def find_repo_root
       current = Dir.pwd
       loop do
-        return current if File.exist?(File.join(current, ".git"))
+        return current if File.exist?(File.join(current, '.git'))
+
         parent = File.dirname(current)
         break if parent == current
+
         current = parent
       end
       nil
@@ -165,7 +176,8 @@ module Vibe
     def load_tasks
       return {} unless File.exist?(@storage_path)
 
-      YAML.safe_load(File.read(@storage_path), permitted_classes: [Time, Symbol], aliases: true) || {}
+      YAML.safe_load(File.read(@storage_path), permitted_classes: [Time, Symbol],
+                                               aliases: true) || {}
     rescue StandardError => e
       warn "Failed to load tasks from #{@storage_path}: #{e.message}"
       {}
@@ -185,27 +197,27 @@ module Vibe
         task = @tasks[task_id]
         return unless task
 
-        task["status"] = STATUS[:running]
-        task["started_at"] = Time.now.iso8601
+        task['status'] = STATUS[:running]
+        task['started_at'] = Time.now.iso8601
         save_tasks
       end
 
       begin
-        output, status = Open3.capture2e("/bin/sh", "-c", task["command"])
+        output, status = Open3.capture2e('/bin/sh', '-c', task['command'])
         exit_code = status.exitstatus
 
         @mutex.synchronize do
-          task["status"] = exit_code.zero? ? STATUS[:completed] : STATUS[:failed]
-          task["output"] = output
-          task["exit_code"] = exit_code
-          task["completed_at"] = Time.now.iso8601
+          task['status'] = exit_code.zero? ? STATUS[:completed] : STATUS[:failed]
+          task['output'] = output
+          task['exit_code'] = exit_code
+          task['completed_at'] = Time.now.iso8601
           save_tasks
         end
       rescue StandardError => e
         @mutex.synchronize do
-          task["status"] = STATUS[:failed]
-          task["error"] = e.message
-          task["completed_at"] = Time.now.iso8601
+          task['status'] = STATUS[:failed]
+          task['error'] = e.message
+          task['completed_at'] = Time.now.iso8601
           save_tasks
         end
       end

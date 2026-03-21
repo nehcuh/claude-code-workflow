@@ -3,7 +3,7 @@
 # CLI commands for checkpoint management
 # These methods are included in VibeCLI class
 
-require_relative "../checkpoint_manager"
+require_relative '../checkpoint_manager'
 
 module Vibe
   module CheckpointCommands
@@ -12,22 +12,23 @@ module Vibe
       subcommand = argv.shift
 
       case subcommand
-      when "create"
+      when 'create'
         run_checkpoint_create(argv)
-      when "list"
+      when 'list'
         run_checkpoint_list(argv)
-      when "rollback"
+      when 'rollback'
         run_checkpoint_rollback(argv)
-      when "compare"
+      when 'compare'
         run_checkpoint_compare(argv)
-      when "delete"
+      when 'delete'
         run_checkpoint_delete(argv)
-      when "cleanup"
+      when 'cleanup'
         run_checkpoint_cleanup(argv)
-      when nil, "help", "--help", "-h"
+      when nil, 'help', '--help', '-h'
         puts checkpoint_usage
       else
-        raise Vibe::ValidationError, "Unknown checkpoint subcommand: #{subcommand}\n\n#{checkpoint_usage}"
+        raise Vibe::ValidationError,
+              "Unknown checkpoint subcommand: #{subcommand}\n\n#{checkpoint_usage}"
       end
     end
 
@@ -37,14 +38,14 @@ module Vibe
       files = argv
 
       unless description
-        puts "Error: Description required"
+        puts 'Error: Description required'
         puts
         puts checkpoint_usage
         exit 1
       end
 
       if files.empty?
-        puts "Error: At least one file required"
+        puts 'Error: At least one file required'
         puts
         puts checkpoint_usage
         exit 1
@@ -53,7 +54,7 @@ module Vibe
       # Validate files exist
       missing = files.reject { |f| File.exist?(f) }
       if missing.any?
-        puts "Error: Files not found:"
+        puts 'Error: Files not found:'
         missing.each { |f| puts "  - #{f}" }
         exit 1
       end
@@ -62,7 +63,7 @@ module Vibe
       checkpoint_id = manager.create(description, files)
 
       puts "\n✅ Checkpoint created: #{checkpoint_id}\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
       puts "Description: #{description}"
       puts "Files: #{files.size}"
@@ -82,11 +83,11 @@ module Vibe
       checkpoints = manager.list(filters)
 
       puts "\n📋 Checkpoints\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
 
       if checkpoints.empty?
-        puts "No checkpoints found."
+        puts 'No checkpoints found.'
         puts
         return
       end
@@ -108,7 +109,7 @@ module Vibe
       options = parse_checkpoint_rollback_options(argv)
 
       unless options[:id]
-        puts "Error: Checkpoint ID required"
+        puts 'Error: Checkpoint ID required'
         puts
         puts checkpoint_usage
         exit 1
@@ -125,12 +126,12 @@ module Vibe
           puts "\n✅ Rollback Complete\n"
         end
 
-        puts "=" * 60
+        puts '=' * 60
         puts
         puts "Checkpoint: #{result[:checkpoint_id]}"
         puts "Description: #{result[:description]}"
         puts
-        puts "Changes:"
+        puts 'Changes:'
         result[:changes].each do |change|
           puts "  [#{change[:action]}] #{change[:file]}"
         end
@@ -147,7 +148,7 @@ module Vibe
       id2 = argv.shift
 
       unless id1 && id2
-        puts "Error: Two checkpoint IDs required"
+        puts 'Error: Two checkpoint IDs required'
         puts
         puts checkpoint_usage
         exit 1
@@ -159,7 +160,7 @@ module Vibe
         result = manager.compare(id1, id2)
 
         puts "\n🔍 Checkpoint Comparison\n"
-        puts "=" * 60
+        puts '=' * 60
         puts
         puts "Checkpoint 1: #{result[:checkpoint1][:id]}"
         puts "  Created: #{result[:checkpoint1][:created_at]}"
@@ -173,11 +174,13 @@ module Vibe
         if result[:differences].any?
           result[:differences].each do |diff|
             case diff[:status]
-            when "modified"
-              puts "  [M] #{diff[:file]} (#{diff[:size_change] > 0 ? '+' : ''}#{diff[:size_change]} bytes)"
-            when "added"
+            when 'modified'
+              size_change = diff[:size_change]
+              sign = size_change.positive? ? '+' : ''
+              puts "  [M] #{diff[:file]} (#{sign}#{size_change} bytes)"
+            when 'added'
               puts "  [A] #{diff[:file]} (+#{diff[:size]} bytes)"
-            when "removed"
+            when 'removed'
               puts "  [D] #{diff[:file]}"
             end
           end
@@ -194,7 +197,7 @@ module Vibe
       checkpoint_id = argv.shift
 
       unless checkpoint_id
-        puts "Error: Checkpoint ID required"
+        puts 'Error: Checkpoint ID required'
         puts
         puts checkpoint_usage
         exit 1
@@ -218,7 +221,7 @@ module Vibe
       removed = manager.cleanup(keep_count)
 
       puts "\n🧹 Checkpoint Cleanup\n"
-      puts "=" * 60
+      puts '=' * 60
       puts
       puts "Removed: #{removed} checkpoint(s)"
       puts "Kept: #{keep_count} most recent"
@@ -232,9 +235,9 @@ module Vibe
 
       while (arg = argv.shift)
         case arg
-        when "--limit", "-n"
+        when '--limit', '-n'
           options[:limit] = argv.shift&.to_i
-        when "--since"
+        when '--since'
           # Parse duration like "1h", "2d", "1w"
           duration_str = argv.shift
           options[:since] = parse_duration(duration_str) if duration_str
@@ -249,7 +252,7 @@ module Vibe
 
       while (arg = argv.shift)
         case arg
-        when "--dry-run", "-n"
+        when '--dry-run', '-n'
           options[:dry_run] = true
         else
           options[:id] = arg
@@ -267,9 +270,9 @@ module Vibe
       unit = match[2]
 
       case unit
-      when "h" then value * 3600
-      when "d" then value * 86400
-      when "w" then value * 604800
+      when 'h' then value * 3600
+      when 'd' then value * 86_400
+      when 'w' then value * 604_800
       end
     end
 

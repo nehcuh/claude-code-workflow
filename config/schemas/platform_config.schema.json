@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/draft-06/schema#",
   "$id": "https://vibesop.example.com/schemas/platform_config.schema.json",
   "title": "Platform Configuration Schema",
   "description": "Schema for validating platform configuration in vibesop",
@@ -106,20 +106,40 @@
           "additionalProperties": false
         },
         "runtime_dirs": {
-          "type": "array",
-          "description": "Runtime directories to copy",
-          "items": {
-            "type": "string",
-            "enum": ["rules", "docs", "skills", "agents", "commands", "memory"]
+          "type": "object",
+          "description": "Runtime directories to copy for each mode",
+          "required": ["global", "project"],
+          "properties": {
+            "global": {
+              "$ref": "#/definitions/runtime_dir_list"
+            },
+            "project": {
+              "$ref": "#/definitions/runtime_dir_list"
+            }
           },
-          "uniqueItems": true,
-          "default": []
+          "additionalProperties": false,
+          "default": {
+            "global": [],
+            "project": []
+          }
         },
         "copy_mode": {
-          "type": "string",
-          "description": "How to copy runtime directories",
-          "enum": ["full", "minimal", "none"],
-          "default": "minimal"
+          "type": "object",
+          "description": "How to copy runtime directories for each mode",
+          "required": ["global", "project"],
+          "properties": {
+            "global": {
+              "$ref": "#/definitions/copy_mode_value"
+            },
+            "project": {
+              "$ref": "#/definitions/copy_mode_value"
+            }
+          },
+          "additionalProperties": false,
+          "default": {
+            "global": "minimal",
+            "project": "minimal"
+          }
         },
         "special_handling": {
           "type": "object",
@@ -197,6 +217,12 @@
           "pattern": "^[a-zA-Z0-9_./-]+$",
           "examples": ["settings.json", "opencode.json"]
         },
+        "builder": {
+          "type": "string",
+          "description": "Builder method name used by runtime generator",
+          "pattern": "^[a-z_][a-z0-9_]*$",
+          "examples": ["claude_settings_config", "opencode_project_config"]
+        },
         "template": {
           "type": "string",
           "description": "ERB template path (relative to templates/)",
@@ -204,7 +230,25 @@
           "examples": ["claude-code/settings.json.erb", "opencode/opencode.json.erb"]
         }
       },
+      "anyOf": [
+        { "required": ["builder"] },
+        { "required": ["template"] }
+      ],
       "additionalProperties": false
+    },
+    "runtime_dir_list": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["rules", "docs", "skills", "agents", "commands", "memory"]
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "copy_mode_value": {
+      "type": "string",
+      "enum": ["full", "minimal", "none"],
+      "default": "minimal"
     }
   }
 }

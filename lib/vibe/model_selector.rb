@@ -95,7 +95,7 @@ module Vibe
     # @param current_model [String] Current model that failed
     # @param reason [String] Reason for fallback
     # @return [String, nil] Fallback model or nil if no fallback available
-    def fallback_model(current_model, reason = nil)
+    def fallback_model(current_model, _reason = nil)
       fallback = FALLBACK_CHAIN[current_model]
       @stats[:fallbacks][current_model] += 1 if fallback
       fallback

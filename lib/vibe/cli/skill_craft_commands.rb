@@ -18,7 +18,7 @@ module Vibe
         run_skill_craft_triggers(argv)
       when 'status'
         run_skill_craft_status(argv)
-      when '--help', '-h', nil, 'help'
+      when '--help', '-h', 'help'
         puts skill_craft_usage
       else
         # Default: interactive crafting session
@@ -28,17 +28,17 @@ module Vibe
 
     def run_skill_craft_analyze(argv)
       options = parse_analyze_options(argv)
-      
-      puts "📊 Analyzing session history..."
-      
+
+      puts '📊 Analyzing session history...'
+
       analyzer = SessionAnalyzer.new(
         min_occurrences: options[:min_occurrences] || 3,
         min_success_rate: options[:min_success_rate] || 0.7
       )
-      
+
       sessions = analyzer.load_sessions
       patterns = analyzer.analyze
-      
+
       puts "\n#{patterns.size} patterns detected from #{sessions.size} sessions"
       puts analyzer.summary
     end
@@ -47,8 +47,8 @@ module Vibe
       options = parse_generate_options(argv)
 
       if options[:pattern].nil?
-        puts "Error: No pattern specified"
-        puts "Usage: vibe skill-craft generate --pattern <index>"
+        puts 'Error: No pattern specified'
+        puts 'Usage: vibe skill-craft generate --pattern <index>'
         puts "Run 'vibe skill-craft analyze' first to see available patterns."
         return
       end
@@ -65,8 +65,9 @@ module Vibe
 
       # Look up pattern by 1-based index
       index = options[:pattern].to_i - 1
-      if index < 0 || index >= patterns.size
-        puts "Error: Pattern index #{options[:pattern]} out of range (1..#{patterns.size})"
+      if index.negative? || index >= patterns.size
+        puts "Error: Pattern index #{options[:pattern]} out of range " \
+             "(1..#{patterns.size})"
         puts "Run 'vibe skill-craft analyze' to see available patterns."
         return
       end
@@ -80,20 +81,20 @@ module Vibe
         puts "   Location: #{result[:skill_path]}"
       elsif result[:error] == :exists
         puts "Error: #{result[:message]}"
-        puts "   Use --force to overwrite."
+        puts '   Use --force to overwrite.'
       else
-        puts "Error: Failed to generate skill"
+        puts 'Error: Failed to generate skill'
       end
     end
 
-    def run_skill_craft_triggers(argv)
-      puts "🔍 Checking trigger conditions..."
-      
+    def run_skill_craft_triggers(_argv)
+      puts '🔍 Checking trigger conditions...'
+
       manager = TriggerManager.new
       triggers = manager.check_triggers
-      
+
       if triggers.empty?
-        puts "✅ No triggers fired"
+        puts '✅ No triggers fired'
       else
         puts "\n#{triggers.size} trigger(s) detected:"
         triggers.each do |trigger|
@@ -103,84 +104,88 @@ module Vibe
       end
     end
 
-    def run_skill_craft_status(argv)
+    def run_skill_craft_status(_argv)
       manager = TriggerManager.new
-      
-      puts "📈 Skill Craft Status"
-      puts "=" * 40
+
+      puts '📈 Skill Craft Status'
+      puts '=' * 40
       puts "Sessions since last review: #{manager.state['session_count'] || 0}"
       puts "Last review: #{manager.state['last_review'] || 'Never'}"
-      puts "Accumulation threshold: #{manager.config.dig('triggers', 'accumulation_threshold')}"
+      puts "Accumulation threshold: #{manager.config.dig('triggers',
+                                                         'accumulation_threshold')}"
     end
 
-    def run_skill_craft_interactive(argv)
-      puts "🎯 Skill Crafting Session"
-      puts "=" * 50
-      
+    def run_skill_craft_interactive(_argv)
+      puts '🎯 Skill Crafting Session'
+      puts '=' * 50
+
       # Step 1: Analyze
       analyzer = SessionAnalyzer.new
-      sessions = analyzer.load_sessions
+      analyzer.load_sessions
       patterns = analyzer.analyze
-      
+
       if patterns.empty?
         puts "\n❌ No patterns found in session history"
         return
       end
-      
+
       puts "\n#{patterns.size} patterns found:"
       patterns.first(10).each_with_index do |pattern, i|
-        confidence_bar = "█" * (pattern[:confidence] * 10).to_i + "░" * (10 - pattern[:confidence] * 10).to_i
+        confidence_filled = (pattern[:confidence] * 10).to_i
+        confidence_empty = 10 - confidence_filled
+        confidence_bar = ('█' * confidence_filled) + ('░' * confidence_empty)
         puts "  #{i + 1}. [#{pattern[:type]}] #{pattern[:pattern][0..50]}..."
-        puts "     #{confidence_bar} #{(pattern[:confidence] * 100).to_i}% (#{pattern[:occurrences]}x)"
+        puts "     #{confidence_bar} #{(pattern[:confidence] * 100).to_i}% " \
+             "(#{pattern[:occurrences]}x)"
       end
-      
+
       puts "\nSelect patterns to craft (comma-separated, 'all', or 'q' to quit):"
-      print "> "
+      print '> '
       selection = $stdin.gets.chomp
-      
+
       return if selection == 'q'
       return unless selection && selection != ''
-      
+
       if selection == 'all'
         selected_patterns = patterns.to_a
       else
         indices = selection.split(',').map(&:strip).map(&:to_i).map { |i| i - 1 }
         selected_patterns = indices.map { |i| patterns[i] }.compact
       end
-      
+
       # Step 2: Generate
       generator = SkillGenerator.new
       results = generator.generate_batch(selected_patterns)
-      
+
       puts "\n✅ Generated #{results.size} skills:"
       results.each do |result|
         puts "  • #{result[:skill_name]} → #{result[:skill_path]}"
       end
-      
+
       # Step 3: Update state
       manager = TriggerManager.new
       manager.record_review
-      
+
       puts "\n✨ Skill crafting complete!"
-      puts "Skills saved to: ~/.claude/skills/personal/"
+      puts 'Skills saved to: ~/.claude/skills/personal/'
     end
 
     private
 
     def parse_analyze_options(argv)
       options = { min_occurrences: 3, min_success_rate: 0.7, scan_recent: 20 }
-      
+
       argv.each do |arg|
         case arg
         when /^--min-occurrences=(\d+)$/
-          options[:min_occurrences] = $1.to_i
+          options[:min_occurrences] = ::Regexp.last_match(1).to_i
         when /^--min-success-rate=([\d.]+)$/
-          options[:min_success_rate] = $1.to_f
+          options[:min_success_rate] = ::Regexp.last_match(1).to_f
         when /^--scan-recent=(\d+)$/
-          options[:scan_recent] = $1.to_i
+          options[:scan_recent] = ::Regexp.last_match(1).to_i
         end
       end
-      
+
       options
     end
 

@@ -33,6 +33,12 @@ jobs:
             end
           end
         "
+
+    - name: Validate schemas
+      run: |
+        chmod +x bin/validate-schemas bin/validate-platform-config
+        bundle exec bin/validate-schemas
+        bundle exec bin/validate-platform-config
     
     - name: Run vibe inspect
       run: |
@@ -74,7 +80,7 @@ jobs:
     - name: Run all tests including E2E
       run: |
         # Run full test suite via rake (includes unit and E2E tests)
-        COVERAGE=false bundle exec rake test
+        COVERAGE=true bundle exec rake test
 
     - name: Run smoke test
       run: |
@@ -103,11 +109,7 @@ jobs:
     
     - name: Run RuboCop
       run: |
-        if command -v rubocop &> /dev/null; then
-          rubocop lib/ bin/vibe || true
-        else
-          echo "RuboCop not installed, skipping"
-        fi
+        bundle exec rubocop --fail-level W lib/ bin/vibe
     
     - name: Check file permissions
       run: |

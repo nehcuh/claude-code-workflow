@@ -268,7 +268,7 @@ module Vibe
         content = session[:content]
         
         checklist_keywords.each do |keyword|
-          matches = content.scan(/#{Regexp.escape(keyword)}\s+(.+?)[\.\n]/i)
+          matches = content.scan(/#{Regexp.escape(keyword)}\s+(.+?)[.\n]/i)
           matches.each do |match|
             patterns << {
               type: :checklist,

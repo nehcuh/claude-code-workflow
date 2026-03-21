@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "tmpdir"
-require "date"
-require_relative "errors"
+require 'tmpdir'
+require 'date'
+require_relative 'errors'
 
 module Vibe
   # Generic utilities shared across all Vibe modules.
@@ -14,24 +14,26 @@ module Vibe
     # Deep merge two nested data structures.
     #
     # DESIGN DECISION: LENIENT MODE (宽容模式)
-    # 
+    #
     # Why lenient mode?
     # 1. Graceful degradation: Instead of failing on type errors, return extra
-    # 2. Backward compatibility: Existing code that depends on flexible merging continues to work
+    # 2. Backward compatibility: Existing code that depends on flexible
+    #    merging continues to work
     # 3. Simplicity: No need for complex type checking at merge time
     # 4. Predictability: The behavior is consistent and easy to reason about
     #
     # Trade-offs:
     # - Less strict: Could miss type errors that would only show up in logs
-    # - Requires understanding: Developers need to understand that non-matching types are replaced
+    # - Requires understanding: Developers need to understand that
+    #   non-matching types are replaced
     #
     # Examples:
     #   deep_merge({a: 1, b: {c: 2}}, {b: {d: 3}, e: 4})
     #   # => {a: 1, b: {c: 2, d: 3}, e: 4}
-    #   
+    #
     #   deep_merge([1, 2, 3], [3, 4, 5])
     #   # => [1, 2, 3, 4, 5] (uniq)
-    #   
+    #
     #   deep_merge({a: 1}, "invalid")
     #   # => "invalid" (string is replaced)
     #
@@ -52,16 +54,18 @@ module Vibe
       if base.is_a?(Hash) && extra.is_a?(Hash)
         merged = deep_copy(base)
         extra.each do |key, value|
-          merged[key] = merged.key?(key) ? deep_merge(merged[key], value) : deep_copy(value)
+          merged[key] =
+            merged.key?(key) ? deep_merge(merged[key], value) : deep_copy(value)
         end
         merged
       elsif base.is_a?(Array) && extra.is_a?(Array)
         (base + extra).uniq
       else
         # Type mismatch: warn about potential data loss in debug mode
-        if ENV["VIBE_DEBUG"]
-          warn "deep_merge: type mismatch - base is #{base.class}, extra is #{extra.class}. " \
-               "Extra will replace base (potential data loss)."
+        if ENV['VIBE_DEBUG']
+          warn "deep_merge: type mismatch - base is #{base.class}, " \
+               "extra is #{extra.class}. " \
+               'Extra will replace base (potential data loss).'
         end
         deep_copy(extra)
       end
@@ -71,7 +75,10 @@ module Vibe
     SAFE_MARSHAL_CLASSES = [Time, Date, DateTime, Rational, Complex, Regexp, Range].freeze
 
     def deep_copy(value)
-      return value if value.nil? || value == true || value == false || value.is_a?(Numeric) || value.is_a?(Symbol)
+      if value.nil? || value == true || value == false ||
+         value.is_a?(Numeric) || value.is_a?(Symbol)
+        return value
+      end
 
       case value
       when String
@@ -89,7 +96,7 @@ module Vibe
         else
           # For unknown types, return the original value (shallow copy)
           # This is safer than potentially executing malicious code
-          if ENV["VIBE_DEBUG"]
+          if ENV['VIBE_DEBUG']
             warn "deep_copy: unhandled type #{value.class}, returning original reference"
           end
           value
@@ -107,8 +114,8 @@ module Vibe
     # otherwise the absolute path.
     def display_path(path)
       absolute = File.expand_path(path)
-      repo_prefix = @repo_root.end_with?("/") ? @repo_root : "#{@repo_root}/"
-      return "." if absolute == @repo_root
+      repo_prefix = @repo_root.end_with?('/') ? @repo_root : "#{@repo_root}/"
+      return '.' if absolute == @repo_root
       return absolute.delete_prefix(repo_prefix) if absolute.start_with?(repo_prefix)
 
       absolute
@@ -136,16 +143,16 @@ module Vibe
 
     def write_json(path, content)
       FileUtils.mkdir_p(File.dirname(path))
-      File.write(path, JSON.pretty_generate(content) + "\n")
+      File.write(path, "#{JSON.pretty_generate(content)}\n")
     end
 
     # --- Formatting helpers ---
 
     def format_backtick_list(items)
       values = Array(items).map(&:to_s).reject { |item| item.strip.empty? }
-      return "`none`" if values.empty?
+      return '`none`' if values.empty?
 
-      values.map { |item| "`#{item}`" }.join(", ")
+      values.map { |item| "`#{item}`" }.join(', ')
     end
 
     # --- Input validation and sanitization ---
@@ -155,20 +162,29 @@ module Vibe
 
     # Validate and sanitize a file path input
     # Raises ValidationError if path contains dangerous characters or unsafe traversal
-    def validate_path!(path, context: "path")
+    def validate_path!(path, context: 'path')
       raise ValidationError, "#{context} cannot be nil" if path.nil?
       raise ValidationError, "#{context} cannot be empty" if path.to_s.strip.empty?
 
       path_str = path.to_s
-      raise ValidationError, "#{context} exceeds maximum length (#{MAX_PATH_LENGTH})" if path_str.length > MAX_PATH_LENGTH
+      if path_str.length > MAX_PATH_LENGTH
+        raise ValidationError,
+              "#{context} exceeds maximum length (#{MAX_PATH_LENGTH})"
+      end
       raise ValidationError, "#{context} contains null byte" if path_str.include?("\0")
-      raise ValidationError, "#{context} contains control characters" if path_str.match?(/[\x00-\x1f\x7f]/)
+
+      if path_str.match?(/[\x00-\x1f\x7f]/)
+        raise ValidationError,
+              "#{context} contains control characters"
+      end
 
       # Path traversal protection: prevent escaping from safe directories
-      if path_str.include?("..")
+      if path_str.include?('..')
         expanded = File.expand_path(path_str)
         # Allow paths within: repo root, current directory, or system temp directory
-        allowed_roots = [@repo_root, Dir.pwd, Dir.tmpdir].map { |root| File.expand_path(root) }
+        allowed_roots = [@repo_root, Dir.pwd, Dir.tmpdir].map do |root|
+          File.expand_path(root)
+        end
         safe = allowed_roots.any? { |root| expanded.start_with?(root) }
 
         unless safe
@@ -178,6 +194,5 @@ module Vibe
 
       path_str
     end
-
   end
 end

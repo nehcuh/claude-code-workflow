@@ -1,42 +1,42 @@
 # frozen_string_literal: true
 
-require "fileutils"
-require "open3"
-require "timeout"
-require "rbconfig"
-require_relative "platform_utils"
+require 'fileutils'
+require 'open3'
+require 'timeout'
+require 'rbconfig'
+require_relative 'platform_utils'
 
 module Vibe
   module GstackInstaller
     include PlatformUtils
 
     GSTACK_REPO_URLS = [
-      "https://github.com/garrytan/gstack.git",
-      "https://gitee.com/mirrors/gstack.git"  # China mirror
+      'https://github.com/garrytan/gstack.git',
+      'https://gitee.com/mirrors/gstack.git' # China mirror
     ].freeze
 
     GSTACK_PLATFORM_PATHS = {
-      "claude-code" => "~/.claude/skills/gstack",
-      "opencode" => "~/.config/opencode/skills/gstack"
+      'claude-code' => '~/.claude/skills/gstack',
+      'opencode' => '~/.config/opencode/skills/gstack'
     }.freeze
 
     CLONE_TIMEOUT = 60
     MAX_RETRIES = 3
 
     def self.install_gstack(platform = nil)
-      platform ||= "claude-code"
+      platform ||= 'claude-code'
 
-      unless system("git", "--version", out: File::NULL, err: File::NULL)
+      unless system('git', '--version', out: File::NULL, err: File::NULL)
         puts
-        puts "   ❌ Git is not installed. Please install Git first."
+        puts '   ❌ Git is not installed. Please install Git first.'
         return false
       end
 
       puts
-      puts "   Installing gstack Skill Pack..."
+      puts '   Installing gstack Skill Pack...'
 
       target_dir = File.expand_path(
-        GSTACK_PLATFORM_PATHS[platform] || GSTACK_PLATFORM_PATHS["claude-code"]
+        GSTACK_PLATFORM_PATHS[platform] || GSTACK_PLATFORM_PATHS['claude-code']
       )
 
       if Dir.exist?(target_dir) && gstack_markers_present?(target_dir)
@@ -49,21 +49,21 @@ module Vibe
 
       # Remove incomplete install if present
       if Dir.exist?(target_dir) && !gstack_markers_present?(target_dir)
-        puts "   ⚠️  Incomplete installation found, removing..."
+        puts '   ⚠️  Incomplete installation found, removing...'
         FileUtils.rm_rf(target_dir)
       end
 
       puts
-      puts "   Cloning gstack repository..."
+      puts '   Cloning gstack repository...'
       puts "   Target: #{target_dir}"
 
       success, used_url = clone_from_mirrors(GSTACK_REPO_URLS, target_dir)
       unless success
-        puts "   ❌ Failed to clone from all available sources"
+        puts '   ❌ Failed to clone from all available sources'
         puts
-        puts "   Troubleshooting:"
-        puts "   - Check your internet connection"
-        puts "   - Check if a firewall is blocking Git"
+        puts '   Troubleshooting:'
+        puts '   - Check your internet connection'
+        puts '   - Check if a firewall is blocking Git'
         puts "   - Try manual clone: git clone #{GSTACK_REPO_URLS.first} #{target_dir}"
         return false
       end
@@ -73,47 +73,49 @@ module Vibe
       run_setup(target_dir)
     rescue StandardError => e
       puts "   ❌ Installation failed: #{e.message}"
-      puts "   #{e.backtrace.first(5).join("\n   ")}" if ENV["VIBE_DEBUG"]
+      puts "   #{e.backtrace.first(5).join("\n   ")}" if ENV['VIBE_DEBUG']
       false
     end
 
     def self.run_setup(target_dir)
-      setup_script = File.join(target_dir, "setup")
+      setup_script = File.join(target_dir, 'setup')
 
       unless File.exist?(setup_script)
-        puts "   ⚠️  setup script not found, skipping post-install"
-        puts "   ✅ gstack cloned but /browse may not work without running setup"
+        puts '   ⚠️  setup script not found, skipping post-install'
+        puts '   ✅ gstack cloned but /browse may not work without running setup'
         return true
       end
 
       puts
       puts "   ⚠️  About to execute: #{setup_script}"
-      puts "   Source: #{GSTACK_REPO_URLS.first} (floating HEAD — not pinned to a tag or SHA)"
-      puts "   The setup script installs Bun dependencies and builds the /browse binary."
+      puts(
+        "   Source: #{GSTACK_REPO_URLS.first} " \
+          '(floating HEAD — not pinned to a tag or SHA)'
+      )
+      puts '   The setup script installs Bun dependencies and builds the /browse binary.'
       puts "   Review it at: #{setup_script}"
       puts
-      puts "   Running gstack setup..."
+      puts '   Running gstack setup...'
 
-      stdout, stderr, status = Open3.capture3("bash", setup_script, chdir: target_dir)
+      _stdout, stderr, status = Open3.capture3('bash', setup_script, chdir: target_dir)
 
       if status.success?
-        puts "   ✅ gstack installed successfully!"
+        puts '   ✅ gstack installed successfully!'
         puts "   Location: #{target_dir}"
-        true
       else
         # Setup failure is non-fatal — skills still work, just /browse won't
-        puts "   ⚠️  setup completed with warnings (browse skills may not work)"
+        puts '   ⚠️  setup completed with warnings (browse skills may not work)'
         puts "   #{stderr.strip}" unless stderr.empty?
-        puts "   Other gstack skills (review, ship, etc.) will work fine."
+        puts '   Other gstack skills (review, ship, etc.) will work fine.'
         puts "   To fix /browse later: cd #{target_dir} && bun install && bun run build"
-        true
       end
+      true
     end
 
     def self.verify_installation(platform = nil)
-      platform ||= "claude-code"
+      platform ||= 'claude-code'
       target_dir = File.expand_path(
-        GSTACK_PLATFORM_PATHS[platform] || GSTACK_PLATFORM_PATHS["claude-code"]
+        GSTACK_PLATFORM_PATHS[platform] || GSTACK_PLATFORM_PATHS['claude-code']
       )
 
       issues = []
@@ -129,15 +131,15 @@ module Vibe
       end
 
       version = nil
-      version_file = File.join(target_dir, "VERSION")
+      version_file = File.join(target_dir, 'VERSION')
       version = File.read(version_file).strip if File.exist?(version_file)
 
       skills_count = Dir.children(target_dir).count do |entry|
         File.directory?(File.join(target_dir, entry)) &&
-          File.exist?(File.join(target_dir, entry, "SKILL.md"))
+          File.exist?(File.join(target_dir, entry, 'SKILL.md'))
       end
 
-      browse_ready = File.exist?(File.join(target_dir, "browse", "dist", "browse"))
+      browse_ready = File.exist?(File.join(target_dir, 'browse', 'dist', 'browse'))
 
       {
         success: issues.empty?,
@@ -149,7 +151,7 @@ module Vibe
       }
     end
 
-    def self.uninstall_gstack(platform = nil)
+    def self.uninstall_gstack(_platform = nil)
       GSTACK_PLATFORM_PATHS.each_value do |path|
         expanded = File.expand_path(path)
         if Dir.exist?(expanded)
@@ -157,7 +159,7 @@ module Vibe
           FileUtils.rm_rf(expanded)
         end
       end
-      puts "gstack uninstalled."
+      puts 'gstack uninstalled.'
     end
 
     # --- Private helpers ---
@@ -185,31 +187,32 @@ module Vibe
         begin
           Timeout.timeout(CLONE_TIMEOUT) do
             _stdout, stderr, status = Open3.capture3(
-              "git", "clone", "--depth", "1", url, target
+              'git', 'clone', '--depth', '1', url, target
             )
 
-            if status.success?
-              return true
-            else
-              puts "   ⚠️  Attempt #{attempt}/#{MAX_RETRIES} failed"
-              puts "   #{stderr.strip}" unless stderr.empty?
-              # Clean up failed clone
-              FileUtils.rm_rf(target) if Dir.exist?(target)
-            end
+            return true if status.success?
+
+            puts "   ⚠️  Attempt #{attempt}/#{MAX_RETRIES} failed"
+            puts "   #{stderr.strip}" unless stderr.empty?
+            # Clean up failed clone
+            FileUtils.rm_rf(target) if Dir.exist?(target)
           end
         rescue Timeout::Error
-          puts "   ⚠️  Attempt #{attempt}/#{MAX_RETRIES} timed out after #{CLONE_TIMEOUT}s"
+          puts(
+            "   ⚠️  Attempt #{attempt}/#{MAX_RETRIES} timed out " \
+              "after #{CLONE_TIMEOUT}s"
+          )
           FileUtils.rm_rf(target) if Dir.exist?(target)
         rescue StandardError => e
           puts "   ⚠️  Attempt #{attempt}/#{MAX_RETRIES} error: #{e.message}"
           FileUtils.rm_rf(target) if Dir.exist?(target)
         end
 
-        if attempt < MAX_RETRIES
-          sleep_time = attempt * 2
-          puts "   Retrying in #{sleep_time} seconds..."
-          sleep(sleep_time)
-        end
+        next unless attempt < MAX_RETRIES
+
+        sleep_time = attempt * 2
+        puts "   Retrying in #{sleep_time} seconds..."
+        sleep(sleep_time)
       end
 
       false

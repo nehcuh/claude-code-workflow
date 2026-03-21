@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "rbconfig"
+require 'rbconfig'
 
 module Vibe
   # Platform-related utility methods.
@@ -11,7 +11,7 @@ module Vibe
     # Detect current operating system
     # @return [Symbol] :windows, :macos, :linux, or :unknown
     def detect_os
-      case RbConfig::CONFIG["host_os"]
+      case RbConfig::CONFIG['host_os']
       when /mswin|msys|mingw|cygwin|bccwin|wince|emc/
         :windows
       when /darwin|mac os/
@@ -33,25 +33,28 @@ module Vibe
     VALID_TARGETS = %w[claude-code opencode].freeze
 
     TARGET_ALIAS_MAP = {
-      "claude" => "claude-code",
-      "claude-code" => "claude-code",
-      "opencode" => "opencode"
+      'claude' => 'claude-code',
+      'claude-code' => 'claude-code',
+      'opencode' => 'opencode'
     }.freeze
 
     # Normalize platform name to internal target name.
     # Handles aliases, underscores, and validates against known targets.
     # @param platform [String, nil] Platform name (e.g., "claude", "claude_code")
-    # @param strict [Boolean] If true, raises on unknown platform; if false, returns input downcased
+    # @param strict [Boolean] If true, raises on unknown platform.
+    #   If false, returns input downcased.
     # @return [String] Normalized platform name
     # @raise [Vibe::ValidationError] if strict and platform is unknown
     def normalize_target(platform, strict: false)
-      normalized = platform.to_s.downcase.gsub("_", "-")
+      normalized = platform.to_s.downcase.gsub('_', '-')
       resolved = TARGET_ALIAS_MAP[normalized]
 
       if resolved
         resolved
       elsif strict
-        raise Vibe::ValidationError, "Unsupported platform: #{platform}. Valid options: #{VALID_TARGETS.join(', ')}"
+        raise Vibe::ValidationError,
+              "Unsupported platform: #{platform}. Valid options: " \
+              "#{VALID_TARGETS.join(', ')}"
       else
         normalized
       end
@@ -62,10 +65,10 @@ module Vibe
     # @return [String] Human-readable label
     def platform_label(platform)
       case normalize_target(platform)
-      when "claude-code"
-        "Claude Code"
-      when "opencode"
-        "OpenCode"
+      when 'claude-code'
+        'Claude Code'
+      when 'opencode'
+        'OpenCode'
       else
         platform.to_s.capitalize
       end
@@ -77,22 +80,22 @@ module Vibe
     def default_global_destination(target)
       base_path = if windows?
                     # Windows: Use %USERPROFILE% for config
-                    ENV["USERPROFILE"] || ENV["HOME"]
+                    ENV['USERPROFILE'] || ENV['HOME']
                   else
                     # Unix: Use ~ for config
-                    ENV["HOME"]
+                    ENV['HOME']
                   end
 
       case target
-      when "claude-code"
-        File.join(base_path, ".claude")
-      when "opencode"
+      when 'claude-code'
+        File.join(base_path, '.claude')
+      when 'opencode'
         # OpenCode uses XDG config directory per official docs
         # https://github.com/opencode-ai/opencode
         if windows?
-          File.join(base_path, ".config", "opencode")
+          File.join(base_path, '.config', 'opencode')
         else
-          File.expand_path("~/.config/opencode")
+          File.expand_path('~/.config/opencode')
         end
       else
         File.join(base_path, ".#{target}")
@@ -104,12 +107,12 @@ module Vibe
     # @return [String] Entrypoint filename
     def config_entrypoint(target)
       case target
-      when "claude-code"
-        "CLAUDE.md"
-      when "opencode"
-        "opencode.json"
+      when 'claude-code'
+        'CLAUDE.md'
+      when 'opencode'
+        'opencode.json'
       else
-        "config.md"
+        'config.md'
       end
     end
 
@@ -118,7 +121,7 @@ module Vibe
     # @return [String] Command name
     def platform_command(platform)
       case normalize_target(platform)
-      when "claude-code" then "claude"
+      when 'claude-code' then 'claude'
       else normalize_target(platform)
       end
     end

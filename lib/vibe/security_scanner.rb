@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'errors'
+
 module Vibe
   # Lightweight prompt-injection and jailbreak scanner.
   # Inspired by the "parry" project from awesome-claude-code.
@@ -12,10 +14,14 @@ module Vibe
   class SecurityScanner
     RULES = [
       {
-        id:       :system_prompt_leak,
+        id: :system_prompt_leak,
         severity: :critical,
         patterns: [
-          /ignore (all |previous |your |the )?(previous |prior |above |system |all )?instructions/i,
+          Regexp.new(
+            'ignore (all |previous |your |the )?' \
+            '(previous |prior |above |system |all )?instructions',
+            Regexp::IGNORECASE
+          ),
           /disregard (your |all |previous |the )?instructions/i,
           /forget (everything|all|your instructions)/i,
           /reveal (your |the )?(system |hidden |secret |full )?prompt/i,
@@ -23,10 +29,10 @@ module Vibe
           /show me (your |the )?(system |full |entire )?prompt/i,
           /what (are|were) (your|the) (original |system )?instructions/i
         ],
-        description: "Attempt to extract or override system prompt"
+        description: 'Attempt to extract or override system prompt'
       },
       {
-        id:       :role_hijack,
+        id: :role_hijack,
         severity: :high,
         patterns: [
           /you are now (a |an )?(different|new|another|evil|unrestricted)/i,
@@ -36,33 +42,37 @@ module Vibe
           /your (new |true |real )?persona is/i,
           /switch (to |into )?(developer|admin|god|DAN|jailbreak) mode/i
         ],
-        description: "Attempt to hijack AI identity or role"
+        description: 'Attempt to hijack AI identity or role'
       },
       {
-        id:       :instruction_injection,
+        id: :instruction_injection,
         severity: :high,
         patterns: [
-          /\[INST\]|\[\/INST\]/i,
+          %r{\[INST\]|\[/INST\]}i,
           /<\|im_start\|>|<\|im_end\|>/,
           /###\s*(Human|Assistant|System)\s*:/,
           /\[SYSTEM\]|\[USER\]|\[ASSISTANT\]/i,
-          /<<SYS>>|<\/SYS>/
+          %r{<<SYS>>|</SYS>}
         ],
-        description: "Injection of model-specific control tokens"
+        description: 'Injection of model-specific control tokens'
       },
       {
-        id:       :privilege_escalation,
+        id: :privilege_escalation,
         severity: :high,
         patterns: [
           /i am (a |an )?(developer|admin|administrator|anthropic|openai|engineer)/i,
           /this is (a |an )?(test|debug|maintenance|admin) mode/i,
-          /you have (been granted|special|elevated|admin) (access|permissions|privileges)/i,
+          Regexp.new(
+            'you have (been granted|special|elevated|admin) ' \
+            '(access|permissions|privileges)',
+            Regexp::IGNORECASE
+          ),
           /override (safety|content|ethical) (filter|policy|guideline)/i
         ],
-        description: "Claim of elevated privileges to bypass restrictions"
+        description: 'Claim of elevated privileges to bypass restrictions'
       },
       {
-        id:       :indirect_injection,
+        id: :indirect_injection,
         severity: :medium,
         patterns: [
           /when (you|the AI) (read|process|see) this/i,
@@ -70,7 +80,7 @@ module Vibe
           /<!-- .*instruction.* -->/i,
           /\[hidden\]|\[invisible\]|\[secret\]/i
         ],
-        description: "Indirect or hidden instruction injection"
+        description: 'Indirect or hidden instruction injection'
       }
     ].freeze
 
@@ -78,7 +88,10 @@ module Vibe
     # @param text [String] Input to scan
     # @return [Hash] { safe: Boolean, threats: Array, risk_level: Symbol }
     def scan(text)
-      return { safe: true, threats: [], risk_level: :none } if text.nil? || text.strip.empty?
+      if text.nil? || text.strip.empty?
+        return { safe: true, threats: [],
+                 risk_level: :none }
+      end
 
       threats = RULES.flat_map do |rule|
         rule[:patterns].map do |pattern|
@@ -86,24 +99,24 @@ module Vibe
           next unless match
 
           {
-            rule:        rule[:id],
-            severity:    rule[:severity],
+            rule: rule[:id],
+            severity: rule[:severity],
             description: rule[:description],
-            matched:     match[0]
+            matched: match[0]
           }
         end.compact
       end
 
       # Deduplicate by rule id (keep highest severity match per rule)
       threats = threats
-        .group_by { |t| t[:rule] }
-        .map { |_, group| group.first }
+                .group_by { |t| t[:rule] }
+                .map { |_, group| group.first }
 
       risk_level = calculate_risk(threats)
 
       {
-        safe:       threats.empty?,
-        threats:    threats,
+        safe: threats.empty?,
+        threats: threats,
         risk_level: risk_level
       }
     end
@@ -112,8 +125,11 @@ module Vibe
     def scan!(text)
       result = scan(text)
       unless result[:safe]
-        threat_summary = result[:threats].map { |t| "#{t[:rule]} (#{t[:severity]})" }.join(", ")
-        raise SecurityError, "Potential prompt injection detected: #{threat_summary}"
+        threat_summary = result[:threats].map do |t|
+          "#{t[:rule]} (#{t[:severity]})"
+        end.join(', ')
+        raise Vibe::SecurityError,
+              "Potential prompt injection detected: #{threat_summary}"
       end
 
       result

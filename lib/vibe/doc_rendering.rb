@@ -9,12 +9,12 @@ module Vibe
   #   Vibe::OverlaySupport — overlay_sentence
   module DocRendering
     def initialize_yaml_cache
-      @yaml_cache ||= {}
+      @initialize_yaml_cache ||= {}
     end
 
     def load_yaml_cached(path)
       initialize_yaml_cache
-      @yaml_cache[path] ||= read_yaml_abs(path)
+      @initialize_yaml_cache[path] ||= read_yaml_abs(path)
     end
 
     def render_inspect(payload)
@@ -31,7 +31,8 @@ module Vibe
         lines << "Requested overlay:"
         lines << "- name: #{overlay["name"]}"
         lines << "- path: #{overlay["display_path"]}"
-        lines << "- target patches: #{format_backtick_list(Array(overlay["target_patch_targets"]))}"
+        lines << "- target patches: " \
+                 "#{format_backtick_list(Array(overlay["target_patch_targets"]))}"
       else
         lines << "Requested overlay: none"
       end
@@ -45,7 +46,8 @@ module Vibe
         lines << "- destination: #{marker["destination_root"]}"
         lines << "- applied_at: #{marker["applied_at"]}"
         if marker["overlay"]
-          lines << "- overlay: #{marker["overlay"]["name"]} (#{marker["overlay"]["display_path"]})"
+          lines << "- overlay: #{marker["overlay"]["name"]} " \
+                   "(#{marker["overlay"]["display_path"]})"
         end
       else
         lines << "Current repo target marker: none"
@@ -56,11 +58,14 @@ module Vibe
 
       payload["targets"].each do |target_info|
         lines << "- #{target_info["target"]}"
-        lines << "  default_profile: #{target_info["default_profile"]} (#{target_info["profile_maturity"]})"
+        lines << "  default_profile: #{target_info["default_profile"]} " \
+                 "(#{target_info["profile_maturity"]})"
         lines << "  generated_output: #{target_info["generated_output"]}"
-        lines << "  generated_manifest_present: #{target_info["generated_manifest_present"]}"
+        lines << "  generated_manifest_present: " \
+                 "#{target_info["generated_manifest_present"]}"
         resolved_overlay = target_info["overlay"]
-        lines << "  resolved_overlay: #{resolved_overlay ? resolved_overlay["name"] : 'none'}"
+        resolved_overlay_name = resolved_overlay ? resolved_overlay["name"] : 'none'
+        lines << "  resolved_overlay: #{resolved_overlay_name}"
         Array(target_info["profile_notes"]).each do |note|
           lines << "  note: #{note}"
         end
@@ -102,14 +107,17 @@ module Vibe
         refs = Array(policy["source_refs"]).map { |ref| "`#{ref}`" }.join(", ")
         refs = refs.empty? ? "none" : refs
         [
-          "- `#{policy["id"]}` (#{policy["category"]}, #{policy["enforcement"]}, group: #{policy["target_render_group"]})",
+          "- `#{policy["id"]}` (#{policy["category"]}, " \
+          "#{policy["enforcement"]}, " \
+          "group: #{policy["target_render_group"]})",
           "  - #{policy["summary"]}",
           "  - source refs: #{refs}"
         ].join("\n")
       end.join("\n")
 
       source_note = if manifest["target"] != "claude-code"
-        "\n> **Note:** Source refs refer to files in the portable workflow repository, not this generated output directory.\n"
+        "\n> **Note:** Source refs refer to files in the portable workflow " \
+        "repository, not this generated output directory.\n"
       else
         ""
       end
@@ -156,7 +164,8 @@ module Vibe
         end
       end.join("\n")
 
-      model_config_note = render_model_config_note(manifest["target"], manifest["profile_mapping"])
+      model_config_note = render_model_config_note(manifest["target"], 
+manifest["profile_mapping"])
 
       <<~MD
         # Routing profile
@@ -188,7 +197,8 @@ module Vibe
     def render_skills_doc(manifest)
       skill_lines = manifest["skills"].map do |skill|
         support = skill["target_support"] || "not-modeled"
-        "- `#{skill["id"]}` (`#{skill["namespace"]}`, `#{skill["priority"]}`, `#{skill["trigger_mode"]}`, support: `#{support}`) — #{skill["intent"]}"
+        "- `#{skill["id"]}` (`#{skill["namespace"]}`, `#{skill["priority"]}`, " \
+        "`#{skill["trigger_mode"]}`, support: `#{support}`) — #{skill["intent"]}"
       end.join("\n")
 
       # Generate trigger scenarios table for suggest-mode external skills
@@ -254,7 +264,9 @@ module Vibe
 
     def render_safety_doc(manifest)
       target_actions = manifest.fetch("security").fetch("target_actions")
-      severity_lines = manifest.fetch("security").fetch("severity_levels").map do |severity, rule|
+      severity_lines = manifest.fetch("security")
+                               .fetch("severity_levels")
+                               .map do |severity, rule|
         examples = Array(rule["examples"]).map { |example| "  - #{example}" }.join("\n")
         "- `#{severity}` — #{rule["meaning"]}\n#{examples}"
       end.join("\n")
@@ -263,15 +275,24 @@ module Vibe
         "- `#{severity}` — #{action}"
       end.join("\n")
 
-      signal_lines = manifest.fetch("security").fetch("signal_categories").map do |category|
-        indicators = Array(category["indicators"]).map { |indicator| "`#{indicator}`" }.join(", ")
-        upgrades = Array(category["upgrade_to_p0_when"]).map { |item| "`#{item}`" }.join(", ")
-        line = "- `#{category["id"]}` (base: `#{category["base_severity"]}`) — indicators: #{indicators}"
+      signal_lines = manifest.fetch("security")
+                             .fetch("signal_categories")
+                             .map do |category|
+        indicators = Array(category["indicators"])
+                     .map { |indicator| "`#{indicator}`" }
+                     .join(", ")
+        upgrades = Array(category["upgrade_to_p0_when"])
+                   .map { |item| "`#{item}`" }
+                   .join(", ")
+        line = "- `#{category["id"]}` (base: `#{category["base_severity"]}`) " \
+               "— indicators: #{indicators}"
         line += " | upgrade when: #{upgrades}" unless upgrades.empty?
         line
       end.join("\n")
 
-      adjudication = manifest.fetch("security").fetch("adjudication_factors").map do |item|
+      adjudication = manifest.fetch("security")
+                             .fetch("adjudication_factors")
+                             .map do |item|
         "- `#{item}`"
       end.join("\n")
 
@@ -341,7 +362,9 @@ module Vibe
     end
 
     def filtered_policies(manifest, groups)
-      manifest["policies"].select { |policy| groups.include?(policy["target_render_group"]) }
+      manifest["policies"].select do |policy|
+        groups.include?(policy["target_render_group"])
+      end
     end
 
     def mandatory_skills(manifest)
@@ -360,7 +383,8 @@ module Vibe
       return "- none" if skills.empty?
 
       skills.map do |skill|
-        "- `#{skill["id"]}` (`#{skill["priority"]}`, `#{skill["trigger_mode"]}`) — #{skill["intent"]}"
+        "- `#{skill["id"]}` (`#{skill["priority"]}`, " \
+        "`#{skill["trigger_mode"]}`) — #{skill["intent"]}"
       end.join("\n")
     end
 
@@ -394,7 +418,8 @@ module Vibe
       [
         "- Name: `#{overlay["name"]}`",
         "- Path: `#{overlay["display_path"]}`",
-        "- Profile mapping overrides: #{format_backtick_list((overlay["profile_mapping_overrides"] || {}).keys.sort)}",
+        "- Profile mapping overrides: " \
+        "#{format_backtick_list((overlay["profile_mapping_overrides"] || {}).keys.sort)}",
         "- Extra profile notes: `#{overlay["profile_note_append_count"]}`",
         "- Policy patches: `#{overlay["policy_patch_count"]}`",
         "- Native patch keys: #{format_backtick_list(patch_keys)}"
@@ -421,10 +446,13 @@ module Vibe
     def render_task_routing_doc(manifest)
       return "" unless task_routing_doc
 
-      complexity_sections = task_routing_doc.fetch("complexity_levels", {}).map do |level, config|
+      complexity_sections = task_routing_doc.fetch("complexity_levels", 
+{}).map do |level, config|
         criteria = config.fetch("criteria", {}).map { |k, v| "  - #{k}: #{v}" }.join("\n")
         examples = config.fetch("examples", []).map { |ex| "  - #{ex}" }.join("\n")
-        requirements = config.fetch("process_requirements", {}).map { |k, v| "  - #{k}: #{v}" }.join("\n")
+        requirements = config.fetch("process_requirements", {}).map { |k, v|
+ "  - #{k}: #{v}"
+}.join("\n")
 
         <<~SECTION.chomp
           ### #{level.capitalize}
@@ -444,7 +472,8 @@ module Vibe
         SECTION
       end.join("\n\n")
 
-      auto_rules = task_routing_doc.fetch("auto_detection", {}).fetch("rules", []).map do |rule|
+      auto_rules = task_routing_doc.fetch("auto_detection", {}).fetch("rules", 
+[]).map do |rule|
         "- #{rule["condition"]} → `#{rule["complexity"]}` (#{rule["reason"]})"
       end.join("\n")
 
@@ -476,7 +505,8 @@ module Vibe
     def render_test_standards_doc(manifest)
       return "" unless test_standards_doc
 
-      coverage_sections = test_standards_doc.fetch("coverage_by_complexity", {}).map do |level, config|
+      coverage_sections = test_standards_doc.fetch("coverage_by_complexity", 
+{}).map do |level, config|
         <<~SECTION.chomp
           ### #{level.capitalize}
 
@@ -489,7 +519,8 @@ module Vibe
       end.join("\n\n")
 
       critical_paths = test_standards_doc.fetch("critical_paths", []).map do |path|
-        "- `#{path["path_pattern"] || path["function_pattern"]}` → #{path["coverage"]}% (#{path["reason"]})"
+        pattern = path["path_pattern"] || path["function_pattern"]
+        "- `#{pattern}` → #{path["coverage"]}% (#{path["reason"]})"
       end.join("\n")
 
       test_types = test_standards_doc.fetch("test_types", {}).map do |type, config|
@@ -543,7 +574,7 @@ module Vibe
       MD
     end
 
-    def render_model_config_note(target, profile_mapping)
+    def render_model_config_note(target, _profile_mapping)
       # Look up config note from providers.yaml profile data
       providers.fetch("profiles", {}).each_value do |profile|
         next unless profile["target"] == target
@@ -552,6 +583,5 @@ module Vibe
       end
       ""
     end
-
   end
 end

@@ -21,9 +21,9 @@ module Vibe
 
     PRIORITY_WEIGHTS = {
       critical: 100,
-      high:     50,
-      medium:   20,
-      low:      5,
+      high: 50,
+      medium: 20,
+      low: 5,
       optional: 1
     }.freeze
 
@@ -41,11 +41,11 @@ module Vibe
     # @param tags [Array<String>] optional categorization tags
     def add(id, content, priority: :medium, tags: [])
       @blocks << {
-        id:       id,
-        content:  content,
+        id: id,
+        content: content,
         priority: priority,
-        tags:     Array(tags),
-        tokens:   estimate_tokens(content)
+        tags: Array(tags),
+        tokens: estimate_tokens(content)
       }
       self
     end
@@ -60,12 +60,12 @@ module Vibe
       required_tokens = required.sum { |b| b[:tokens] }
       if required_tokens > budget
         return {
-          included:    required,
-          excluded:    optional,
+          included: required,
+          excluded: optional,
           total_tokens: required_tokens,
-          budget:      budget,
+          budget: budget,
           utilization: (required_tokens.to_f / budget * 100).round(1),
-          warning:     "Required blocks exceed budget by #{required_tokens - budget} tokens"
+          warning: "Required blocks exceed budget by #{required_tokens - budget} tokens"
         }
       end
 
@@ -86,10 +86,10 @@ module Vibe
 
       total = included.sum { |b| b[:tokens] }
       {
-        included:    included,
-        excluded:    excluded,
+        included: included,
+        excluded: excluded,
         total_tokens: total,
-        budget:      budget,
+        budget: budget,
         utilization: (total.to_f / budget * 100).round(1)
       }
     end
@@ -111,7 +111,7 @@ module Vibe
 
       # Remove common filler phrases
       FILLER_PATTERNS.each do |pattern|
-        compressed = compressed.map { |l| l.gsub(pattern, "") }
+        compressed = compressed.map { |l| l.gsub(pattern, '') }
       end
 
       compressed.join("\n").strip
@@ -124,7 +124,7 @@ module Vibe
       return 0 if text.nil? || text.empty?
 
       zh_chars = text.scan(/\p{Han}/).length
-      remaining = text.gsub(/\p{Han}/, "")
+      remaining = text.gsub(/\p{Han}/, '')
       en_words  = remaining.split(/\s+/).reject(&:empty?).length
 
       (zh_chars * CHARS_PER_ZH_CHAR * TOKENS_PER_WORD_ZH +
@@ -136,16 +136,14 @@ module Vibe
     def stats
       total_tokens = @blocks.sum { |b| b[:tokens] }
       by_priority  = @blocks.group_by { |b| b[:priority] }
-                             .transform_values { |bs| bs.sum { |b| b[:tokens] } }
+                            .transform_values { |bs| bs.sum { |b| b[:tokens] } }
 
       {
-        block_count:  @blocks.length,
+        block_count: @blocks.length,
         total_tokens: total_tokens,
-        by_priority:  by_priority
+        by_priority: by_priority
       }
     end
-
-    private
 
     FILLER_PATTERNS = [
       /\bplease note that\b/i,

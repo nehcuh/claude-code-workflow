@@ -12,9 +12,9 @@ module Vibe
   # Depends on methods from:
   #   Vibe::Utils — write_json, display_path
   module PathSafety
-    UNSAFE_OUTPUT_PATHS = ["/", "/tmp", "/var", "/etc", "/usr"].freeze
+    UNSAFE_OUTPUT_PATHS = ['/', '/tmp', '/var', '/etc', '/usr'].freeze
     # macOS temp directories under /var are safe
-    SAFE_VAR_PREFIXES = ["/var/folders/"].freeze
+    SAFE_VAR_PREFIXES = ['/var/folders/'].freeze
     # Maximum recursion depth for normalize_path to prevent stack overflow
     MAX_NORMALIZE_DEPTH = 100
 
@@ -24,43 +24,50 @@ module Vibe
       repo = File.expand_path(@repo_root)
 
       # Check if path is under a safe /var prefix (e.g., /var/folders/ on macOS)
-      is_safe_var = SAFE_VAR_PREFIXES.any? { |prefix|
+      is_safe_var = SAFE_VAR_PREFIXES.any? do |prefix|
         normalized_prefix = normalize_path(prefix)
         expanded.start_with?(normalized_prefix)
-      }
+      end
 
       UNSAFE_OUTPUT_PATHS.each do |unsafe|
         unsafe_expanded = normalize_path(unsafe)
-        if expanded == unsafe_expanded || expanded.start_with?("#{unsafe_expanded}/")
-          # Allow if it's under a safe /var prefix
-          next if unsafe == "/var" && is_safe_var
-          raise PathSafetyError.new(
-            "Refusing to use #{expanded} as output root: overlaps with #{unsafe}",
-            context: {
-              output_path: expanded,
-              unsafe_path: unsafe,
-              suggestion: "Use a deeper path outside system directories."
-            }
-          )
+        unless expanded == unsafe_expanded || expanded.start_with?("#{unsafe_expanded}/")
+          next
         end
+        # Allow if it's under a safe /var prefix
+        next if unsafe == '/var' && is_safe_var
+
+        raise PathSafetyError.new(
+          "Refusing to use #{expanded} as output root: overlaps with #{unsafe}",
+          context: {
+            output_path: expanded,
+            unsafe_path: unsafe,
+            suggestion: 'Use a deeper path outside system directories.'
+          }
+        )
       end
 
-      raise PathSafetyError.new(
-        "Refusing to use #{expanded} as output root: overlaps with $HOME (#{home})",
-        context: {
-          output_path: expanded,
-          home_path: home,
-          suggestion: "Use a subdirectory of $HOME or an external directory."
-        }
-      ) if expanded == home
-
-      if expanded == repo || (expanded.start_with?("#{repo}/") && !expanded.start_with?("#{repo}/generated/"))
+      if expanded == home
         raise PathSafetyError.new(
-          "Refusing to use #{expanded} as output root: overlaps with source repo (#{repo})",
+          "Refusing to use #{expanded} as output root: overlaps with $HOME (#{home})",
+          context: {
+            output_path: expanded,
+            home_path: home,
+            suggestion: 'Use a subdirectory of $HOME or an external directory.'
+          }
+        )
+      end
+
+      overlaps_repo = expanded == repo || expanded.start_with?("#{repo}/")
+      outside_generated = !expanded.start_with?("#{repo}/generated/")
+      if overlaps_repo && outside_generated
+        raise PathSafetyError.new(
+          "Refusing to use #{expanded} as output root: overlaps with " \
+          "source repo (#{repo})",
           context: {
             output_path: expanded,
             repo_path: repo,
-            suggestion: "Use a path under generated/ or an external directory."
+            suggestion: 'Use a path under generated/ or an external directory.'
           }
         )
       end
@@ -71,22 +78,23 @@ module Vibe
           context: {
             output_path: expanded,
             repo_path: repo,
-            suggestion: "Choose an output directory outside the source repo."
+            suggestion: 'Choose an output directory outside the source repo.'
           }
         )
       end
 
-      parts = expanded.split("/").reject(&:empty?)
-      if parts.length < 2
-        raise PathSafetyError.new(
-          "Refusing to use #{expanded} as output root: path is too shallow (need at least 2 levels)",
-          context: {
-            output_path: expanded,
-            depth: parts.length,
-            suggestion: "Use a deeper path like /path/to/output."
-          }
-        )
-      end
+      parts = expanded.split('/').reject(&:empty?)
+      return unless parts.length < 2
+
+      raise PathSafetyError.new(
+        "Refusing to use #{expanded} as output root: path is too shallow " \
+        "(need at least 2 levels)",
+        context: {
+          output_path: expanded,
+          depth: parts.length,
+          suggestion: 'Use a deeper path like /path/to/output.'
+        }
+      )
     end
 
     def ensure_no_path_overlap!(output_root, destination_root)
@@ -99,20 +107,20 @@ module Vibe
           context: {
             output_path: out,
             destination_path: dest,
-            suggestion: "Use separate directories for output and destination."
+            suggestion: 'Use separate directories for output and destination.'
           }
         )
       end
-      if paths_overlap?(out, dest)
-        raise PathSafetyError.new(
-          "Output root (#{out}) and destination root (#{dest}) overlap",
-          context: {
-            output_path: out,
-            destination_path: dest,
-            suggestion: "Use non-overlapping directories."
-          }
-        )
-      end
+      return unless paths_overlap?(out, dest)
+
+      raise PathSafetyError.new(
+        "Output root (#{out}) and destination root (#{dest}) overlap",
+        context: {
+          output_path: out,
+          destination_path: dest,
+          suggestion: 'Use non-overlapping directories.'
+        }
+      )
     end
 
     def paths_overlap?(left, right)
@@ -133,11 +141,13 @@ module Vibe
       # Prevent stack overflow from extremely deep directory structures
       if depth > PathSafety::MAX_NORMALIZE_DEPTH
         raise PathSafetyError.new(
-          "Path normalization exceeded maximum depth (#{PathSafety::MAX_NORMALIZE_DEPTH})",
+          "Path normalization exceeded maximum depth " \
+          "(#{PathSafety::MAX_NORMALIZE_DEPTH})",
           context: {
             path: path.to_s,
             depth: depth,
-            suggestion: "Check for circular symlinks or extremely deep directory structures."
+            suggestion: 'Check for circular symlinks or extremely deep ' \
+                        'directory structures.'
           }
         )
       end
@@ -147,7 +157,7 @@ module Vibe
 
       # Try to resolve symlinks if path exists
       begin
-        return File.realpath(expanded)
+        File.realpath(expanded)
       rescue Errno::ENOENT
         # Path doesn't exist, try to resolve parent directories
         # This handles cases like: symlink -> real, comparing with real/nonexistent/child
@@ -155,13 +165,13 @@ module Vibe
         basename = File.basename(expanded)
 
         # Recursively normalize parent if it's not root
-        if parent != expanded && parent != "/"
+        if parent != expanded && parent != '/'
           normalized_parent = normalize_path(parent, depth + 1)
           return File.join(normalized_parent, basename)
         end
 
         # Parent is root or same as current, return as-is
-        return expanded
+        expanded
       end
     end
 
@@ -174,13 +184,12 @@ module Vibe
 
       return if conflicts.empty?
 
-      sample = conflicts.first(5).map { |path| "  - #{path}" }.join("\n")
       raise PathSafetyError.new(
         "Destination already contains #{conflicts.length} generated path(s)",
         context: {
           conflict_count: conflicts.length,
           sample_conflicts: conflicts.first(5),
-          suggestion: "Re-run with --force to overwrite them."
+          suggestion: 'Re-run with --force to overwrite them.'
         }
       )
     end
@@ -189,28 +198,28 @@ module Vibe
       write_json(
         path,
         {
-          "schema_version" => 5,
-          "mode" => mode,
-          "source_repo" => ".",
-          "destination_root" => display_path(destination_root),
-          "generated_output" => display_path(File.expand_path(output_root)),
-          "target" => manifest["target"],
-          "profile" => manifest["profile"],
-          "profile_mapping" => manifest["profile_mapping"],
-          "overlay" => manifest["overlay"],
-          "effective_policy_count" => manifest["policies"].length,
-          "applied_at" => Time.now.utc.iso8601
+          'schema_version' => 5,
+          'mode' => mode,
+          'source_repo' => '.',
+          'destination_root' => display_path(destination_root),
+          'generated_output' => display_path(File.expand_path(output_root)),
+          'target' => manifest['target'],
+          'profile' => manifest['profile'],
+          'profile_mapping' => manifest['profile_mapping'],
+          'overlay' => manifest['overlay'],
+          'effective_policy_count' => manifest['policies'].length,
+          'applied_at' => Time.now.utc.iso8601
         }
       )
     end
 
     def staged_file_paths(root, prefix = nil)
-      entries = Dir.glob(File.join(root, "*"), File::FNM_DOTMATCH).reject do |path|
-        [".", ".."].include?(File.basename(path))
+      entries = Dir.glob(File.join(root, '*'), File::FNM_DOTMATCH).reject do |path|
+        ['.', '..'].include?(File.basename(path))
       end
 
       entries.flat_map do |entry|
-        relative = [prefix, File.basename(entry)].compact.join("/")
+        relative = [prefix, File.basename(entry)].compact.join('/')
 
         if File.directory?(entry)
           staged_file_paths(entry, relative)
@@ -221,8 +230,8 @@ module Vibe
     end
 
     def copy_tree_contents(source_root, destination_root)
-      entries = Dir.glob(File.join(source_root, "*"), File::FNM_DOTMATCH).reject do |path|
-        [".", ".."].include?(File.basename(path))
+      entries = Dir.glob(File.join(source_root, '*'), File::FNM_DOTMATCH).reject do |path|
+        ['.', '..'].include?(File.basename(path))
       end
 
       entries.each do |entry|
@@ -237,6 +246,5 @@ module Vibe
         end
       end
     end
-
   end
 end
