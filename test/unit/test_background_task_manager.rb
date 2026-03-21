@@ -24,7 +24,8 @@ class TestBackgroundTaskManager < Minitest::Test
     assert task_id.length > 0
 
     task = @manager.status(task_id)
-    assert_equal "pending", task["status"]
+    # Tasks execute synchronously, so status is completed after submit
+    assert_equal "completed", task["status"]
     assert_equal "Test task", task["description"]
   end
 
@@ -38,39 +39,21 @@ class TestBackgroundTaskManager < Minitest::Test
   def test_task_execution
     task_id = @manager.submit("echo 'hello world'")
 
-    # Wait for task to complete
-    sleep 0.5
-
     task = @manager.status(task_id)
-    assert_includes ["completed", "running"], task["status"]
+    assert_equal "completed", task["status"]
+    assert_includes task["output"], "hello world"
   end
 
   def test_task_failure
     task_id = @manager.submit("exit 1")
-
-    # Wait for task to complete
-    sleep 0.5
 
     task = @manager.status(task_id)
     assert_equal "failed", task["status"]
     assert_equal 1, task["exit_code"]
   end
 
-  def test_cancel_pending_task
-    task_id = @manager.submit("sleep 10")
-    result = @manager.cancel(task_id)
-
-    assert result, "Should successfully cancel pending task"
-
-    task = @manager.status(task_id)
-    assert_equal "cancelled", task["status"]
-  end
-
   def test_cannot_cancel_completed_task
     task_id = @manager.submit("echo 'done'")
-
-    # Wait for completion
-    sleep 0.5
 
     result = @manager.cancel(task_id)
     refute result, "Should not cancel completed task"
@@ -85,13 +68,11 @@ class TestBackgroundTaskManager < Minitest::Test
   end
 
   def test_list_with_status_filter
-    task1 = @manager.submit("echo 'test'")
-    task2 = @manager.submit("sleep 10")
-    @manager.cancel(task2)
+    @manager.submit("echo 'test'")
+    @manager.submit("exit 1")
 
-    completed_tasks = @manager.list(status: "cancelled")
-    assert_equal 1, completed_tasks.size
-    assert_equal task2, completed_tasks.first["id"]
+    failed_tasks = @manager.list(status: "failed")
+    assert_equal 1, failed_tasks.size
   end
 
   def test_list_with_priority_filter
@@ -115,13 +96,10 @@ class TestBackgroundTaskManager < Minitest::Test
   end
 
   def test_cleanup_old_tasks
-    # Create an old completed task
     task_id = @manager.submit("echo 'old'")
-    sleep 0.5
 
     task = @manager.status(task_id)
     task["created_at"] = (Time.now - 100000).iso8601
-    task["status"] = "completed"
 
     removed = @manager.cleanup(86400)
     assert_equal 1, removed
@@ -131,7 +109,6 @@ class TestBackgroundTaskManager < Minitest::Test
 
   def test_cleanup_keeps_recent_tasks
     task_id = @manager.submit("echo 'recent'")
-    sleep 0.5
 
     removed = @manager.cleanup(86400)
     assert_equal 0, removed
@@ -162,12 +139,8 @@ class TestBackgroundTaskManager < Minitest::Test
 
     task = @manager.status(task_id)
     refute_nil task["created_at"]
-    assert_nil task["started_at"]
-    assert_nil task["completed_at"]
-
-    sleep 0.5
-
-    task = @manager.status(task_id)
-    refute_nil task["started_at"] if task["status"] != "pending"
+    # Synchronous execution means timestamps are set immediately
+    refute_nil task["started_at"]
+    refute_nil task["completed_at"]
   end
 end

@@ -45,24 +45,44 @@ module Vibe
 
     def run_skill_craft_generate(argv)
       options = parse_generate_options(argv)
-      
+
       if options[:pattern].nil?
-        puts "❌ Error: No pattern specified"
-        puts "Usage: vibe skill-craft generate --pattern <id>"
+        puts "Error: No pattern specified"
+        puts "Usage: vibe skill-craft generate --pattern <index>"
+        puts "Run 'vibe skill-craft analyze' first to see available patterns."
         return
       end
-      
+
+      # Analyze sessions to get pattern list
+      analyzer = SessionAnalyzer.new
+      analyzer.load_sessions
+      patterns = analyzer.analyze
+
+      if patterns.empty?
+        puts "Error: No patterns found. Run 'vibe skill-craft analyze' first."
+        return
+      end
+
+      # Look up pattern by 1-based index
+      index = options[:pattern].to_i - 1
+      if index < 0 || index >= patterns.size
+        puts "Error: Pattern index #{options[:pattern]} out of range (1..#{patterns.size})"
+        puts "Run 'vibe skill-craft analyze' to see available patterns."
+        return
+      end
+
+      pattern = patterns[index]
       generator = SkillGenerator.new(output_dir: options[:output])
-      result = generator.generate(options[:pattern], force: options[:force])
+      result = generator.generate(pattern, force: options[:force])
 
       if result[:success]
-        puts "✅ Skill generated: #{result[:skill_name]}"
+        puts "Skill generated: #{result[:skill_name]}"
         puts "   Location: #{result[:skill_path]}"
       elsif result[:error] == :exists
-        puts "❌ #{result[:message]}"
+        puts "Error: #{result[:message]}"
         puts "   Use --force to overwrite."
       else
-        puts "❌ Failed to generate skill"
+        puts "Error: Failed to generate skill"
       end
     end
 

@@ -27,19 +27,31 @@ module Vibe
     end
 
     def run_worktree_create(argv)
-      task_name = argv.join(" ")
+      options = {}
+      name_parts = []
+
+      argv.each do |arg|
+        case arg
+        when /^--branch=(.+)$/
+          options[:branch] = $1
+        when /^--branch$/
+          # handled by next iteration — but we use = form in usage
+          next
+        else
+          name_parts << arg
+        end
+      end
+
+      task_name = name_parts.join(" ")
       if task_name.empty?
         puts "Error: task name required\n\n#{worktree_usage}"
         exit 1
       end
 
-      options = {}
-      options[:branch] = argv.shift if argv.first&.start_with?("--branch=")
-
       manager = WorktreeManager.new
-      info = manager.create(task_name)
+      info = manager.create(task_name, options)
 
-      puts "\n✅ Worktree created"
+      puts "\nWorktree created"
       puts "=" * 60
       puts "ID:      #{info['id']}"
       puts "Branch:  #{info['branch']}"

@@ -4,6 +4,8 @@ require "yaml"
 require "securerandom"
 require "time"
 require "thread"
+require "open3"
+require "shellwords"
 
 module Vibe
   # Background task manager for long-running operations
@@ -30,12 +32,12 @@ module Vibe
     def initialize(storage_path = nil)
       @storage_path = storage_path || default_storage_path
       @tasks = load_tasks
-      @worker_thread = nil
       @mutex = Mutex.new
-      @queue = []
     end
 
-    # Submit a new background task
+    # Submit a new background task and execute it immediately.
+    # In CLI mode the process exits after the command returns, so tasks
+    # are executed synchronously rather than on a background thread.
     # @param command [String] Command to execute
     # @param options [Hash] Task options
     #   - :priority [Symbol] Task priority (:low, :normal, :high, :critical)
@@ -62,12 +64,11 @@ module Vibe
 
       @mutex.synchronize do
         @tasks[task_id] = task
-        @queue << task_id
-        @queue.sort_by! { |id| -@tasks[id]["priority"] }
         save_tasks
       end
 
-      start_worker unless worker_running?
+      # Execute synchronously so the task completes before the CLI exits
+      execute_task(task_id)
 
       task_id
     end
@@ -138,16 +139,27 @@ module Vibe
       removed
     end
 
-    # Stop the worker thread
+    # Stop the worker thread (no-op, kept for API compatibility)
     def stop_worker
-      @worker_thread&.kill
-      @worker_thread = nil
+      # Tasks now execute synchronously; nothing to stop
     end
 
     private
 
     def default_storage_path
-      File.join(Dir.home, ".claude", "projects", "-Users-huchen-Projects-claude-code-workflow", "memory", "background_tasks.yaml")
+      repo_root = find_repo_root || Dir.pwd
+      File.join(repo_root, "memory", "background_tasks.yaml")
+    end
+
+    def find_repo_root
+      current = Dir.pwd
+      loop do
+        return current if File.exist?(File.join(current, ".git"))
+        parent = File.dirname(current)
+        break if parent == current
+        current = parent
+      end
+      nil
     end
 
     def load_tasks
@@ -166,31 +178,6 @@ module Vibe
       warn "Failed to save tasks to #{@storage_path}: #{e.message}"
     end
 
-    def worker_running?
-      @worker_thread&.alive?
-    end
-
-    def start_worker
-      return if worker_running?
-
-      @worker_thread = Thread.new { worker_loop }
-    end
-
-    def worker_loop
-      loop do
-        task_id = next_task
-        break unless task_id
-
-        execute_task(task_id)
-      end
-    end
-
-    def next_task
-      @mutex.synchronize do
-        @queue.shift
-      end
-    end
-
     def execute_task(task_id)
       task = nil
 
@@ -204,8 +191,8 @@ module Vibe
       end
 
       begin
-        output = `#{task["command"]} 2>&1`
-        exit_code = $?.exitstatus
+        output, status = Open3.capture2e("/bin/sh", "-c", task["command"])
+        exit_code = status.exitstatus
 
         @mutex.synchronize do
           task["status"] = exit_code.zero? ? STATUS[:completed] : STATUS[:failed]
