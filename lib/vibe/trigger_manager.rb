@@ -42,6 +42,7 @@ module Vibe
     end
 
     def save_state
+      FileUtils.mkdir_p(File.dirname(@state_file))
       File.write(@state_file, YAML.dump(@state))
     end
 
@@ -104,7 +105,7 @@ module Vibe
       # Check for git events indicating completion
       return false unless context[:git_event]
       
-      %w[merge push].any? { |event| context[:git_event].downcase }
+      %w[merge push].any? { |event| context[:git_event].downcase.include?(event) }
     end
 
     def accumulation_message
@@ -122,14 +123,12 @@ module Vibe
     end
 
     def periodic_message
-      days_since = ((Date.today - Time.parse(@state["last_review"])) / 86400).to_i
+      days_since = (Date.today - Time.parse(@state["last_review"]).to_date).to_i
       <<~MSG
         📅 Weekly Review
-        
+
         It's been #{days_since} days since your last skill crafting session.
-        
-        #{patterns_count} pattern candidates found in recent sessions.
-        
+
         Run `/skill-craft` to extract personal skills.
       MSG
     end
@@ -177,7 +176,7 @@ module Vibe
       
       # Handle overnight wrapping
       if start_hour > end_hour
-        !(hour >= start_hour || hour < end_hour)
+        hour >= start_hour || hour < end_hour
       else
         hour >= start_hour && hour < end_hour
       end

@@ -4,6 +4,7 @@ require "yaml"
 require "securerandom"
 require "time"
 require "fileutils"
+require "open3"
 
 module Vibe
   # Manages git worktrees for parallel task isolation
@@ -31,7 +32,7 @@ module Vibe
 
       FileUtils.mkdir_p(@worktrees_dir)
 
-      run_git!("worktree add -b #{branch} #{path} #{base}")
+      run_git!("worktree", "add", "-b", branch, path, base)
 
       info = {
         "id" => id,
@@ -85,11 +86,11 @@ module Vibe
       path = info["path"]
 
       # Remove the worktree from git
-      run_git("worktree remove --force #{path}")
+      run_git!("worktree", "remove", "--force", path)
 
       # Delete the branch unless asked to keep it
       unless options[:keep_branch]
-        run_git("branch -D #{info['branch']}")
+        run_git!("branch", "-D", info["branch"])
       end
 
       # Remove metadata file (directory already gone after worktree remove)
@@ -120,14 +121,15 @@ module Vibe
     private
 
     def detect_repo_root
-      root = `git rev-parse --show-toplevel 2>/dev/null`.strip
-      raise "Not inside a git repository" if root.empty?
+      out, status = Open3.capture2e("git", "rev-parse", "--show-toplevel")
+      raise "Not inside a git repository" unless status.success?
 
-      root
+      out.strip
     end
 
     def current_branch
-      `git -C #{@repo_root} rev-parse --abbrev-ref HEAD`.strip
+      out, _status = Open3.capture2e("git", "-C", @repo_root, "rev-parse", "--abbrev-ref", "HEAD")
+      out.strip
     end
 
     def assert_git_repo!
@@ -138,15 +140,16 @@ module Vibe
       str.downcase.gsub(/[^a-z0-9]+/, "-").gsub(/^-|-$/, "")[0..30]
     end
 
-    def run_git!(cmd)
-      out = `git -C #{@repo_root} #{cmd} 2>&1`
-      raise "git #{cmd} failed: #{out}" unless $?.success?
+    def run_git!(*args)
+      out, status = Open3.capture2e("git", "-C", @repo_root, *args)
+      raise "git #{args.join(' ')} failed: #{out}" unless status.success?
 
       out
     end
 
-    def run_git(cmd)
-      `git -C #{@repo_root} #{cmd} 2>&1`
+    def run_git(*args)
+      out, _status = Open3.capture2e("git", "-C", @repo_root, *args)
+      out
     end
 
     def save_meta(id, info)

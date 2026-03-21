@@ -4,6 +4,8 @@ require "yaml"
 require "securerandom"
 require "time"
 require "set"
+require "open3"
+require "shellwords"
 
 module Vibe
   # Executes tasks respecting a dependency graph.
@@ -70,37 +72,48 @@ module Vibe
       max_parallel    = options[:max_parallel]
 
       threads  = []
-      semaphore = max_parallel ? Mutex.new : nil
-      slots     = max_parallel
+      slot_mutex = max_parallel ? Mutex.new : nil
+      slot_cv    = max_parallel ? ConditionVariable.new : nil
+      slots      = max_parallel
 
       loop do
         ready = ready_tasks
         break if ready.empty? && threads.none?(&:alive?)
 
         ready.each do |task|
-          # Acquire a slot if concurrency is capped
-          if semaphore
-            semaphore.synchronize { slots -= 1 }
+          # Wait for a slot if concurrency is capped
+          if slot_mutex
+            slot_mutex.synchronize do
+              while slots <= 0
+                slot_cv.wait(slot_mutex)
+              end
+              slots -= 1
+            end
           end
 
           mark_running(task["id"])
 
-          t = Thread.new(task) do |t|
-            execute_task(t)
-            semaphore&.synchronize { slots += 1 }
+          thread = Thread.new(task) do |tsk|
+            execute_task(tsk)
+            if slot_mutex
+              slot_mutex.synchronize do
+                slots += 1
+                slot_cv.signal
+              end
+            end
 
             # If this task failed and stop_on_failure, skip everything downstream
-            if t["status"] == STATUS[:failed] && stop_on_failure
-              skip_downstream(t["id"])
+            if tsk["status"] == STATUS[:failed] && stop_on_failure
+              skip_downstream(tsk["id"])
             end
           end
 
-          threads << t
+          threads << thread
         end
 
         # Yield the GIL so worker threads can make progress
         sleep 0.05
-        threads.reject!(&:join_nonblock_safe)
+        threads.reject! { |t| t.join(0) }
       end
 
       threads.each(&:join)
@@ -157,14 +170,14 @@ module Vibe
     def execute_task(task)
       cmd = task["command"]
       dir = task["working_dir"]
+      sh_args = ["/bin/sh", "-c", cmd]
 
-      output = if dir
-                 Dir.chdir(dir) { `#{cmd} 2>&1` }
-               else
-                 `#{cmd} 2>&1`
-               end
-
-      exit_code = $?.exitstatus
+      output, status = if dir
+                         Open3.capture2e(*sh_args, chdir: dir)
+                       else
+                         Open3.capture2e(*sh_args)
+                       end
+      exit_code = status.exitstatus
 
       @mutex.synchronize do
         task["output"]      = output
@@ -183,7 +196,9 @@ module Vibe
 
     # Mark all tasks that (transitively) depend on failed_id as skipped
     def skip_downstream(failed_id)
-      dependents = @tasks.values.select { |t| t["depends_on"].include?(failed_id) }
+      dependents = @mutex.synchronize do
+        @tasks.values.select { |t| t["depends_on"].include?(failed_id) }
+      end
       dependents.each do |t|
         next unless t["status"] == STATUS[:pending]
 
@@ -224,17 +239,5 @@ module Vibe
 
       @tasks.each_key.any? { |id| visit.call(id) }
     end
-
-    # Thread#join with a short timeout; returns the thread if it finished, nil otherwise
-    def join_nonblock_safe
-      # We monkey-patch Thread locally to avoid polluting the global namespace
-    end
-  end
-end
-
-# Extend Thread with a non-blocking join helper used by CascadeExecutor
-class Thread
-  def join_nonblock_safe
-    join(0)
   end
 end

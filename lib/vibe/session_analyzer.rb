@@ -90,23 +90,23 @@ module Vibe
       current_session = nil
       
       content.split("\n").each do |line|
-        if line.match(/^### S\d+ \((\d{2}:\d{2})/)
+        if (m = line.match(/^### S\d+ \((\d{2}:\d{2})/))
           sessions << current_session if current_session
           current_session = {
             id: "session-#{sessions.size + 1}",
-            time: $1,
+            time: m[1],
             content: "",
             tool_calls: [],
             tags: []
           }
         elsif current_session
           current_session[:content] += line + "\n"
-          
+
           # Extract tool calls
-          if line.match(/(Bash|Edit|Write|Read|Glob|Grep):\s*(.+)/)
+          if (m = line.match(/(Bash|Edit|Write|Read|Glob|Grep):\s*(.+)/))
             current_session[:tool_calls] << {
-              tool: $1,
-              command: $2.strip,
+              tool: m[1],
+              command: m[2].strip,
               success: !line.include?("→ Failed")
             }
           end
@@ -191,7 +191,8 @@ module Vibe
           recovery_sequences << {
             error: call[:command],
             recovery: recovery.map { |c| c[:tool] }.join(" → "),
-            session: session[:id]
+            session: session[:id],
+            recovered: recovery.any? { |c| c[:success] }
           }
         end
       end
@@ -206,7 +207,7 @@ module Vibe
           type: :error_recovery,
           pattern: "Error → #{recovery}",
           occurrences: group.size,
-          success_rate: group.count { |g| g[:recovery].include?("→") }.to_f / group.size,
+          success_rate: group.count { |g| g[:recovered] }.to_f / group.size,
           confidence: calculate_confidence(group.size, 0.8),
           tags: %w[error-handling recovery],
           examples: group.take(3).map { |g| g[:error] }
@@ -267,7 +268,7 @@ module Vibe
         content = session[:content]
         
         checklist_keywords.each do |keyword|
-          matches = content.scan(/#{keyword}\s+(.+?)[\.\n]/i)
+          matches = content.scan(/#{Regexp.escape(keyword)}\s+(.+?)[\.\n]/i)
           matches.each do |match|
             patterns << {
               type: :checklist,
