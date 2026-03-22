@@ -1,9 +1,33 @@
 # frozen_string_literal: true
 
 require 'minitest/autorun'
+require 'tmpdir'
+require 'json'
 require_relative '../../lib/vibe/platform_verifier'
+require_relative '../../lib/vibe/platform_utils'
+
+class PlatformVerifierTestHost
+  include Vibe::PlatformVerifier
+  include Vibe::PlatformUtils
+
+  attr_accessor :repo_root, :target_platform
+
+  def initialize(repo_root)
+    @repo_root = repo_root
+    @target_platform = 'claude-code'
+  end
+end
 
 class TestPlatformVerifier < Minitest::Test
+  def setup
+    @tmpdir = Dir.mktmpdir('vibe-verifier-test')
+    @host = PlatformVerifierTestHost.new(@tmpdir)
+  end
+
+  def teardown
+    FileUtils.rm_rf(@tmpdir) if @tmpdir && File.exist?(@tmpdir)
+  end
+
   def test_module_exists
     assert Vibe.const_defined?(:PlatformVerifier)
   end
@@ -16,46 +40,58 @@ class TestPlatformVerifier < Minitest::Test
     assert Vibe::PlatformVerifier.include?(Vibe::PlatformUtils)
   end
 
-  def test_module_has_verify_platform_installation
-    assert Vibe::PlatformVerifier.instance_methods(false).include?(:verify_platform_installation)
-  end
-
-  def test_module_has_suggest_platform_setup
-    assert Vibe::PlatformVerifier.instance_methods(false).include?(:suggest_platform_setup)
-  end
-
-  def test_module_has_verify_all_platforms
-    assert Vibe::PlatformVerifier.instance_methods(false).include?(:verify_all_platforms)
-  end
-
   def test_module_has_required_methods
-    instance_methods = Vibe::PlatformVerifier.instance_methods(false)
-
-    # Should have methods related to platform verification
-    relevant_methods = %i[verify_platform_installation suggest_platform_setup
-                          verify_all_platforms]
-    relevant_methods.each do |method|
-      assert instance_methods.include?(method), "Module should have #{method} method"
+    %i[verify_platform_installation suggest_platform_setup verify_all_platforms].each do |m|
+      assert Vibe::PlatformVerifier.instance_methods(false).include?(m)
     end
   end
 
-  def test_module_methods_return_values
-    # Test that methods exist and can be called
-    instance_methods = Vibe::PlatformVerifier.instance_methods(false)
-
-    # These are instance methods that should exist
-    assert instance_methods.include?(:verify_platform_installation)
-    assert instance_methods.include?(:suggest_platform_setup)
-    assert instance_methods.include?(:verify_all_platforms)
+  def test_verify_platform_installation_not_found
+    # Use a platform whose destination won't exist in tmpdir
+    @host.define_singleton_method(:default_global_destination) { |_| '/nonexistent/path' }
+    out, = capture_io { @host.verify_platform_installation('claude-code') }
+    assert_match(/not found/, out)
   end
 
-  def test_module_integration_with_platform_utils
-    # The module should work with PlatformUtils constants
-    assert Vibe::PlatformUtils.const_defined?(:VALID_TARGETS)
+  def test_verify_platform_installation_found_no_marker
+    dest = File.join(@tmpdir, 'claude')
+    FileUtils.mkdir_p(dest)
+    @host.define_singleton_method(:default_global_destination) { |_| dest }
+    out, = capture_io { @host.verify_platform_installation('claude-code') }
+    assert_match(/found/, out)
+  end
 
-    # Should include claude-code and opencode
-    valid_targets = Vibe::PlatformUtils::VALID_TARGETS
-    assert_includes valid_targets, 'claude-code'
-    assert_includes valid_targets, 'opencode'
+  def test_verify_platform_installation_found_with_marker
+    dest = File.join(@tmpdir, 'claude')
+    FileUtils.mkdir_p(dest)
+    marker = File.join(dest, '.vibe-target.json')
+    File.write(marker, JSON.generate('profile' => 'default', 'mode' => 'global'))
+    @host.define_singleton_method(:default_global_destination) { |_| dest }
+    out, = capture_io { @host.verify_platform_installation('claude-code') }
+    assert_match(/found/, out)
+    assert_match(/default/, out)
+  end
+
+  def test_suggest_platform_setup_output
+    @host.define_singleton_method(:default_global_destination) { |_| '/some/path' }
+    out, = capture_io { @host.suggest_platform_setup('claude-code') }
+    assert_match(/Suggested setup/, out)
+    assert_match(/vibe init/, out)
+  end
+
+  def test_verify_all_platforms_output
+    @host.define_singleton_method(:default_global_destination) { |_| '/nonexistent' }
+    out, = capture_io { @host.verify_all_platforms }
+    assert_match(/Not installed/, out)
+  end
+
+  def test_verify_all_platforms_with_installed
+    dest = File.join(@tmpdir, 'claude')
+    FileUtils.mkdir_p(dest)
+    @host.define_singleton_method(:default_global_destination) do |target|
+      target == 'claude-code' ? dest : '/nonexistent'
+    end
+    out, = capture_io { @host.verify_all_platforms }
+    assert_match(/Installed/, out)
   end
 end

@@ -33,17 +33,14 @@ class TestPlatformInstaller < Minitest::Test
   end
 
   def test_module_dependencies_are_available
-    # Verify that all required dependencies are available
     assert Vibe.const_defined?(:PlatformUtils)
     assert Vibe.const_defined?(:UserInteraction)
     assert Vibe.const_defined?(:HookInstaller)
   end
 
   def test_module_has_core_methods
-    # Check that the module has core methods
     instance_methods = Vibe::PlatformInstaller.instance_methods(false)
 
-    # Should have methods related to platform operations
     core_methods = %i[install_global_config build_and_deploy_target]
     core_methods.each do |method|
       assert instance_methods.include?(method), "Module should have #{method} method"
