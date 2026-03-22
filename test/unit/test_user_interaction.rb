@@ -76,13 +76,27 @@ class TestUserInteraction < Minitest::Test
   end
 
   def test_open_url_accepts_url_parameter
-    # Test that method accepts string parameter
-    assert_silent do
-      # We're not actually testing the system call, just that it accepts the param
+    # Test that method accepts string parameter without actually opening URL
+    # We stub the system call to avoid opening browser during tests
+    original_method = @host.method(:system)
 
+    # Track if system was called with correct arguments
+    system_called = false
+    url_arg = nil
+
+    @host.define_singleton_method(:system) do |*args|
+      system_called = true
+      url_arg = args.last if args.length > 0
+      true # Return success without actually calling system
+    end
+
+    begin
       @host.open_url('http://example.com')
-    rescue StandardError
-      nil
+      assert system_called, 'open_url should call system command'
+      assert_equal 'http://example.com', url_arg, 'URL should be passed to system'
+    ensure
+      # Restore original method
+      @host.define_singleton_method(:system, original_method)
     end
   end
 
