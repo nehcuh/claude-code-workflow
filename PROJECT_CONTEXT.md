@@ -3,11 +3,11 @@
 ## Session Handoff
 
 <!-- handoff:start -->
-### 2026-03-22
-- **分支**: improve/review-suggestions（基于跨模型评审建议）
-- **完成**: 改进 2 — SessionAnalyzer 格式版本检测（SUPPORTED_FORMATS, detect_format, parse_sessions_v1/v2）
-- **待做**: 改进 3（InstinctManager 权重可配置）→ 改进 4（Grader token 预算）→ 改进 1（vibe onboard 命令）→ 测试 → 文档同步
-- **下一步**: `lib/vibe/instinct_manager.rb` 加 DEFAULT_WEIGHTS + `config: { weights: {} }` 参数
+### 2026-03-22 (session-end)
+- **分支**: improve/review-suggestions — 4 项改进全部完成，2 commits
+- **完成**: vibe onboard 命令、SessionAnalyzer v1/v2 格式检测、InstinctManager DEFAULT_WEIGHTS + config 参数、Grader :token_budget
+- **测试**: 575 runs, 0 failures（+17 个新测试）；文档 README × 2 + CHANGELOG 已同步
+- **下一步**: `git merge improve/review-suggestions` 或 `gh pr create`，然后继续 Q2 路线图
 <!-- handoff:end -->
 
 ### 2026-03-18
