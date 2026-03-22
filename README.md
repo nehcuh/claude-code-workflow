@@ -417,6 +417,8 @@ claude                               # 或 opencode
 #### 场景 1：我只用 Claude Code，想快速配好
 
 ```bash
+vibe onboard                         # 5 步引导：配置 + 角色 + 验证 + 技能预览（推荐新用户）
+# 或者只部署配置，不需要引导：
 vibe quickstart                      # 一键配置 ~/.claude
 cd ~/my-project && vibe switch --platform claude-code
 claude                               # 开始编码
@@ -749,6 +751,7 @@ See `docs/task-routing.md` for detailed routing guidelines.
 | `bin/vibe switch <target>` | Apply workflow to current project | `bin/vibe switch opencode` |
 | `bin/vibe init --platform=<tool>` | Install integrations (Superpowers, RTK) | `bin/vibe init --platform=claude-code` |
 | `bin/vibe quickstart` | One-command setup for Claude Code | `bin/vibe quickstart` |
+| `bin/vibe onboard` | Guided 5-step setup for new users (deploy + role + doctor + skill preview) | `bin/vibe onboard` |
 
 ### When to Use What?
 

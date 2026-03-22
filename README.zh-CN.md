@@ -233,6 +233,8 @@ claude                               # 或 opencode
 #### 场景 1：我只用 Claude Code，想快速配好
 
 ```bash
+vibe onboard                         # 5 步引导：配置 + 角色 + 验证 + 技能预览（推荐新用户）
+# 或者只部署配置，不需要引导：
 vibe quickstart                      # 一键配置 ~/.claude
 cd ~/my-project && vibe switch --platform claude-code
 claude                               # 开始编码
