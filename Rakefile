@@ -86,12 +86,8 @@ task :coverage do
     puts '   Full Report:     coverage/index.html'
 
     # Warn if below minimum
-    if line_cov < 50
-      warn "\n⚠️  Line coverage (#{line_cov.round(2)}%) is below minimum (50%)"
-    end
-    if branch_cov < 50
-      warn "⚠️  Branch coverage (#{branch_cov.round(2)}%) is below minimum (50%)"
-    end
+    warn "\n⚠️  Line coverage (#{line_cov.round(2)}%) is below minimum (50%)" if line_cov < 50
+    warn "⚠️  Branch coverage (#{branch_cov.round(2)}%) is below minimum (50%)" if branch_cov < 50
   else
     warn "\n⚠️  Coverage report not found at coverage/.last_run.json"
   end

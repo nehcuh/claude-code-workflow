@@ -36,9 +36,7 @@ class TestUserInteraction < Minitest::Test
   end
 
   def test_ensure_interactive_setup_available_raises_with_context_when_not_tty
-    if $stdin.respond_to?(:tty?) && $stdin.tty?
-      skip 'Requires non-TTY environment for proper testing'
-    end
+    skip 'Requires non-TTY environment for proper testing' if $stdin.respond_to?(:tty?) && $stdin.tty?
 
     error = assert_raises(Vibe::ValidationError) do
       @host.ensure_interactive_setup_available!('test prompt')
@@ -49,9 +47,7 @@ class TestUserInteraction < Minitest::Test
   end
 
   def test_ensure_interactive_setup_available_raises_without_context_when_not_tty
-    if $stdin.respond_to?(:tty?) && $stdin.tty?
-      skip 'Requires non-TTY environment for proper testing'
-    end
+    skip 'Requires non-TTY environment for proper testing' if $stdin.respond_to?(:tty?) && $stdin.tty?
 
     error = assert_raises(Vibe::ValidationError) do
       @host.ensure_interactive_setup_available!

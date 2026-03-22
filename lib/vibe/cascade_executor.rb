@@ -97,9 +97,7 @@ module Vibe
             end
 
             # If this task failed and stop_on_failure, skip everything downstream
-            if tsk['status'] == STATUS[:failed] && stop_on_failure
-              skip_downstream(tsk['id'])
-            end
+            skip_downstream(tsk['id']) if tsk['status'] == STATUS[:failed] && stop_on_failure
           end
 
           threads << thread

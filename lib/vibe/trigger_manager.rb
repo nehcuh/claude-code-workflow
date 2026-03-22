@@ -57,9 +57,7 @@ module Vibe
       triggers = []
 
       # Accumulation trigger
-      if accumulation_trigger?(context)
-        triggers << { type: :accumulation, message: accumulation_message }
-      end
+      triggers << { type: :accumulation, message: accumulation_message } if accumulation_trigger?(context)
 
       # Periodic trigger
       triggers << { type: :periodic, message: periodic_message } if periodic_trigger?

@@ -121,14 +121,10 @@ module Vibe
 
       issues = []
 
-      unless Dir.exist?(target_dir)
-        return { success: false, issues: ["gstack not installed at #{target_dir}"] }
-      end
+      return { success: false, issues: ["gstack not installed at #{target_dir}"] } unless Dir.exist?(target_dir)
 
       %w[SKILL.md VERSION setup].each do |marker|
-        unless File.exist?(File.join(target_dir, marker))
-          issues << "Missing marker file: #{marker}"
-        end
+        issues << "Missing marker file: #{marker}" unless File.exist?(File.join(target_dir, marker))
       end
 
       version = nil

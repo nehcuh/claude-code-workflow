@@ -676,9 +676,7 @@ class VibeCLI
     end
 
     remaining = parser.parse(argv)
-    if options[:target].nil? && !remaining.empty?
-      options[:target] = normalize_target(remaining.shift)
-    end
+    options[:target] = normalize_target(remaining.shift) if options[:target].nil? && !remaining.empty?
     ensure_no_remaining_args!(remaining)
 
     overlay = resolve_overlay(explicit_path: options[:overlay],

@@ -180,9 +180,7 @@ module Vibe
                else '⏳'
                end
         puts "#{icon} #{task['id']}  (#{task['status']})"
-        if task['status'] == 'failed' && task['output']
-          task['output'].lines.last(3).each { |l| puts "     #{l.chomp}" }
-        end
+        task['output'].lines.last(3).each { |l| puts "     #{l.chomp}" } if task['status'] == 'failed' && task['output']
       end
 
       puts

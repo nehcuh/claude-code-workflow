@@ -26,9 +26,7 @@ module Vibe
 
       status.each do |name, info|
         verify_integration_display(name, info)
-        if name == :rtk && info[:installed] && !info[:hook_configured]
-          rtk_needs_hook = true
-        end
+        rtk_needs_hook = true if name == :rtk && info[:installed] && !info[:hook_configured]
       end
 
       puts

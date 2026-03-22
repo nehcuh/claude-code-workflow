@@ -136,9 +136,7 @@ module Vibe
       when 'rtk'
         puts "   Binary: #{info[:binary]}" if info[:binary]
         puts "   Hook: #{info[:hook_configured] ? 'Configured' : 'Not configured'}"
-        if !info[:hook_configured] && ask_yes_no('   Configure RTK hook now?')
-          configure_rtk_hook
-        end
+        configure_rtk_hook if !info[:hook_configured] && ask_yes_no('   Configure RTK hook now?')
       end
     end
 

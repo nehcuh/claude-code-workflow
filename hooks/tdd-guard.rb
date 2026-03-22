@@ -133,9 +133,7 @@ module TDDGuard
     if config.strict_mode
       source_files.each do |src|
         test_file = find_test_file(src, config.test_patterns)
-        if test_file && !files.include?(test_file)
-          warnings << "Test file #{test_file} not updated with #{src}"
-        end
+        warnings << "Test file #{test_file} not updated with #{src}" if test_file && !files.include?(test_file)
       end
     end
 

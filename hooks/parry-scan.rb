@@ -173,17 +173,11 @@ module ParryScanner
       recommendations << 'Review input for prompt injection attempts'
     end
 
-    if matches.any? { |m| m[:category] == :data_extraction }
-      recommendations << 'Verify data destination is authorized'
-    end
+    recommendations << 'Verify data destination is authorized' if matches.any? { |m| m[:category] == :data_extraction }
 
-    if matches.any? { |m| m[:category] == :command_injection }
-      recommendations << 'Sanitize command input'
-    end
+    recommendations << 'Sanitize command input' if matches.any? { |m| m[:category] == :command_injection }
 
-    if matches.any? { |m| m[:category] == :system_leak }
-      recommendations << 'System prompts are protected'
-    end
+    recommendations << 'System prompts are protected' if matches.any? { |m| m[:category] == :system_leak }
 
     recommendations << 'Proceed with caution' if risk_level == :medium
     recommendations << 'Block this request' if risk_level == :critical

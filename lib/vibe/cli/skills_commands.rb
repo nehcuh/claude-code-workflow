@@ -104,9 +104,7 @@ module Vibe
         skills[:not_adapted].first(10).each do |skill|
           puts "  • #{skill[:id]}"
         end
-        if skills[:not_adapted].length > 10
-          puts "    ... and #{skills[:not_adapted].length - 10} more"
-        end
+        puts "    ... and #{skills[:not_adapted].length - 10} more" if skills[:not_adapted].length > 10
         puts "   Run 'vibe skills check' to adapt these skills"
         puts
       end

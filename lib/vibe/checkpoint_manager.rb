@@ -79,9 +79,7 @@ module Vibe
     def list(filters = {})
       results = @checkpoints.values
 
-      if filters[:since]
-        results = results.select { |cp| Time.parse(cp['created_at']) >= filters[:since] }
-      end
+      results = results.select { |cp| Time.parse(cp['created_at']) >= filters[:since] } if filters[:since]
 
       results = results.sort_by { |cp| cp['created_at'] }.reverse
 

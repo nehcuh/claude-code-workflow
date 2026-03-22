@@ -64,9 +64,7 @@ module Vibe
       results.select! { |i| i['status'] == filters[:status] } if filters[:status]
 
       # Filter by minimum confidence
-      if filters[:min_confidence]
-        results.select! { |i| i['confidence'] >= filters[:min_confidence] }
-      end
+      results.select! { |i| i['confidence'] >= filters[:min_confidence] } if filters[:min_confidence]
 
       # Sort results
       if filters[:sort_by]

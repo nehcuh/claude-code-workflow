@@ -31,9 +31,7 @@ module Vibe
 
       UNSAFE_OUTPUT_PATHS.each do |unsafe|
         unsafe_expanded = normalize_path(unsafe)
-        unless expanded == unsafe_expanded || expanded.start_with?("#{unsafe_expanded}/")
-          next
-        end
+        next unless expanded == unsafe_expanded || expanded.start_with?("#{unsafe_expanded}/")
         # Allow if it's under a safe /var prefix
         next if unsafe == '/var' && is_safe_var
 

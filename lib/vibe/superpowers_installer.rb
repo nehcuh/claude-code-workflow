@@ -164,9 +164,7 @@ module Vibe
 
       issues << "Superpowers not cloned to #{shared_dir}" unless Dir.exist?(shared_dir)
 
-      unless Dir.exist?(source_skills_dir)
-        issues << "Skills directory not found in #{shared_dir}"
-      end
+      issues << "Skills directory not found in #{shared_dir}" unless Dir.exist?(source_skills_dir)
 
       skills_count = 0
       linked_count = 0
@@ -179,9 +177,7 @@ module Vibe
           source_path = File.join(source_skills_dir, entry)
           link_path = File.join(target_dir, entry)
 
-          unless skill_linked?(link_path, source_path)
-            issues << "Missing or incorrect skill link for: #{entry}"
-          end
+          issues << "Missing or incorrect skill link for: #{entry}" unless skill_linked?(link_path, source_path)
           linked_count += 1 if skill_linked?(link_path, source_path)
         end
       end

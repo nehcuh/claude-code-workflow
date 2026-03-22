@@ -71,9 +71,7 @@ module Vibe
           preview = r[:line].length > 60 ? "#{r[:line][0..60]}..." : r[:line]
           puts "  [#{r[:count]}x] #{preview}"
         end
-        if result[:redundancies].size > 5
-          puts "  ... and #{result[:redundancies].size - 5} more"
-        end
+        puts "  ... and #{result[:redundancies].size - 5} more" if result[:redundancies].size > 5
         puts
       end
 

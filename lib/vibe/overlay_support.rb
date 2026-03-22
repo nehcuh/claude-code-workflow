@@ -324,9 +324,7 @@ module Vibe
     end
 
     def overlay_supported_targets
-      if self.class.const_defined?(:SUPPORTED_TARGETS)
-        return self.class::SUPPORTED_TARGETS
-      end
+      return self.class::SUPPORTED_TARGETS if self.class.const_defined?(:SUPPORTED_TARGETS)
 
       []
     end

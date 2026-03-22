@@ -96,9 +96,7 @@ module Vibe
         else
           # For unknown types, return the original value (shallow copy)
           # This is safer than potentially executing malicious code
-          if ENV['VIBE_DEBUG']
-            warn "deep_copy: unhandled type #{value.class}, returning original reference"
-          end
+          warn "deep_copy: unhandled type #{value.class}, returning original reference" if ENV['VIBE_DEBUG']
           value
         end
       end
@@ -187,9 +185,7 @@ module Vibe
         end
         safe = allowed_roots.any? { |root| expanded.start_with?(root) }
 
-        unless safe
-          raise ValidationError, "#{context} contains unsafe path traversal: #{path_str}"
-        end
+        raise ValidationError, "#{context} contains unsafe path traversal: #{path_str}" unless safe
       end
 
       path_str

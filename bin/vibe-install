@@ -125,9 +125,7 @@ class VibeInstaller
         FileUtils.rm_f(target)
       else
         puts 'Removing existing vibe symlink...'
-        unless system('sudo', 'rm', '-f', target)
-          raise 'Failed to remove existing symlink'
-        end
+        raise 'Failed to remove existing symlink' unless system('sudo', 'rm', '-f', target)
       end
     end
 

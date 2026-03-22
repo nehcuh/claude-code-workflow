@@ -190,9 +190,7 @@ class TestGstackDetection < Minitest::Test
 
   def test_detect_gstack_not_installed
     # Skip if gstack is actually installed on this system
-    if gstack_location
-      skip "gstack is installed at #{gstack_location} — skipping negative test"
-    end
+    skip "gstack is installed at #{gstack_location} — skipping negative test" if gstack_location
 
     # With no gstack directory, should return :not_installed
     assert_equal :not_installed, detect_gstack
@@ -205,9 +203,7 @@ class TestGstackDetection < Minitest::Test
 
   def test_verify_gstack_not_installed
     # Skip if gstack is actually installed on this system
-    if gstack_location
-      skip "gstack is installed at #{gstack_location} — skipping negative test"
-    end
+    skip "gstack is installed at #{gstack_location} — skipping negative test" if gstack_location
 
     result = verify_gstack
     assert_equal false, result[:installed]
@@ -242,18 +238,14 @@ class TestGstackDetection < Minitest::Test
 
   def test_gstack_skills_count_zero_when_not_installed
     # Skip if gstack is actually installed on this system
-    if gstack_location
-      skip "gstack is installed at #{gstack_location} — skipping negative test"
-    end
+    skip "gstack is installed at #{gstack_location} — skipping negative test" if gstack_location
 
     assert_equal 0, gstack_skills_count
   end
 
   def test_gstack_version_nil_when_not_installed
     # Skip if gstack is actually installed on this system
-    if gstack_location
-      skip "gstack is installed at #{gstack_location} — skipping negative test"
-    end
+    skip "gstack is installed at #{gstack_location} — skipping negative test" if gstack_location
 
     assert_nil gstack_version
   end

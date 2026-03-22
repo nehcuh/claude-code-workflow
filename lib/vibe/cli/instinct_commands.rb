@@ -444,17 +444,13 @@ module Vibe
         if success
           current_sequence << call
         else
-          if current_sequence.size >= 3
-            candidates << build_candidate(current_sequence, session_data)
-          end
+          candidates << build_candidate(current_sequence, session_data) if current_sequence.size >= 3
           current_sequence = []
         end
       end
 
       # Check last sequence
-      if current_sequence.size >= 3
-        candidates << build_candidate(current_sequence, session_data)
-      end
+      candidates << build_candidate(current_sequence, session_data) if current_sequence.size >= 3
 
       candidates
     end

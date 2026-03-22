@@ -78,9 +78,7 @@ class VibeUninstaller
 
     puts "✓ System command: #{VIBE_BIN}" if @vibe_installed
 
-    if @wrapper_path && File.exist?(@wrapper_path)
-      puts "✓ Wrapper script: #{@wrapper_path}"
-    end
+    puts "✓ Wrapper script: #{@wrapper_path}" if @wrapper_path && File.exist?(@wrapper_path)
 
     puts "✓ Configuration: #{CONFIG_FILE}" if @config_exists
 
@@ -129,9 +127,7 @@ class VibeUninstaller
     remove_system_command if @vibe_installed
 
     # Remove wrapper script
-    if @wrapper_path && File.exist?(@wrapper_path)
-      remove_file(@wrapper_path, 'wrapper script')
-    end
+    remove_file(@wrapper_path, 'wrapper script') if @wrapper_path && File.exist?(@wrapper_path)
 
     # Remove platform configurations
     remove_platform_configs if @remove_configs || @remove_all
