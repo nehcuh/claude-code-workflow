@@ -212,6 +212,27 @@ class TestGrader < Minitest::Test
     assert_equal "exceeds_token_budget", skipped.first[:reason]
     # Skipped candidates should NOT count as failures
     assert_equal 0, result[:failures]
+    # pass_rate denominator excludes skipped: 1 pass / 1 evaluated = 100%
+    assert_equal 100.0, result[:pass_rate]
+  end
+
+  def test_pass_at_k_all_skipped_pass_rate_is_zero
+    large_code = "x" * 40  # ~10 tokens, exceeds budget of 5
+    candidates = [
+      { code: large_code, description: "large1" },
+      { code: large_code, description: "large2" }
+    ]
+    result = @grader.pass_at_k(candidates, {
+      type: :unit_test,
+      command: "sh {code_file}",
+      k: 2,
+      token_budget: 5
+    })
+
+    assert_equal 2, result[:budget_exceeded_count]
+    assert_equal 0, result[:passes]
+    assert_equal 0, result[:failures]
+    assert_equal 0.0, result[:pass_rate]
   end
 
   def test_pass_at_k_budget_exceeded_count_zero_when_all_fit

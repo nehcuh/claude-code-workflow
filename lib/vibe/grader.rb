@@ -148,7 +148,8 @@ module Vibe
 
       passes = results.count { |r| r[:grade] == GRADE[:pass] }
       skipped = results.count { |r| r[:grade] == :skipped }
-      pass_rate = (passes.to_f / k * 100).round(1)
+      evaluated_count = k - skipped
+      pass_rate = evaluated_count.positive? ? (passes.to_f / evaluated_count * 100).round(1) : 0.0
 
       {
         k: k,
