@@ -3,6 +3,16 @@
 ## Session Handoff
 
 <!-- handoff:start -->
+### 2026-03-22 晚上
+- **修复**: `vibe init` 时只检查 superpowers，遗漏 gstack
+- **改动**: 
+  - `core/integrations/recommended.yaml` - 添加 gstack 到推荐列表
+  - `lib/vibe/integration_setup.rb` - 添加 gstack 状态消息处理
+  - `lib/vibe/integration_recommendations.rb` - 添加 gstack 标签
+  - `lib/vibe/integration_manager.rb` - 始终显示集成状态摘要
+- **测试**: 37 tests passed
+- **状态**: 已修改但未提交
+
 ### 2026-03-22 下午（本次会话）
 - **深度评审 → 优化**: 覆盖率 33.97% → 37.61%（+149 tests，591 → 740 runs），修复 5 个真实 bug
 - **关键 bug 修复**: grader `determine_grade` Symbol/String 类型不匹配（warning 分支从未触发）、CJK token 低估 3 倍（0.5 → 1.5）、skill_manager splat TypeError、trigger_manager 状态注入不可测
