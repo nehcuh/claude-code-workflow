@@ -17,10 +17,10 @@ VibeSOP fork 自 [runesleo/claude-code-workflow](https://github.com/runesleo/cla
 | 平台支持 | 仅 Claude Code | Claude Code + OpenCode + 可扩展至未来平台 |
 | 核心规范 | 与 Claude Code 耦合 | 可移植 `core/`（模型、技能、策略、安全） |
 | CLI | 基础 shell 脚本 | 完整 Ruby CLI（`bin/vibe`），9 个命令 |
-| 架构 | 单文件配置 | 22 个模块化 Ruby 库 |
+| 架构 | 单文件配置 | 50+ 个模块化 Ruby 库 |
 | Windows 支持 | 仅 WSL2 / Git Bash | 原生 cmd.exe 批处理脚本，跨平台检测 |
 | 定制化 | 手动编辑文件 | Overlay 系统（`.vibe/overlay.yaml`） |
-| 测试覆盖 | 无 | 289 个测试，SimpleCov 覆盖率强制执行 |
+| 测试覆盖 | 无 | 740 个测试，SimpleCov 覆盖率强制执行 |
 | 技能系统 | 静态 Markdown | 可移植技能注册表 + 安全审计 |
 | 记忆系统 | 单文件 | 三层架构（session / project-knowledge / overview） |
 | 文档 | 英文 | 英文 + 中文（`README.zh-CN.md`） |

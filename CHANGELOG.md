@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **grader: `determine_grade` Symbol/String type mismatch** — `linter` and `security` warning grades never triggered because `TYPES[type]` (String) was compared against `type` (Symbol) in the `case` statement; fix passes `TYPES[type]` to `determine_grade`, making warning paths reachable for the first time
+- **grader: `@language` instance variable coupling** — `write_temp_candidate` depended on hidden `@language` state set by `pass_at_k`; refactored to explicit parameter, eliminating the implicit coupling
+- **grader: `pass_rate` denominator excluded skipped candidates** — skipped candidates no longer counted as failures in `pass_at_k` pass rate calculation
+- **context_optimizer: CJK token estimate 3× too low** — `TOKENS_PER_WORD_ZH = 0.5` (2 chars per token) underestimated Claude's tokenizer by 3×; corrected to `TOKENS_PER_ZH_CHAR = 1.5` (conservative safe estimate); constant renamed to reflect actual semantics
+- **skill_manager: `**info` splat raises `TypeError` on non-Hash entries** — `load_project_skills` crashed when `adapted_skills` entries were `nil` or a non-Hash value; guarded with `info.is_a?(Hash) ? info : {}`
+- **trigger_manager: `state_file` not injectable for testing** — constructor now accepts `'state_file'` key in config hash, enabling isolated tests without writing to `~/.claude/`
+
 ### Added
+- **740 tests (+149 from prior session)** — new `test/unit/test_trigger_manager.rb` (33 cases, 97% line coverage); extended `test_instinct_manager`, `test_grader`, `test_cascade_executor`, `test_checkpoint_manager`, `test_skill_management`, `test_vibe_external_tools`, `test_session_analyzer`, `test_platform_utils`, `test_config_driven_renderers`, `test_superpowers_installer`
+- **OnboardRunner test coverage** — 15 cases covering 5-step guided onboarding flow
 - **Guided Onboarding** (`vibe onboard [--skip-deploy]`) — 5-step interactive setup that deploys config, records user role, runs doctor check, previews the P0 systematic-debugging skill, and shows next steps
 - **SessionAnalyzer format versioning** — `detect_format()` with `SUPPORTED_FORMATS` (v1: `### S\d+` headers, v2: ISO-date `## Session YYYY-MM-DD` headers); unknown formats warn and return `[]` instead of silently producing wrong results
 - **Configurable instinct confidence weights** — `InstinctManager` accepts `config: { weights: { success_rate:, usage_frequency:, source_diversity: } }`; `DEFAULT_WEIGHTS` constant exposes the 60/30/10 defaults; fully backward-compatible

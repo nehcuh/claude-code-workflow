@@ -17,10 +17,10 @@ VibeSOP is a fork of [runesleo/claude-code-workflow](https://github.com/runesleo
 | Platform support | Claude Code only | Claude Code + OpenCode + extensible to future platforms |
 | Core spec | Coupled to Claude Code | Provider-neutral `core/` (models, skills, policies, security) |
 | CLI | Basic shell scripts | Full Ruby CLI (`bin/vibe`) with 9 commands |
-| Architecture | Single-file config | 22 modular Ruby library modules |
+| Architecture | Single-file config | 50+ modular Ruby library modules |
 | Windows support | WSL2 / Git Bash only | Native cmd.exe batch scripts, cross-platform detection |
 | Customization | Manual file edits | Overlay system (`.vibe/overlay.yaml`) |
-| Test coverage | None | 289 tests, SimpleCov coverage enforcement |
+| Test coverage | None | 740 tests, SimpleCov coverage enforcement |
 | Skill system | Static markdown | Portable skill registry with security audit |
 | Memory system | Single file | 3-tier (session / project-knowledge / overview) |
 | Documentation | English | English + Chinese (`README.zh-CN.md`) |
@@ -138,7 +138,7 @@ This repo now has two layers of concern:
 - JSON Schema validation for all configs
 - Comprehensive CLI with 9 commands
 - Project overlay system for customization
-- 273 tests with 100% pass rate
+- 740 tests with 100% pass rate
 
 ## Architecture: Portable Core + Runtime Layers
 
@@ -181,7 +181,7 @@ vibesop/
 │   ├── vibe-smoke                # Smoke test for generator target builds + overlays
 │   └── validate-schemas          # JSON schema validation for core/ specs
 │
-├── lib/vibe/                     # Modularized CLI implementation (22 modules)
+├── lib/vibe/                     # Modularized CLI implementation (50+ modules)
 │   ├── utils.rb                  # Common utilities (deep merge, I/O, path handling)
 │   ├── doc_rendering.rb          # Markdown document rendering
 │   ├── overlay_support.rb        # Overlay parsing, discovery, policy merging
@@ -300,7 +300,11 @@ vibesop/
 │   ├── verification-before-completion/SKILL.md  # "Run the test. Read the output. THEN claim."
 │   ├── systematic-debugging/SKILL.md     # 5-phase debugging (recall → root cause → fix)
 │   ├── planning-with-files/SKILL.md      # File-based planning for complex tasks
-│   └── experience-evolution/SKILL.md     # Auto-accumulate project knowledge
+│   ├── experience-evolution/SKILL.md     # Auto-accumulate project knowledge
+│   ├── instinct-learning/SKILL.md        # Extract reusable patterns from sessions
+│   ├── riper-workflow/SKILL.md           # Structured 5-phase development workflow
+│   ├── skill-craft/SKILL.md             # Craft personal skills from session history
+│   └── using-git-worktrees/SKILL.md     # Branch isolation using git worktrees
 │
 ├── agents/                       # Custom agent definitions
 │   ├── pr-reviewer.md            # Code review agent
