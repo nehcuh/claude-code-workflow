@@ -133,7 +133,9 @@ module Vibe
       config['last_checked'] = Time.now.strftime('%Y-%m-%dT%H:%M:%S%z')
 
       FileUtils.mkdir_p(File.dirname(config_path))
-      File.write(config_path, YAML.dump(config))
+      tmp_path = "#{config_path}.tmp.#{Process.pid}"
+      File.write(tmp_path, YAML.dump(config))
+      FileUtils.mv(tmp_path, config_path)
     end
 
     private
@@ -173,7 +175,9 @@ module Vibe
       doc = YAML.safe_load(File.read(config_path), aliases: true) || {}
 
       {
-        adapted: doc['adapted_skills']&.map { |id, info| { id: id, **info } } || [],
+        adapted: doc['adapted_skills']&.map { |id, info|
+          { id: id, **(info.is_a?(Hash) ? info : {}) }
+        } || [],
         skipped: doc['skipped_skills'] || []
       }
     end

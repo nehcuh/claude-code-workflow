@@ -12,7 +12,7 @@ module Vibe
 
     def initialize(config = {})
       @config = default_config.merge(config)
-      @state_file = state_path
+      @state_file = @config.delete('state_file') || state_path
       @state = load_state
     end
 

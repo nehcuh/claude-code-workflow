@@ -15,9 +15,10 @@ module Vibe
   #   puts pkg[:included].length   # => number of blocks that fit
   #   puts pkg[:total_tokens]      # => estimated token count
   class ContextOptimizer
-    TOKENS_PER_WORD_EN = 0.75
-    TOKENS_PER_WORD_ZH = 0.5
-    CHARS_PER_ZH_CHAR  = 1
+    TOKENS_PER_WORD_EN  = 0.75
+    # Claude's tokenizer: common CJK characters tokenize to ~1–2 tokens each.
+    # 1.5 is a conservative estimate — slight overestimation keeps budget safe.
+    TOKENS_PER_ZH_CHAR  = 1.5
 
     PRIORITY_WEIGHTS = {
       critical: 100,
@@ -127,7 +128,7 @@ module Vibe
       remaining = text.gsub(/\p{Han}/, '')
       en_words  = remaining.split(/\s+/).reject(&:empty?).length
 
-      (zh_chars * CHARS_PER_ZH_CHAR * TOKENS_PER_WORD_ZH +
+      (zh_chars * TOKENS_PER_ZH_CHAR +
        en_words * TOKENS_PER_WORD_EN).ceil
     end
 

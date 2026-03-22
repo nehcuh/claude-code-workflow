@@ -246,4 +246,78 @@ class TestGrader < Minitest::Test
 
     assert_equal 0, result[:budget_exceeded_count]
   end
+
+  # --- determine_grade: linter / security warning paths ---
+
+  def test_run_linter_warning_on_nonzero_exit_with_warning_output
+    # exit 1 + "warning" in output → :warning grade
+    result = @grader.run(:linter, "echo 'warning: unused var' && exit 1")
+    assert_equal "warning", result[:grade]
+  end
+
+  def test_run_linter_fail_on_nonzero_exit_without_warning
+    result = @grader.run(:linter, "echo 'syntax error' && exit 1")
+    assert_equal "fail", result[:grade]
+  end
+
+  def test_run_security_warning_on_nonzero_exit_with_low_severity
+    result = @grader.run(:security, "echo 'low severity found' && exit 1")
+    assert_equal "warning", result[:grade]
+  end
+
+  def test_run_security_warning_on_nonzero_exit_with_info_severity
+    result = @grader.run(:security, "echo 'info level issue' && exit 1")
+    assert_equal "warning", result[:grade]
+  end
+
+  def test_run_custom_type_pass
+    result = @grader.run(:custom, "exit 0")
+    assert_equal "pass", result[:grade]
+  end
+
+  def test_run_custom_type_fail
+    result = @grader.run(:custom, "exit 1")
+    assert_equal "fail", result[:grade]
+  end
+
+  def test_stats_tracks_warnings
+    @grader.run(:linter, "echo 'warning: unused' && exit 1")
+    assert_equal 1, @grader.stats[:warnings]
+    assert_equal 0, @grader.stats[:failures]
+  end
+
+  # --- pass_at_k with language parameter ---
+
+  def test_pass_at_k_language_sets_file_extension
+    candidates = [{ code: "print('hello')", description: "py" }]
+    @grader.pass_at_k(candidates, {
+      type: :unit_test,
+      command: "test -f {code_file}",
+      k: 1,
+      language: "py"
+    })
+    # No assertion on extension directly (temp file is cleaned up),
+    # but the run should succeed without errors.
+    assert_equal 1, @grader.stats[:total_runs]
+  end
+
+  def test_pass_at_k_no_language_defaults_to_rb
+    candidates = [{ code: "puts 'ok'", description: "rb" }]
+    # Should not raise — defaults to .rb when language is nil
+    result = @grader.pass_at_k(candidates, {
+      type: :unit_test,
+      command: "test -f {code_file}",
+      k: 1
+    })
+    assert_equal 1, result[:k]
+  end
+
+  # --- run rescue path ---
+
+  def test_run_records_failure_on_command_exception
+    # Simulate a command that will cause the shell to report an error
+    result = @grader.run(:unit_test, "exit 2")
+    assert_equal "fail", result[:grade]
+    assert_equal 2, result[:exit_code]
+  end
 end

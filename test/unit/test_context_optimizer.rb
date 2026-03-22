@@ -25,9 +25,16 @@ class TestContextOptimizer < Minitest::Test
   end
 
   def test_chinese_chars
-    # 4 CJK chars * 0.5 = 2 tokens
+    # 4 CJK chars * 1.5 = 6.0 → ceil = 6
     tokens = @opt.estimate_tokens("你好世界")
-    assert_equal 2, tokens
+    assert_equal 6, tokens
+  end
+
+  def test_chinese_chars_constant_reflects_actual_tokenizer
+    # TOKENS_PER_ZH_CHAR must be >= 1.0 — Claude tokenizer gives ~1–2 tokens/char.
+    # A value below 1.0 would systematically underestimate CJK content.
+    assert Vibe::ContextOptimizer::TOKENS_PER_ZH_CHAR >= 1.0,
+           "TOKENS_PER_ZH_CHAR should be >= 1.0 to reflect Claude tokenizer behaviour"
   end
 
   def test_mixed_text

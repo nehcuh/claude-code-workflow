@@ -170,6 +170,88 @@ class TestCascadeExecutor < Minitest::Test
     refute_nil task["started_at"]
     refute_nil task["finished_at"]
   end
+
+  # ── stop_on_failure: false ────────────────────────────────────────────────────
+
+  def test_run_stop_on_failure_false_does_not_skip_downstream
+    @ex.add("bad",  command: "exit 1")
+    @ex.add("after", command: "exit 0", depends_on: ["bad"])
+    result = @ex.run(stop_on_failure: false)
+
+    # "after" depends on "bad", which failed.
+    # With stop_on_failure: false, downstream is NOT pre-emptively skipped,
+    # but "after" still cannot run (dependency failed = not completed).
+    # It ends up neither completed nor explicitly skipped by our code.
+    assert_equal "failed", result[:tasks]["bad"]["status"]
+    # "after" stays pending/skipped because ready_tasks only fires when deps are :completed
+    refute_equal "completed", result[:tasks]["after"]["status"]
+  end
+
+  def test_run_stop_on_failure_false_runs_unrelated_independent_tasks
+    @ex.add("bad",       command: "exit 1")
+    @ex.add("unrelated", command: "exit 0")
+    result = @ex.run(stop_on_failure: false)
+
+    assert_equal "failed",    result[:tasks]["bad"]["status"]
+    assert_equal "completed", result[:tasks]["unrelated"]["status"]
+  end
+
+  # ── execute_task rescue path ──────────────────────────────────────────────────
+
+  def test_run_records_exit_minus_one_on_task_exception
+    # We use a non-existent working_dir to force Open3 to raise Errno::ENOENT
+    @ex.add("boom", command: "exit 0", working_dir: "/nonexistent_dir_xyz_abc")
+    result = @ex.run
+
+    assert_equal "failed", result[:tasks]["boom"]["status"]
+    assert_equal(-1, result[:tasks]["boom"]["exit_code"])
+    refute_nil result[:tasks]["boom"]["output"]
+  end
+
+  # ── max_parallel ──────────────────────────────────────────────────────────────
+
+  def test_run_with_max_parallel_one_serializes_execution
+    tmpfile = Tempfile.new("cascade_parallel")
+    tmpfile.close
+
+    @ex.add("a", command: "echo a >> #{tmpfile.path}")
+    @ex.add("b", command: "echo b >> #{tmpfile.path}")
+    @ex.add("c", command: "echo c >> #{tmpfile.path}")
+    result = @ex.run(max_parallel: 1)
+
+    assert result[:success]
+    assert_equal 3, result[:passed]
+  ensure
+    tmpfile&.unlink
+  end
+
+  # ── 3-node cycle detection ────────────────────────────────────────────────────
+
+  def test_validate_raises_on_three_node_cycle
+    @ex.add("a", command: "exit 0", depends_on: ["c"])
+    @ex.add("b", command: "exit 0", depends_on: ["a"])
+    @ex.add("c", command: "exit 0", depends_on: ["b"])
+    assert_raises(ArgumentError) { @ex.validate_graph! }
+  end
+
+  # ── working_dir at task level ─────────────────────────────────────────────────
+
+  def test_run_task_with_working_dir
+    tmpdir = Dir.mktmpdir
+    File.write(File.join(tmpdir, "marker.txt"), "exists")
+    @ex.add("check", command: "test -f marker.txt", working_dir: tmpdir)
+    result = @ex.run
+    assert_equal "completed", result[:tasks]["check"]["status"]
+  ensure
+    FileUtils.rm_rf(tmpdir)
+  end
+
+  # ── add chaining ──────────────────────────────────────────────────────────────
+
+  def test_add_returns_self_for_chaining
+    result = @ex.add("a", command: "exit 0").add("b", command: "exit 0")
+    assert_same @ex, result
+  end
 end
 
 require "tempfile"

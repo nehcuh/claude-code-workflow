@@ -79,7 +79,7 @@ module Vibe
         duration = Time.now - start_time
 
         # Determine grade based on exit code and output
-        grade = determine_grade(type, exit_code, output)
+        grade = determine_grade(TYPES[type], exit_code, output)
 
         result.merge!(
           completed_at: Time.now.iso8601,
@@ -118,7 +118,7 @@ module Vibe
     def pass_at_k(candidates, grader_config)
       k = grader_config[:k] || candidates.size
       evaluated = candidates.take(k)
-      @language = grader_config[:language]
+      language = grader_config[:language]
       token_budget = grader_config[:token_budget]
       budget_exceeded = 0
 
@@ -134,7 +134,7 @@ module Vibe
         end
 
         # Write candidate code to temp file
-        temp_file = write_temp_candidate(candidate[:code], index)
+        temp_file = write_temp_candidate(candidate[:code], index, language)
 
         # Run grader with candidate
         command = grader_config[:command].gsub('{code_file}', temp_file)
@@ -233,8 +233,8 @@ module Vibe
       (@stats[:passes].to_f / @stats[:total_runs] * 100).round(1)
     end
 
-    def write_temp_candidate(code, index)
-      ext = @language ? ".#{@language}" : '.rb'
+    def write_temp_candidate(code, index, language = nil)
+      ext = language ? ".#{language}" : '.rb'
       temp_file = File.join(Dir.tmpdir, "candidate_#{index}_#{SecureRandom.hex(4)}#{ext}")
       File.write(temp_file, code)
       temp_file

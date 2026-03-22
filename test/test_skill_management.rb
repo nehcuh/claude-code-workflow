@@ -92,6 +92,84 @@ class TestSkillManager < Minitest::Test
     assert config['last_checked']
     assert_kind_of String, config['last_checked']
   end
+
+  def test_update_check_timestamp_creates_directory_if_missing
+    FileUtils.rm_rf(File.join(@test_dir, ".vibe"))
+    @manager.update_check_timestamp
+    config_path = File.join(@test_dir, ".vibe/skills.yaml")
+    assert File.exist?(config_path)
+  end
+
+  def test_update_check_timestamp_preserves_existing_fields
+    config_path = File.join(@test_dir, ".vibe/skills.yaml")
+    FileUtils.mkdir_p(File.dirname(config_path))
+    File.write(config_path, YAML.dump('schema_version' => 1, 'custom_key' => 'preserved'))
+    @manager.update_check_timestamp
+    config = YAML.safe_load(File.read(config_path))
+    assert_equal 1, config['schema_version']
+    assert_equal 'preserved', config['custom_key']
+    assert config['last_checked']
+  end
+
+  def test_update_check_timestamp_no_tmp_file_left_behind
+    @manager.update_check_timestamp
+    config_path = File.join(@test_dir, ".vibe/skills.yaml")
+    tmp_files = Dir.glob("#{config_path}.tmp.*")
+    assert_empty tmp_files, "Temporary file left behind after atomic write"
+  end
+
+  def test_update_check_timestamp_last_checked_is_iso8601
+    @manager.update_check_timestamp
+    config_path = File.join(@test_dir, ".vibe/skills.yaml")
+    config = YAML.safe_load(File.read(config_path))
+    assert_match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, config['last_checked'])
+  end
+
+  def test_skill_info_returns_nil_for_nonexistent_skill
+    result = @manager.skill_info("nonexistent-skill-xyz")
+    assert_nil result
+  end
+
+  def test_list_skills_adapted_skipped_are_empty_for_fresh_project
+    skills = @manager.list_skills
+    assert_empty skills[:adapted]
+    assert_empty skills[:skipped]
+  end
+
+  def test_list_skills_tolerates_non_hash_adapted_skill_entry
+    # Write a skills.yaml where one adapted_skills entry is a plain string, not a Hash.
+    # Before the fix, this raised TypeError from **info splat.
+    config_path = File.join(@test_dir, ".vibe/skills.yaml")
+    FileUtils.mkdir_p(File.dirname(config_path))
+    malformed = {
+      'schema_version' => 1,
+      'adapted_skills' => {
+        'systematic-debugging' => 'just-a-string'
+      },
+      'skipped_skills' => []
+    }
+    File.write(config_path, YAML.dump(malformed))
+
+    # Should not raise — returns adapted item with only :id key
+    skills = @manager.list_skills
+    assert_equal 1, skills[:adapted].size
+    assert_equal 'systematic-debugging', skills[:adapted].first[:id]
+  end
+
+  def test_list_skills_tolerates_nil_adapted_skill_entry
+    config_path = File.join(@test_dir, ".vibe/skills.yaml")
+    FileUtils.mkdir_p(File.dirname(config_path))
+    malformed = {
+      'schema_version' => 1,
+      'adapted_skills' => { 'session-end' => nil },
+      'skipped_skills' => []
+    }
+    File.write(config_path, YAML.dump(malformed))
+
+    skills = @manager.list_skills
+    assert_equal 1, skills[:adapted].size
+    assert_equal 'session-end', skills[:adapted].first[:id]
+  end
 end
 
 class TestSkillDetector < Minitest::Test

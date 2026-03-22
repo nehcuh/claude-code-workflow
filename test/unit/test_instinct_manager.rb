@@ -318,4 +318,184 @@ class InstinctManagerTest < Minitest::Test
     # default: 1.0*0.6 + 1.0*0.3 + 1.0*0.1 = 1.0
     assert_in_delta 1.0, @manager.send(:calculate_confidence, instinct), 0.001
   end
+
+  # --- load_data error path ---
+
+  def test_load_data_returns_default_on_corrupt_yaml
+    File.write(@storage_path, ":\nbad: : yaml\n  broken")
+    m = Vibe::InstinctManager.new(@storage_path)
+    assert_equal [], m.all
+    assert_equal "1.0", m.data["version"]
+  end
+
+  def test_load_data_warns_on_corrupt_yaml
+    File.write(@storage_path, ":\nbad: : yaml\n  broken")
+    _, stderr = capture_io { Vibe::InstinctManager.new(@storage_path) }
+    assert_match(/Failed to load instincts/, stderr)
+  end
+
+  # --- list sorting ---
+
+  def test_list_sort_ascending
+    @manager.create(pattern: "Z pattern", confidence: 0.9)
+    @manager.create(pattern: "A pattern", confidence: 0.3)
+    result = @manager.list(sort_by: :confidence, ascending: true)
+    assert result.first["confidence"] <= result.last["confidence"]
+  end
+
+  def test_list_sort_by_usage_count
+    i1 = @manager.create(pattern: "High usage", confidence: 0.5)
+    i2 = @manager.create(pattern: "Low usage", confidence: 0.5)
+    @manager.record_usage(i1["id"], true)
+    @manager.record_usage(i1["id"], true)
+    result = @manager.list(sort_by: :usage_count)
+    assert_equal i1["id"], result.first["id"]
+  end
+
+  # --- validate_instinct! edge cases ---
+
+  def test_create_raises_on_nil_pattern
+    assert_raises(ArgumentError) { @manager.create(pattern: nil) }
+  end
+
+  def test_create_raises_on_negative_confidence
+    assert_raises(ArgumentError) { @manager.create(pattern: "ok", confidence: -0.1) }
+  end
+
+  def test_update_raises_on_invalid_success_rate
+    i = @manager.create(pattern: "valid", confidence: 0.5)
+    assert_raises(ArgumentError) { @manager.update(i["id"], "success_rate" => 1.5) }
+  end
+
+  def test_update_raises_on_negative_usage_count
+    i = @manager.create(pattern: "valid", confidence: 0.5)
+    assert_raises(ArgumentError) { @manager.update(i["id"], "usage_count" => -1) }
+  end
+
+  # --- record_usage on nonexistent id ---
+
+  def test_record_usage_returns_nil_for_missing_id
+    result = @manager.record_usage("nonexistent-id", true)
+    assert_nil result
+  end
+
+  def test_record_usage_does_not_mutate_data_on_missing_id
+    @manager.create(pattern: "existing", confidence: 0.5)
+    count_before = @manager.all.size
+    @manager.record_usage("nonexistent-id", true)
+    assert_equal count_before, @manager.all.size
+  end
+
+  # --- import :merge strategy ---
+
+  def test_import_merge_strategy_accumulates_usage
+    i = @manager.create(pattern: "Merge target", confidence: 0.6)
+    @manager.record_usage(i["id"], true)
+
+    export_file = File.join(@tmpdir, "export.yaml")
+    import_data = {
+      "version" => "1.0",
+      "instincts" => [{
+        "id" => i["id"],
+        "pattern" => i["pattern"],
+        "confidence" => 0.6,
+        "usage_count" => 5,
+        "success_count" => 4,
+        "success_rate" => 0.8,
+        "source_sessions" => %w[s10 s11],
+        "tags" => ["extra-tag"],
+        "status" => "active"
+      }]
+    }
+    File.write(export_file, YAML.dump(import_data))
+
+    stats = @manager.import(export_file, :merge)
+    assert_equal 1, stats[:merged]
+    assert_equal 0, stats[:imported]
+
+    merged = @manager.get(i["id"])
+    assert merged["usage_count"] > 1, "usage_count should have increased"
+    assert_includes merged["tags"], "extra-tag"
+  end
+
+  # --- import error path ---
+
+  def test_import_counts_errors_for_malformed_items
+    bad_file = File.join(@tmpdir, "bad.yaml")
+    # An integer item (not a Hash) will raise TypeError when accessing ['id']
+    File.write(bad_file, YAML.dump("version" => "1.0", "instincts" => [42]))
+    stats = @manager.import(bad_file, :skip)
+    assert_equal 1, stats[:errors]
+    assert_equal 0, stats[:imported]
+  end
+
+  def test_import_processes_good_items_despite_errors
+    good = { "id" => SecureRandom.uuid, "pattern" => "ok", "confidence" => 0.5,
+             "usage_count" => 0, "success_count" => 0, "success_rate" => 1.0,
+             "source_sessions" => [], "tags" => [], "status" => "active" }
+    bad_file = File.join(@tmpdir, "mixed.yaml")
+    File.write(bad_file, YAML.dump("version" => "1.0", "instincts" => [42, good]))
+    stats = @manager.import(bad_file, :skip)
+    assert_equal 1, stats[:errors]
+    assert_equal 1, stats[:imported]
+  end
+
+  # --- evolve ---
+
+  def test_evolve_creates_skill_file
+    i = @manager.create(pattern: "Use memoization for expensive calls", confidence: 0.8,
+                        tags: %w[ruby performance], source_sessions: %w[s1])
+    output_dir = File.join(@tmpdir, "skills")
+    result = @manager.evolve(i["id"], skill_name: "memoization-skill", output_dir: output_dir)
+
+    assert result[:success]
+    assert File.exist?(result[:skill_path])
+    assert_match(/memoization-skill/, result[:skill_path])
+    content = File.read(result[:skill_path])
+    assert_match(/Use memoization/, content)
+  end
+
+  def test_evolve_updates_status_to_evolved
+    i = @manager.create(pattern: "Pattern to evolve", confidence: 0.75)
+    @manager.evolve(i["id"], output_dir: File.join(@tmpdir, "skills"))
+    updated = @manager.get(i["id"])
+    assert_equal "evolved", updated["status"]
+  end
+
+  def test_evolve_returns_failure_for_nonexistent_id
+    result = @manager.evolve("nonexistent")
+    refute result[:success]
+    assert_match(/not found/, result[:message])
+  end
+
+  def test_evolve_returns_failure_if_skill_already_exists
+    i = @manager.create(pattern: "Duplicate skill", confidence: 0.8)
+    output_dir = File.join(@tmpdir, "skills")
+    @manager.evolve(i["id"], skill_name: "my-skill", output_dir: output_dir)
+    result = @manager.evolve(i["id"], skill_name: "my-skill", output_dir: output_dir)
+    refute result[:success]
+    assert_match(/already exists/, result[:message])
+  end
+
+  # --- load_to_context with tags and context ---
+
+  def test_load_to_context_includes_tags_line
+    @manager.create(pattern: "Tagged instinct", confidence: 0.9,
+                    tags: %w[ruby testing])
+    result = @manager.load_to_context
+    assert_match(/Tags: ruby, testing/, result)
+  end
+
+  def test_load_to_context_includes_context_line
+    @manager.create(pattern: "Contextual instinct", confidence: 0.9,
+                    context: "Use when working with ActiveRecord")
+    result = @manager.load_to_context
+    assert_match(/Context: Use when working with ActiveRecord/, result)
+  end
+
+  def test_load_to_context_omits_tags_line_when_empty
+    @manager.create(pattern: "No-tag instinct", confidence: 0.9, tags: [])
+    result = @manager.load_to_context
+    refute_match(/Tags:/, result)
+  end
 end

@@ -218,4 +218,110 @@ class TestCheckpointManager < Minitest::Test
     assert_equal cp2_id, checkpoints[1]["id"]
     assert_equal cp1_id, checkpoints[2]["id"]
   end
+
+  # --- load_checkpoints error path ---
+
+  def test_load_checkpoints_returns_empty_on_corrupt_yaml
+    File.write(@storage_path, ":\nbad: : yaml\n  broken")
+    m = Vibe::CheckpointManager.new(@storage_path)
+    assert_equal({}, m.checkpoints)
+  end
+
+  def test_load_checkpoints_warns_on_corrupt_yaml
+    File.write(@storage_path, ":\nbad: : yaml\n  broken")
+    _, stderr = capture_io { Vibe::CheckpointManager.new(@storage_path) }
+    assert_match(/Failed to load checkpoints/, stderr)
+  end
+
+  # --- create: skips nonexistent files ---
+
+  def test_create_skips_nonexistent_file
+    checkpoint_id = @manager.create("Partial", [@test_file1, "/nonexistent/path/file.rb"])
+    checkpoint = @manager.get(checkpoint_id)
+    # Only the existing file should be snapshotted
+    assert_equal 1, checkpoint["files"].size
+    assert checkpoint["files"].key?(@test_file1)
+  end
+
+  def test_create_with_no_files_succeeds
+    checkpoint_id = @manager.create("Empty snapshot", [])
+    checkpoint = @manager.get(checkpoint_id)
+    refute_nil checkpoint
+    assert_equal 0, checkpoint["files"].size
+  end
+
+  # --- rollback: snapshot file missing ---
+
+  def test_rollback_skips_file_when_snapshot_deleted
+    checkpoint_id = @manager.create("Before", [@test_file1])
+    checkpoint = @manager.get(checkpoint_id)
+
+    # Delete the snapshot file to simulate missing snapshot
+    snapshot_path = checkpoint["files"][@test_file1]["snapshot_path"]
+    File.delete(snapshot_path)
+
+    result = @manager.rollback(checkpoint_id)
+    skipped = result[:changes].select { |c| c[:action] == "skip" }
+    assert_equal 1, skipped.size
+    assert_equal "snapshot missing", skipped.first[:reason]
+  end
+
+  # --- compare: nonexistent checkpoints raise ---
+
+  def test_compare_raises_for_nonexistent_first_checkpoint
+    cp2_id = @manager.create("cp2", [@test_file2])
+    assert_raises(RuntimeError) { @manager.compare("nonexistent-id", cp2_id) }
+  end
+
+  def test_compare_raises_for_nonexistent_second_checkpoint
+    cp1_id = @manager.create("cp1", [@test_file1])
+    assert_raises(RuntimeError) { @manager.compare(cp1_id, "nonexistent-id") }
+  end
+
+  # --- compare: unchanged files (no difference reported) ---
+
+  def test_compare_identical_snapshots_has_no_differences
+    cp1_id = @manager.create("Same content", [@test_file1])
+    sleep 0.05
+    # Re-snapshot same file without changing it
+    cp2_id = @manager.create("Same content again", [@test_file1])
+    result = @manager.compare(cp1_id, cp2_id)
+    # Same size and mtime → no differences
+    assert_equal 0, result[:total_changes]
+  end
+
+  # --- create with relative path ---
+
+  def test_create_with_relative_path
+    # Write a file in cwd and use relative path
+    cwd_file = File.join(Dir.pwd, "tmp_checkpoint_test_#{Process.pid}.txt")
+    File.write(cwd_file, "relative test")
+    relative_path = File.basename(cwd_file)
+
+    checkpoint_id = @manager.create("Relative path test", [relative_path])
+    checkpoint = @manager.get(checkpoint_id)
+    assert_equal 1, checkpoint["files"].size
+  ensure
+    File.delete(cwd_file) if cwd_file && File.exist?(cwd_file)
+  end
+
+  # --- delete removes snapshot directory ---
+
+  def test_delete_removes_snapshot_directory
+    checkpoint_id = @manager.create("To delete", [@test_file1])
+    snapshot_dir = File.join(@temp_dir, "checkpoints", checkpoint_id)
+    assert File.exist?(snapshot_dir), "Snapshot dir should exist before delete"
+
+    @manager.delete(checkpoint_id)
+    refute File.exist?(snapshot_dir), "Snapshot dir should be removed after delete"
+  end
+
+  # --- cleanup with keep_count = 0 ---
+
+  def test_cleanup_removes_all_when_keep_count_zero
+    3.times { |i| @manager.create("cp#{i}", [@test_file1]) }
+    removed = @manager.cleanup(0)
+    assert_equal 3, removed
+    assert_empty @manager.list
+  end
 end
