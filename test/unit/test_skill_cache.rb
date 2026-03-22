@@ -22,7 +22,7 @@ class TestSkillCache < Minitest::Test
   end
 
   def test_fetch_with_block
-    result = @cache.fetch('test_key', 'test_value')
+    result = @cache.fetch('test_key') { 'test_value' }
 
     assert_equal 'test_value', result
   end
@@ -152,7 +152,7 @@ class TestSkillCache < Minitest::Test
   end
 
   def test_fetch_with_nil_key
-    result = @cache.fetch(nil, 'nil_value')
+    result = @cache.fetch(nil) { 'nil_value' }
 
     assert_equal 'nil_value', result
   end
