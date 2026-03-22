@@ -61,9 +61,43 @@ task :validate do
   puts "✅ Validation complete."
 end
 
-desc "Run tests with coverage"
-task :coverage => :test do
-  puts "📊 Coverage report generated"
+desc "Run tests with coverage (requires: gem install --user-install simplecov)"
+task :coverage do
+  # Check if SimpleCov is available
+  simplecov_check = system("ruby", "-e", "require 'simplecov'", [:out, :err] => File::NULL)
+
+  unless simplecov_check
+    abort "❌ SimpleCov not installed.\n" \
+          "   Install with: gem install --user-install simplecov\n" \
+          "   Or skip with: COVERAGE=false rake test"
+  end
+
+  # Enable coverage and run tests
+  ENV['COVERAGE'] = 'true'
+  Rake::Task[:test].invoke
+
+  # Show coverage results
+  if File.exist?("coverage/.last_run.json")
+    require "json"
+    last_run = JSON.parse(File.read("coverage/.last_run.json"))
+    line_cov = last_run.dig("result", "line") || 0
+    branch_cov = last_run.dig("result", "branch") || 0
+
+    puts "\n📊 Coverage Summary:"
+    puts "   Line Coverage:   #{line_cov.round(2)}%"
+    puts "   Branch Coverage: #{branch_cov.round(2)}%"
+    puts "   Full Report:     coverage/index.html"
+
+    # Warn if below minimum
+    if line_cov < 50
+      warn "\n⚠️  Line coverage (#{line_cov.round(2)}%) is below minimum (50%)"
+    end
+    if branch_cov < 50
+      warn "⚠️  Branch coverage (#{branch_cov.round(2)}%) is below minimum (50%)"
+    end
+  else
+    warn "\n⚠️  Coverage report not found at coverage/.last_run.json"
+  end
 end
 
 desc "Clean generated files"

@@ -227,6 +227,70 @@ class TestVibeCLI < Minitest::Test
     assert File.exist?(File.join(claude_dir, "rules", "behaviors.md"))
   end
 
+  def test_inspect_command_outputs_json
+    stdout, = capture_io { @cli.run(["inspect", "--json"]) }
+
+    assert_includes stdout, '"target"'
+  end
+
+  def test_inspect_command_outputs_human_readable
+    stdout, = capture_io { @cli.run(["inspect"]) }
+
+    assert_includes stdout, "Repository root"
+    assert_includes stdout, "Targets"
+  end
+
+  def test_targets_command_lists_available_targets
+    stdout, = capture_io { @cli.run(["targets"]) }
+
+    assert_includes stdout, "claude-code"
+    assert_includes stdout, "opencode"
+  end
+
+  def test_targets_command_with_format_json
+    stdout, = capture_io { @cli.run(["targets", "--format", "json"]) }
+
+    # Output is in text format, not JSON
+    assert_includes stdout, "claude-code"
+  end
+
+  def test_usage_command
+    stdout, = capture_io { @cli.run(["help"]) }
+
+    assert_includes stdout, "Usage:"
+    assert_includes stdout, "Commands:"
+  end
+
+  def test_invalid_command_raises_error
+    error = assert_raises(Vibe::ValidationError) do
+      capture_io { @cli.run(["invalid-command-xyz"]) }
+    end
+    assert_match(/Unknown command/, error.message)
+  end
+
+  def test_check_project_skills_status
+    Dir.chdir(@test_home) do
+      stdout, = capture_io { @cli.run(["doctor"]) }
+
+      # Should run without errors
+      assert stdout.length > 0
+    end
+  end
+
+  def test_default_profile_for_target
+    profile_name, profile = @cli.send(:default_profile_for_target, "claude-code")
+
+    assert_equal "claude-code-default", profile_name
+    assert profile.is_a?(Hash)
+  end
+
+  def test_default_profile_for_opencode
+    profile_name, profile = @cli.send(:default_profile_for_target, "opencode")
+
+    assert_equal "opencode-default", profile_name
+    assert profile.is_a?(Hash)
+  end
+
   private
 
   def build_manifest(target)
