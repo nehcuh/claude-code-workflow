@@ -5,6 +5,7 @@
 # Detects potential prompt injection and security risks in user input
 # Install: Add to hooks/pre-tool-use or call manually
 
+# Security scanner for detecting prompt injection and other threats.
 module ParryScanner
   # Security risk patterns to detect
   PATTERNS = {
@@ -93,6 +94,7 @@ module ParryScanner
     /sample\s+code/i
   ].freeze
 
+  # Result of a security scan with risk level, matches, and recommendations.
   class ScanResult
     attr_reader :risk_level, :matches, :recommendations
 
@@ -119,7 +121,7 @@ module ParryScanner
   end
 
   # Main scan function
-  def self.scan(input, context: nil)
+  def self.scan(input, _context: nil)
     if input.nil? || input.empty?
       return ScanResult.new(risk_level: :none, matches: [],
                             recommendations: [])

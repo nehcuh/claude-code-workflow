@@ -9,6 +9,7 @@ require_relative '../lib/vibe/utils'
 require_relative '../lib/vibe/external_tools'
 require_relative '../lib/vibe/init_support'
 
+# CLI entry point for the `vibe init` command.
 class VibeInitCLI
   include Vibe::Utils
   include Vibe::ExternalTools

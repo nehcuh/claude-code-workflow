@@ -7,6 +7,7 @@ require 'json'
 # Vibe uninstallation script
 # Removes vibe command from system PATH and optionally cleans up configurations
 
+# CLI uninstaller for the vibe command-line tool.
 class VibeUninstaller
   INSTALL_DIR = '/usr/local/bin'
   CONFIG_DIR = File.expand_path('~/.vibe')

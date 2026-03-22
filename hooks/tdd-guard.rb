@@ -5,7 +5,9 @@
 # Ensures code changes are accompanied by tests
 # Install: Add to pre-commit or pre-push hooks
 
+# TDD enforcement guard — blocks or warns when tests are missing.
 module TDDGuard
+  # Configuration for TDD guard behavior and patterns.
   class Config
     attr_accessor :strict_mode, :test_patterns, :src_patterns, :min_coverage
 
@@ -35,6 +37,7 @@ module TDDGuard
     end
   end
 
+  # Result of a TDD guard check with pass/fail status and issues.
   class CheckResult
     attr_reader :passed, :issues, :warnings
 

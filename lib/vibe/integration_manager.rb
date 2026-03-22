@@ -146,7 +146,7 @@ module Vibe
       end
     end
 
-    def handle_rtk(platform, missing, pending, status, interactive)
+    def handle_rtk(_platform, missing, pending, status, interactive)
       if missing.include?(:rtk)
         puts
         puts '⚠️  RTK Token Optimizer not detected'

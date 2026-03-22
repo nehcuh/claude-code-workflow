@@ -8,6 +8,7 @@ require 'time'
 # Vibe installation script
 # Installs vibe command to system PATH and records project location
 
+# CLI installer for the vibe command-line tool.
 class VibeInstaller
   INSTALL_DIR = '/usr/local/bin'
   CONFIG_DIR = File.expand_path('~/.vibe')
