@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Configurable instinct confidence weights** — `InstinctManager` accepts `config: { weights: { success_rate:, usage_frequency:, source_diversity: } }`; `DEFAULT_WEIGHTS` constant exposes the 60/30/10 defaults; fully backward-compatible
 - **Grader token budget** — `pass_at_k` supports `:token_budget` (chars/4 estimate); over-budget candidates are marked `grade: :skipped` with `reason: 'exceeds_token_budget'`; result includes `budget_exceeded_count` field; no-op when unset
 
+- **Modern CLI Tools Detection** (2026-03-23)
+  - `core/integrations/modern-cli.yaml` — configuration for 8 modern CLI tools
+  - `lib/vibe/external_tools.rb` — detection logic with Ruby native PATH lookup (no subprocess)
+  - `lib/vibe/doc_rendering.rb` — `render_tools_doc` for TOOLS.md generation
+  - `lib/vibe/platform_installer.rb` — user interaction during `vibe init`
+  - `bin/vibe` — `vibe tools <enable|disable|refresh|status>` command
+  - `vibe doctor` — automatic TOOLS.md refresh
+  - Detection: bat, fd, rg, eza, dust, duf, procs, btop (with alternatives support)
 - **Skill Craft System** (2026-03-20)
   - `skills/skill-craft/SKILL.md` — craft personal skills from session history
   - Multi-trigger mechanism: project completion, session accumulation, periodic review

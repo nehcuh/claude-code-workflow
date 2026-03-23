@@ -39,6 +39,7 @@ module Vibe
                   when :skills then render_skills_doc(manifest)
                   when :task_routing then render_task_routing_doc(manifest)
                   when :test_standards then render_test_standards_doc(manifest)
+                  when :tools then render_tools_doc(manifest)
                   when :execution_policy then render_execution_policy_doc(manifest)
                   when :execution then render_execution_policy_doc(manifest)
                   when :general then render_general_doc(manifest)
@@ -126,6 +127,7 @@ module Vibe
         - `safety.md` — safety policy
         - `task-routing.md` — task complexity routing
         - `test-standards.md` — testing requirements
+        - `tools.md` — available modern CLI tools
       MD
     end
 

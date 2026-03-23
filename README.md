@@ -67,6 +67,13 @@ Claude Code is powerful out of the box, but without structure it becomes a smart
   - `vibe skill-craft generate --pattern <id> [--force]` — Generate a skill from a detected pattern
   - `vibe skill-craft status` — View session count and last review date
   - Auto-saves to `~/.claude/skills/personal/`
+- **🛠️ Modern CLI Tools Detection**: Automatically detect and recommend modern CLI tools
+  - Detects 8 modern tools: bat, fd, rg, eza, dust, duf, procs, btop
+  - Generates TOOLS.md with usage notes and fallback strategies
+  - Auto-detected during `vibe init` — user can opt in/out
+  - `vibe tools status` — View detected tools
+  - `vibe tools enable/disable` — Toggle TOOLS.md generation
+  - `vibe doctor` refreshes tool documentation automatically
 - **🔧 gstack Integration**: Virtual engineering team as pluggable skill pack
   - 21 skills across 7 sprint phases (Think → Plan → Build → Review → Test → Ship → Reflect)
   - Auto-detected during `vibe init`, trigger rules generated in `skill-triggers.md`
