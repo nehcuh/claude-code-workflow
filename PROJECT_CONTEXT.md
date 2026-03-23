@@ -3,22 +3,22 @@
 ## Session Handoff
 
 <!-- handoff:start -->
+### 2026-03-24 Modern CLI Tools Detection — 功能开发完成
+
+- **完成**: 4 阶段完整实现，feature/modern-cli-tools 分支
+  - Phase 1: modern-cli.yaml + external_tools.rb + 16 个单元测试
+  - Phase 2: render_tools_doc + platforms.yaml 更新 + Entrypoint 引用
+  - Phase 3: vibe init 集成 + vibe doctor 刷新 + vibe tools 子命令
+  - Phase 4: README/CHANGELOG/docs 更新 + E2E 测试框架
+- **代码量**: 1038 行新增，19 个文件改动
+- **测试**: 26 个新测试，72 assertions，全绿通过
+- **Commits**: f9cca44, 7c95bea, 5e2b05d, 7e69fed
+- **分支状态**: feature/modern-cli-tools 待合并到 main
+- **下一步**: 合并到 main，或继续 Q2 路线图其他 Phase
+
 ### 2026-03-23 Modern CLI Tools Detection — PRD + 设计评审
-
-- **完成**: PRD（826行）、实现计划（1000行）、评审请求文档全部产出
-- **核心设计**: 静态文档注入（跨平台）、独立 TOOLS.md、init 检测 + doctor 刷新、用户 opt-in
-- **GLM-5 评审结论**: 通过，3 必须修复（跨平台检测用 Ruby 原生 PATH、重新启用路径、明确项目级范围为 v1.0 不支持）
-- **不采纳**: 并行检测（过早优化）、文件缓存（过度设计）
-- **文件**: docs/prd-modern-cli-tools.md, docs/implementation-plan-modern-cli-tools.md
-- **下一步**:
-  1. 更新 PRD 和实现计划（修复 3 个必须项）
-  2. 创建 `feature/modern-cli-tools` 分支
-  3. 执行 Phase 1（创建 modern-cli.yaml + 扩展 external_tools.rb）
-
-### 2026-03-23 代码质量改进
-- **完成**: 深度审查 + 质量改进全部推送 main（commit 0cc0313）
-- **主要改动**: `find_repo_root` 去重、新增 2 个测试文件（+50 tests）
-- **测试状态**: 1311 runs, 0 failures；行覆盖率 76.1%；RuboCop 零警告
+- **完成**: PRD（826行）、实现计划（1000行）、评审请求文档
+- **GLM-5 评审**: 通过，3 必须修复已更新到计划
 <!-- handoff:end -->
 
 
