@@ -31,8 +31,7 @@ load vibe_main
 # Now manually invoke it
 begin
   VibeCLI.new(repo_root).run(ARGV)
-rescue Vibe::PathSafetyError, Vibe::SecurityError, Vibe::ValidationError,
-       Vibe::ConfigurationError => e
+rescue Vibe::PathSafetyError, Vibe::SecurityError, Vibe::ValidationError, Vibe::ConfigurationError => e
   warn "Error: #{e.message}"
   exit 1
 rescue Vibe::Error => e

@@ -4,10 +4,12 @@ require 'yaml'
 require 'securerandom'
 require 'time'
 require 'fileutils'
+require_relative 'utils'
 
 module Vibe
   # Manages instinct learning system - automatic pattern extraction from sessions
   class InstinctManager
+    include Utils
     attr_reader :data, :path
 
     DEFAULT_WEIGHTS = {
@@ -304,19 +306,6 @@ module Vibe
       # Try to find repo root
       repo_root = find_repo_root || Dir.pwd
       File.join(repo_root, 'memory', 'instincts.yaml')
-    end
-
-    def find_repo_root
-      current = Dir.pwd
-      loop do
-        return current if File.exist?(File.join(current, '.git'))
-
-        parent = File.dirname(current)
-        break if parent == current
-
-        current = parent
-      end
-      nil
     end
 
     def default_structure

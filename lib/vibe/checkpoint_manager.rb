@@ -4,10 +4,12 @@ require 'yaml'
 require 'securerandom'
 require 'time'
 require 'fileutils'
+require_relative 'utils'
 
 module Vibe
   # Checkpoint manager for code snapshots and rollback
   class CheckpointManager
+    include Utils
     attr_reader :checkpoints, :storage_path
 
     def initialize(storage_path = nil)
@@ -202,19 +204,6 @@ module Vibe
     def default_storage_path
       repo_root = find_repo_root || Dir.pwd
       File.join(repo_root, 'memory', 'checkpoints.yaml')
-    end
-
-    def find_repo_root
-      current = Dir.pwd
-      loop do
-        return current if File.exist?(File.join(current, '.git'))
-
-        parent = File.dirname(current)
-        break if parent == current
-
-        current = parent
-      end
-      nil
     end
 
     def load_checkpoints

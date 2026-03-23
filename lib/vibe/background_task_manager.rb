@@ -5,12 +5,14 @@ require 'securerandom'
 require 'time'
 require 'open3'
 require 'shellwords'
+require_relative 'utils'
 
 module Vibe
   # Synchronous task runner for CLI task management.
   # Note: despite the historical "background" naming, tasks run synchronously.
   # The submit/cancel/stop_worker API reflects a former async design.
   class TaskRunner
+    include Utils
     attr_reader :tasks, :storage_path
 
     # Task status values
@@ -159,19 +161,6 @@ module Vibe
     def default_storage_path
       repo_root = find_repo_root || Dir.pwd
       File.join(repo_root, 'memory', 'background_tasks.yaml')
-    end
-
-    def find_repo_root
-      current = Dir.pwd
-      loop do
-        return current if File.exist?(File.join(current, '.git'))
-
-        parent = File.dirname(current)
-        break if parent == current
-
-        current = parent
-      end
-      nil
     end
 
     def load_tasks

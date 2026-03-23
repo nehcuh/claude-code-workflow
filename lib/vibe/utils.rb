@@ -108,6 +108,21 @@ module Vibe
 
     # --- Path helpers ---
 
+    # Walk up from Dir.pwd looking for a .git directory.
+    # Returns the absolute path to the repo root, or nil if not found.
+    def find_repo_root
+      current = Dir.pwd
+      loop do
+        return current if File.exist?(File.join(current, '.git'))
+
+        parent = File.dirname(current)
+        break if parent == current
+
+        current = parent
+      end
+      nil
+    end
+
     # Returns a display-friendly path: relative to @repo_root when possible,
     # otherwise the absolute path.
     def display_path(path)
