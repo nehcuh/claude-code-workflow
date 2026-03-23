@@ -3,22 +3,24 @@
 ## Session Handoff
 
 <!-- handoff:start -->
+### 2026-03-23 Modern CLI Tools Detection — PRD + 设计评审
+
+- **完成**: PRD（826行）、实现计划（1000行）、评审请求文档全部产出
+- **核心设计**: 静态文档注入（跨平台）、独立 TOOLS.md、init 检测 + doctor 刷新、用户 opt-in
+- **GLM-5 评审结论**: 通过，3 必须修复（跨平台检测用 Ruby 原生 PATH、重新启用路径、明确项目级范围为 v1.0 不支持）
+- **不采纳**: 并行检测（过早优化）、文件缓存（过度设计）
+- **文件**: docs/prd-modern-cli-tools.md, docs/implementation-plan-modern-cli-tools.md
+- **下一步**:
+  1. 更新 PRD 和实现计划（修复 3 个必须项）
+  2. 创建 `feature/modern-cli-tools` 分支
+  3. 执行 Phase 1（创建 modern-cli.yaml + 扩展 external_tools.rb）
+
 ### 2026-03-23 代码质量改进
 - **完成**: 深度审查 + 质量改进全部推送 main（commit 0cc0313）
-- **主要改动**:
-  - `find_repo_root` 从 3 处重复 → 提取到 `Vibe::Utils` 模块
-  - 新增 `test_integration_manager.rb`（31 tests）：覆盖率 24% → 73.53%
-  - 新增 `test_skill_adapter.rb`（19 tests）：覆盖率 32% → 57.48%
-  - 修复 `bin/vibe-wrapper` lint 问题
-- **测试状态**: 1311 runs, 0 failures, 0 errors, 5 skips
-- **覆盖率**: 行 76.1% / 分支 60.09%（两项均历史最高）
-- **RuboCop**: 149 files, no offenses
-- **下一步**: Q2 路线图继续——Phase 2 Token 优化 或 Phase 6 RIPER/Parry
-
-### 2026-03-22 晚上
-- 修复 `vibe init` 时只检查 superpowers 遗漏 gstack；integration_manager 始终显示集成状态摘要
-- 已合并 improve/review-suggestions 分支；覆盖率 73.78%；1261 tests 全绿
+- **主要改动**: `find_repo_root` 去重、新增 2 个测试文件（+50 tests）
+- **测试状态**: 1311 runs, 0 failures；行覆盖率 76.1%；RuboCop 零警告
 <!-- handoff:end -->
+
 
 ### 2026-03-18
 - **完成**: Windows 原生支持（cmd.exe 批处理）、项目改名 VibeSOP、Instinct 学习系统（Phase 1）、Quick Start 重写、文档全面同步
