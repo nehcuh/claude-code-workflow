@@ -57,6 +57,13 @@ Claude Code is powerful out of the box, but without structure it becomes a smart
 
 ### Recent Improvements (2026-03)
 
+- **🧠 Auto Memory Trigger** (`vibe memory`): Automatically capture and record errors to project knowledge
+  - `vibe memory record` — Manually record errors with problem/solution
+  - `vibe memory stats` — View error statistics and top errors
+  - `vibe memory enable/disable` — Toggle automatic error recording
+  - `vibe memory status` — Check current configuration
+  - Auto-numbering (P001, P002...) and pattern deduplication
+  - Configurable threshold (default: 2 occurrences before recording)
 - **🚀 Guided Onboarding** (`vibe onboard`): 5-step interactive setup for new users — deploys config, records your role, runs doctor check, previews the P0 systematic-debugging skill, and shows next steps. Use `--skip-deploy` if config is already installed.
 - **🛡️ SessionAnalyzer format versioning**: `detect_format()` with v1/v2 support. Unknown session file formats now warn and return `[]` instead of silently producing wrong results.
 - **⚙️ Configurable instinct confidence weights**: `InstinctManager` accepts `config: { weights: { ... } }`. `DEFAULT_WEIGHTS` constant exposes the 60/30/10 defaults. Fully backward-compatible.
