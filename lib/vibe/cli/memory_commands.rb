@@ -51,15 +51,9 @@ module Vibe
         files: options[:files]&.split(',') || []
       }
 
-      # Record twice to trigger auto-record
-      trigger.record_error(error_info)
-      result = trigger.record_error(error_info)
-
-      if result
-        puts '✅ Error recorded to memory/project-knowledge.md'
-      else
-        puts '⚠️  Error cached but not yet recorded (needs more occurrences)'
-      end
+      # Use force_record to bypass threshold
+      trigger.force_record(error_info)
+      puts '✅ Error recorded to memory/project-knowledge.md'
     end
 
     # vibe memory stats - Show statistics
@@ -143,18 +137,23 @@ module Vibe
       while i < argv.length
         case argv[i]
         when '--problem'
+          raise Vibe::ValidationError, '--problem requires a value' if argv[i + 1].nil?
           options[:problem] = argv[i + 1]
           i += 2
         when '--solution'
+          raise Vibe::ValidationError, '--solution requires a value' if argv[i + 1].nil?
           options[:solution] = argv[i + 1]
           i += 2
         when '--scenario'
+          raise Vibe::ValidationError, '--scenario requires a value' if argv[i + 1].nil?
           options[:scenario] = argv[i + 1]
           i += 2
         when '--command'
+          raise Vibe::ValidationError, '--command requires a value' if argv[i + 1].nil?
           options[:command] = argv[i + 1]
           i += 2
         when '--files'
+          raise Vibe::ValidationError, '--files requires a value' if argv[i + 1].nil?
           options[:files] = argv[i + 1]
           i += 2
         else

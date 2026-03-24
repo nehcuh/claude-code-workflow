@@ -16,7 +16,9 @@ module Vibe
       min_occurrences: 2,        # Minimum occurrences to record
       auto_record: true,         # Auto-record without confirmation
       categories: %w[pitfall pattern solution],
-      max_entries_per_category: 100
+      max_entries_per_category: 100,
+      max_cache_age_days: 30,    # Clean up cache entries older than 30 days
+      max_cache_entries: 1000    # Maximum cache entries
     }.freeze
 
     def initialize(memory_path = nil, config: {})
@@ -24,6 +26,14 @@ module Vibe
       @config = DEFAULT_CONFIG.merge(config)
       @error_cache = load_error_cache
       ensure_memory_directory
+    end
+
+    # Force record an error, bypassing min_occurrences threshold
+    # @param error_info [Hash] Error information
+    # @return [Boolean] True if recorded
+    def force_record(error_info)
+      write_to_memory(error_info, nil, category: 'pitfall')
+      true
     end
 
     # Record an error occurrence
@@ -104,8 +114,9 @@ module Vibe
       cache_path = File.join(File.dirname(@memory_path), '.error_cache.yaml')
       return {} unless File.exist?(cache_path)
 
-      YAML.safe_load(File.read(cache_path), permitted_classes: [Time, Symbol],
-                                            aliases: true) || {}
+      cache = YAML.safe_load(File.read(cache_path), permitted_classes: [Time, Symbol],
+                                                     aliases: true) || {}
+      cleanup_old_cache(cache)
     rescue StandardError => e
       warn "Failed to load error cache: #{e.message}"
       {}
@@ -116,6 +127,28 @@ module Vibe
       File.write(cache_path, YAML.dump(@error_cache))
     rescue StandardError => e
       warn "Failed to save error cache: #{e.message}"
+    end
+
+    def cleanup_old_cache(cache)
+      return cache unless @config[:max_cache_age_days] && @config[:max_cache_entries]
+
+      now = Time.now
+
+      # Remove old entries
+      cache.select! do |_sig, data|
+        next false unless data['last_seen']
+
+        age_days = (now - Time.parse(data['last_seen'])) / 86_400
+        age_days <= @config[:max_cache_age_days]
+      end
+
+      # Limit total entries (keep most recent)
+      if cache.size > @config[:max_cache_entries]
+        sorted = cache.sort_by { |_, v| Time.parse(v['last_seen']) }.reverse
+        cache = sorted.first(@config[:max_cache_entries]).to_h
+      end
+
+      cache
     end
 
     def generate_error_signature(error_info)

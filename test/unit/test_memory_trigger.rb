@@ -188,4 +188,63 @@ class MemoryTriggerTest < Minitest::Test
     result = new_trigger.record_error(error_info)
     assert result, 'Should load cache and record on second occurrence'
   end
+
+  def test_force_record_bypasses_threshold
+    error_info = {
+      command: 'manual',
+      problem: 'Direct problem',
+      solution: 'Direct solution'
+    }
+
+    # Should record immediately without needing min_occurrences
+    result = @trigger.force_record(error_info)
+    assert result, 'force_record should return true'
+
+    content = File.read(@memory_path)
+    assert_includes content, 'Direct problem', 'Should write entry immediately'
+  end
+
+  def test_cache_cleanup_by_age
+    # Insert a cache entry with an old timestamp
+    old_entry = {
+      'count' => 1,
+      'first_seen' => (Time.now - 40 * 86_400).iso8601,
+      'last_seen'  => (Time.now - 40 * 86_400).iso8601,
+      'info' => { 'command' => 'old cmd' }
+    }
+    cache_path = File.join(File.dirname(@memory_path), '.error_cache.yaml')
+    File.write(cache_path, YAML.dump('old_sig' => old_entry))
+
+    # New trigger loads cache and runs cleanup
+    trigger = Vibe::MemoryTrigger.new(@memory_path,
+                                      config: { auto_record: true,
+                                                min_occurrences: 2,
+                                                max_cache_age_days: 30,
+                                                max_cache_entries: 1000 })
+
+    assert_equal 0, trigger.stats[:total_errors], 'Old cache entry should be cleaned up'
+  end
+
+  def test_cache_cleanup_by_size
+    # Fill cache beyond max_cache_entries limit
+    cache = {}
+    110.times do |i|
+      cache["sig_#{i}"] = {
+        'count' => 1,
+        'first_seen' => Time.now.iso8601,
+        'last_seen' => (Time.now - i).iso8601,
+        'info' => {}
+      }
+    end
+    cache_path = File.join(File.dirname(@memory_path), '.error_cache.yaml')
+    File.write(cache_path, YAML.dump(cache))
+
+    trigger = Vibe::MemoryTrigger.new(@memory_path,
+                                      config: { auto_record: true,
+                                                min_occurrences: 2,
+                                                max_cache_age_days: 30,
+                                                max_cache_entries: 100 })
+
+    assert trigger.stats[:total_errors] <= 100, 'Cache should be trimmed to max_cache_entries'
+  end
 end
