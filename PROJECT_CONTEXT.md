@@ -3,6 +3,19 @@
 ## Session Handoff
 
 <!-- handoff:start -->
+### 2026-03-24 记忆自动加载功能 — ✅ 已合并
+
+- **功能**: Claude Code 和 OpenCode 自动加载项目记忆文件
+- **实现**:
+  - MemoryAutoload 模块：检测记忆文件、交互式配置
+  - `vibe memory autoload` 命令（enable/disable/status）
+  - Claude Code: preCommand hook 自动读取 memory/*.md
+  - OpenCode: 生成 .vibe/opencode/memory-context.md 并注入 instructions
+- **代码审查**: 修复 File.expand_path('~') 测试隔离问题（P011）
+- **提交**: 678d9e6，5 文件，+841/-2 行，16 测试 50 断言全绿
+- **状态**: 已推送到 origin/main，功能可用
+- **下一步**: 验证功能在实际项目中的效果
+
 ### 2026-03-24 Skill 软链接命名规范 — 已修改
 
 - **修改**: 统一 skill 软链接命名格式为 `{repo}-{skill}`（如 `gstack-autoplan`、`superpowers-brainstorming`）
@@ -26,15 +39,6 @@
 - **教训**: P009（安装器路径问题）、P010（AI 会话结束指令识别）
 <!-- handoff:end -->
 
-- **完成**: 4 阶段完整实现 + 评审修复，已合并到 main 分支
-  - Phase 1: modern-cli.yaml + external_tools.rb + 16 个单元测试
-  - Phase 2: render_tools_doc + platforms.yaml 更新 + Entrypoint 引用
-  - Phase 3: vibe init 集成 + vibe doctor 刷新 + vibe tools 子命令
-  - Phase 4: README/CHANGELOG/docs 更新 + E2E 测试框架
-  - 修复: 运行时错误（ask_yes_no 参数）+ 未使用变量警告 + E2E 测试路径
-- **代码量**: 1,058 行新增，20 个文件改动
-- **测试**: 26 个新测试，72 assertions，全绿通过
-- **Commits**: f9cca44, 7c95bea, 5e2b05d, 7e69fed, a32d807（修复）
-- **评审评分**: 9.4/10 ⭐⭐⭐⭐⭐
-- **下一步**: 继续 Q2 路线图其他 Phase（Token 优化 / RIPER/Parry）
-<!-- handoff:end -->
+## Project Overview
+
+VibeSOP - AI 原生开发工作流编排系统
