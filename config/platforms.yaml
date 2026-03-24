@@ -19,7 +19,7 @@ platforms:
 
     doc_types:
       global: [behavior, safety, task_routing, test_standards, tools]
-      project: [behavior, safety]
+      project: [behavior, safety, tools]
 
     native_config:
       global:
@@ -60,7 +60,7 @@ platforms:
 
     doc_types:
       global: [behavior, safety, task_routing, test_standards, tools]
-      project: [behavior, safety]
+      project: [behavior, safety, tools]
 
     native_config:
       global:

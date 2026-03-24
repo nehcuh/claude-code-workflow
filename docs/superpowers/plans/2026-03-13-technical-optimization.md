@@ -415,7 +415,7 @@ runtime_dirs:
 # 修改 doc_types 区分 project/global
 doc_types:
   global: [behavior, safety, task_routing, test_standards]
-  project: [behavior, safety]  # Project: minimal docs
+  project: [behavior, safety, tools]  # Project: includes tools for consistent CLAUDE.md/AGENTS.md references
 ```
 
 - [ ] **Step 2: 更新 copy_runtime_dirs 方法支持 mode 区分**

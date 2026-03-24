@@ -57,9 +57,9 @@ module Vibe
         project_level: project_level
       )
 
-      # Remove TOOLS.md if user opted out
+      # Remove tools.md if user opted out
       unless enable_tools
-        tools_md = File.join(output_root, 'TOOLS.md')
+        tools_md = File.join(output_root, 'tools.md')
         FileUtils.rm(tools_md) if File.exist?(tools_md)
       end
 
@@ -162,7 +162,7 @@ module Vibe
       end
 
       puts "📝 Generate tool recommendations for AI?"
-      puts "   This will create TOOLS.md and help AI use modern tools automatically."
+      puts "   This will create tools.md and help AI use modern tools automatically."
       print '[Y/n] '
       response = $stdin.gets
       return false if response.nil?
@@ -195,10 +195,10 @@ module Vibe
         destination = default_global_destination(target)
         next unless Dir.exist?(destination)
 
-        tools_md = File.join(destination, 'TOOLS.md')
+        tools_md = File.join(destination, 'tools.md')
         if File.exist?(tools_md)
           FileUtils.rm(tools_md)
-          puts "  ✅ Removed TOOLS.md from #{target}"
+          puts "  ✅ Removed tools.md from #{target}"
         end
       end
     end

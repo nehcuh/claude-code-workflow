@@ -83,8 +83,8 @@ integration:
   targets:
     claude-code:
       method: documentation
-      doc_file: TOOLS.md
+      doc_file: tools.md
 
     opencode:
       method: documentation
-      doc_file: TOOLS.md
+      doc_file: tools.md

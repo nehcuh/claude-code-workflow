@@ -489,21 +489,21 @@ platforms:
     # ... existing config ...
     doc_types:
       global: [behavior, safety, task_routing, test_standards, tools]
-      project: [behavior, safety]   # v1.0: tools is global-only
+      project: [behavior, safety, tools]   # Available in both global and project level
 
   opencode:
     # ... existing config ...
     doc_types:
       global: [behavior, safety, task_routing, test_standards, tools]
-      project: [behavior, safety]   # v1.0: tools is global-only
+      project: [behavior, safety, tools]   # Available in both global and project level
 ```
 
-**Note**: v1.0 only supports global configuration. Tools are system-level (installed per machine, not per project), so project-level detection provides no additional value. Project-level support may be added in v1.1 if there is user demand.
+**Note**: Tools are available at both global and project levels. Project-level generation ensures `CLAUDE.md`/`AGENTS.md` reference to `tools.md` is always valid, even for users who only run `vibe switch` without `vibe init`. The tools are still system-level, but detection runs fresh during project setup.
 
 **Acceptance Criteria**:
-- [ ] `tools` added to both platforms (global only)
-- [ ] `project` doc_types unchanged (no `tools`)
-- [ ] YAML is valid
+- [x] `tools` added to both platforms (global and project)
+- [x] `project` doc_types includes `tools`
+- [x] YAML is valid
 
 ---
 
