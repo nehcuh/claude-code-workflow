@@ -17,10 +17,16 @@ module Vibe
     ].freeze
 
     GSTACK_PLATFORM_PATHS = {
-      'unified' => '~/.config/skills/gstack',      # 统一存储位置（优先）
-      'claude-code' => '~/.claude/skills/gstack',  # Claude Code 软链接位置
-      'opencode' => '~/.config/opencode/skills/gstack'  # OpenCode 软链接位置（兼容）
+      'unified' => '~/.config/skills/gstack'      # 统一存储位置（优先）
     }.freeze
+
+    # 各平台软链接配置
+    # Symlink naming format: {repo}-{skill} (e.g., gstack-autoplan)
+    GSTACK_PLATFORM_SYMLINK_PATHS = {
+      'claude-code' => '~/.config/claude/skills',
+      'opencode' => '~/.config/opencode/skills'
+    }.freeze
+    GSTACK_REPO_NAME = 'gstack'
 
     CLONE_TIMEOUT = 60
     MAX_RETRIES = 3
@@ -133,48 +139,92 @@ module Vibe
     end
 
     def self.verify_installation(platform = nil)
-      platform ||= 'unified'
-      target_dir = File.expand_path(
-        GSTACK_PLATFORM_PATHS[platform] || GSTACK_PLATFORM_PATHS['unified']
-      )
-
+      unified_dir = File.expand_path(GSTACK_PLATFORM_PATHS['unified'])
       issues = []
 
-      return { success: false, issues: ["gstack not installed at #{target_dir}"] } unless Dir.exist?(target_dir)
+      # 验证统一存储位置
+      unless Dir.exist?(unified_dir)
+        return { success: false, issues: ["gstack not installed at #{unified_dir}"] }
+      end
 
       %w[SKILL.md VERSION setup].each do |marker|
-        issues << "Missing marker file: #{marker}" unless File.exist?(File.join(target_dir, marker))
+        issues << "Missing marker file: #{marker}" unless File.exist?(File.join(unified_dir, marker))
       end
 
       version = nil
-      version_file = File.join(target_dir, 'VERSION')
+      version_file = File.join(unified_dir, 'VERSION')
       version = File.read(version_file).strip if File.exist?(version_file)
 
-      skills_count = Dir.children(target_dir).count do |entry|
-        File.directory?(File.join(target_dir, entry)) &&
-          File.exist?(File.join(target_dir, entry, 'SKILL.md'))
+      # 统计技能数量
+      skill_entries = Dir.children(unified_dir).select do |entry|
+        full_path = File.join(unified_dir, entry)
+        File.directory?(full_path) && File.exist?(File.join(full_path, 'SKILL.md'))
       end
+      skills_count = skill_entries.size
 
-      browse_ready = File.exist?(File.join(target_dir, 'browse', 'dist', 'browse'))
+      browse_ready = File.exist?(File.join(unified_dir, 'browse', 'dist', 'browse'))
+
+      # 验证指定平台的软链接
+      platform_links = {}
+      if platform && platform != 'unified'
+        target_dir = File.expand_path(GSTACK_PLATFORM_SYMLINK_PATHS[platform])
+        linked_count = 0
+
+        if Dir.exist?(target_dir)
+          skill_entries.each do |entry|
+            link_name = "#{GSTACK_REPO_NAME}-#{entry}"
+            link_path = File.join(target_dir, link_name)
+            source_path = File.join(unified_dir, entry)
+
+            if File.symlink?(link_path) && File.readlink(link_path) == source_path
+              linked_count += 1
+            else
+              issues << "Missing or incorrect skill link for: #{link_name}"
+            end
+          end
+        else
+          issues << "Platform directory not found: #{target_dir}"
+        end
+
+        platform_links[platform] = { linked_count: linked_count, total: skills_count }
+      end
 
       {
         success: issues.empty?,
-        location: target_dir,
+        location: unified_dir,
         version: version,
         skills_count: skills_count,
         browse_ready: browse_ready,
+        platform_links: platform_links,
         issues: issues
       }
     end
 
     def self.uninstall_gstack(_platform = nil)
-      GSTACK_PLATFORM_PATHS.each_value do |path|
-        expanded = File.expand_path(path)
-        if Dir.exist?(expanded)
-          puts "  Removing: #{expanded}"
-          FileUtils.rm_rf(expanded)
+      unified_dir = File.expand_path(GSTACK_PLATFORM_PATHS['unified'])
+      
+      # 清理各平台的软链接
+      GSTACK_PLATFORM_SYMLINK_PATHS.each do |platform, target_dir|
+        target_path = File.expand_path(target_dir)
+        next unless Dir.exist?(target_path)
+
+        puts "  Cleaning #{platform} symlinks..."
+        Dir.children(target_path).each do |entry|
+          link_path = File.join(target_path, entry)
+          # 只删除指向 gstack 的软链接
+          if File.symlink?(link_path) && File.readlink(link_path).start_with?(unified_dir)
+            FileUtils.rm(link_path)
+            puts "    Removed: #{entry}"
+          end
         end
       end
+
+      # 删除统一存储位置
+      if Dir.exist?(unified_dir)
+        puts "  Removing: #{unified_dir}"
+        FileUtils.rm_rf(unified_dir)
+      end
+      
       puts 'gstack uninstalled.'
     end
 
@@ -256,50 +306,61 @@ module Vibe
     end
 
     # 为各平台创建软链接到统一存储位置
+    # 为每个子技能创建单独的软链接，命名格式: gstack-{skill}
     def self.create_platform_symlinks(source_dir)
       puts
       puts '   Creating platform symlinks...'
 
-      # 需要创建软链接的平台路径（排除 unified 自身）
-      symlink_paths = {
-        'claude-code' => GSTACK_PLATFORM_PATHS['claude-code'],
-        'opencode' => GSTACK_PLATFORM_PATHS['opencode']
-      }
+      # 获取所有子技能目录
+      skill_entries = Dir.children(source_dir).select do |entry|
+        full_path = File.join(source_dir, entry)
+        File.directory?(full_path) && File.exist?(File.join(full_path, 'SKILL.md'))
+      end
 
-      symlink_paths.each do |platform, path|
-        symlink_path = File.expand_path(path)
-        
-        # 如果已经是正确的软链接，跳过
-        if File.symlink?(symlink_path) && File.readlink(symlink_path) == source_dir
-          puts "   ✓ #{platform} symlink already correct"
-          next
+      if skill_entries.empty?
+        puts '   ⚠️  No skills found in gstack directory'
+        return
+      end
+
+      # 为每个平台创建软链接
+      GSTACK_PLATFORM_SYMLINK_PATHS.each do |platform, target_dir|
+        target_path = File.expand_path(target_dir)
+        FileUtils.mkdir_p(target_path) unless Dir.exist?(target_path)
+
+        created = 0
+        skipped = 0
+
+        skill_entries.each do |entry|
+          source_path = File.join(source_dir, entry)
+          # 使用命名格式: {repo}-{skill} (例如: gstack-autoplan)
+          link_name = "#{GSTACK_REPO_NAME}-#{entry}"
+          link_path = File.join(target_path, link_name)
+
+          # 检查是否已经正确链接
+          if File.symlink?(link_path) && File.readlink(link_path) == source_path
+            skipped += 1
+            next
+          end
+
+          # 如果存在但不是软链接，跳过并警告
+          if File.exist?(link_path) && !File.symlink?(link_path)
+            puts "   ⚠️  Skipping #{link_name}: already exists at #{link_path}"
+            next
+          end
+
+          # 如果存在旧的错误软链接，删除它
+          FileUtils.rm(link_path) if File.symlink?(link_path)
+
+          # 创建软链接
+          begin
+            FileUtils.ln_s(source_path, link_path)
+            created += 1
+          rescue StandardError => e
+            puts "   ⚠️  Failed to create #{link_name}: #{e.message}"
+          end
         end
 
-        # 如果存在但不是软链接，跳过并警告
-        if File.exist?(symlink_path) && !File.symlink?(symlink_path)
-          puts "   ⚠️  #{platform} path exists but is not a symlink (#{symlink_path})"
-          next
-        end
-
-        # 如果存在旧的错误软链接，删除它
-        if File.symlink?(symlink_path)
-          puts "   → Updating #{platform} symlink"
-          FileUtils.rm(symlink_path)
-        else
-          puts "   → Creating #{platform} symlink"
-        end
-
-        # 创建父目录
-        parent_dir = File.dirname(symlink_path)
-        FileUtils.mkdir_p(parent_dir) unless Dir.exist?(parent_dir)
-
-        # 创建软链接
-        begin
-          FileUtils.ln_s(source_dir, symlink_path)
-          puts "   ✓ #{platform}: #{symlink_path}"
-        rescue StandardError => e
-          puts "   ⚠️  Failed to create #{platform} symlink: #{e.message}"
-        end
+        puts "   ✓ #{platform}: #{created} created, #{skipped} up to date"
       end
     end
   end

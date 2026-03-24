@@ -203,8 +203,8 @@ module Vibe
         end
       else
         puts '   (Run in an interactive terminal to install automatically)'
-        puts '   Manual: git clone https://github.com/garrytan/gstack.git ~/.claude/skills/gstack'
-        puts '           cd ~/.claude/skills/gstack && ./setup'
+        puts '   Manual: git clone https://github.com/garrytan/gstack.git ~/.config/skills/gstack'
+        puts '           cd ~/.config/skills/gstack && ./setup'
       end
     end
 

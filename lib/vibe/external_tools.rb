@@ -51,10 +51,11 @@ module Vibe
     # Platform-specific superpowers paths.
     # skills_dir: directory where individual skill symlinks are created.
     # skills_source: the superpowers skills source directory that symlinks point into.
+    # Note: Symlink naming format is {repo}-{skill} (e.g., superpowers-brainstorming)
     SUPERPOWERS_PLATFORM_PATHS = {
       'claude-code' => {
         plugin: '~/.claude/plugins/superpowers',
-        skills_dir: '~/.claude/skills',
+        skills_dir: '~/.config/claude/skills',
         skills_source: '~/.config/skills/superpowers/skills'
       },
       'opencode' => {
@@ -147,6 +148,7 @@ module Vibe
 
     # Returns entries in skills_dir whose symlink targets are inside source_dir.
     # Handles both relative and absolute symlink paths, and skips broken symlinks.
+    # Supports new naming format: {repo}-{skill} (e.g., superpowers-brainstorming)
     def superpowers_symlinks_in(skills_dir, source_dir)
       return [] unless Dir.exist?(skills_dir)
 
@@ -169,7 +171,8 @@ module Vibe
                             end
 
           # Check if target is inside source_dir
-          absolute_target.start_with?(normalized_source)
+          # Also verify the entry name follows the expected pattern (superpowers-*)
+          absolute_target.start_with?(normalized_source) && entry.start_with?('superpowers-')
         rescue Errno::ENOENT, Errno::ELOOP
           # Skip broken or circular symlinks
           warn "Warning: Broken symlink detected: #{link_path}" if ENV['VIBE_DEBUG']
@@ -266,11 +269,17 @@ module Vibe
 
     # --- gstack Detection ---
 
+    # Only check unified storage location - individual skill symlinks are created
+    # per-platform with naming format: gstack-{skill} (e.g., gstack-autoplan)
     GSTACK_DETECTION_PATHS = [
-      '~/.config/skills/gstack',      # 统一存储位置（优先）
-      '~/.claude/skills/gstack',      # Claude Code 软链接位置
-      '~/.config/opencode/skills/gstack'  # OpenCode 软链接位置（兼容）
+      '~/.config/skills/gstack'      # 统一存储位置（唯一真实位置）
     ].freeze
+
+    # Platform-specific paths for skill symlinks
+    GSTACK_PLATFORM_SYMLINK_PATHS = {
+      'claude-code' => '~/.config/claude/skills',
+      'opencode' => '~/.config/opencode/skills'
+    }.freeze
 
     GSTACK_MARKER_FILES = %w[SKILL.md VERSION setup].freeze
 

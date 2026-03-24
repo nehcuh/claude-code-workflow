@@ -26,16 +26,18 @@ module Vibe
 
     # target_dir: the skills directory where individual skill symlinks are created.
     # Each entry in source_subdir gets its own symlink inside target_dir.
+    # Symlink naming format: {repo}-{skill} (e.g., superpowers-brainstorming)
     SUPERPOWERS_PLATFORM_SYMLINK_PATHS = {
       'claude-code' => {
         source_subdir: 'skills',
-        target_dir: '~/.claude/skills'
+        target_dir: '~/.config/claude/skills'
       },
       'opencode' => {
         source_subdir: 'skills',
         target_dir: '~/.config/opencode/skills'
       }
     }.freeze
+    SUPERPOWERS_REPO_NAME = 'superpowers'
 
     def self.install_superpowers(platform = nil)
       install_superpowers_for_platform(platform || 'claude-code')
@@ -120,18 +122,20 @@ module Vibe
 
       skill_entries.each do |entry|
         source_path = File.join(source_skills_dir, entry)
-        link_path = File.join(target_dir, entry)
+        # Use naming format: {repo}-{skill} (e.g., superpowers-brainstorming)
+        link_name = "#{SUPERPOWERS_REPO_NAME}-#{entry}"
+        link_path = File.join(target_dir, link_name)
 
         if skill_linked?(link_path, source_path)
           skipped += 1
           next
         elsif File.exist?(link_path) || File.symlink?(link_path)
-          puts "   ⚠️  Skipping #{entry}: already exists at #{link_path}"
+          puts "   ⚠️  Skipping #{link_name}: already exists at #{link_path}"
           next
         end
 
         create_skill_link(source_path, link_path)
-        puts "   ✓ #{entry}"
+        puts "   ✓ #{link_name}"
         created += 1
       end
 
@@ -175,9 +179,11 @@ module Vibe
 
         skill_entries.each do |entry|
           source_path = File.join(source_skills_dir, entry)
-          link_path = File.join(target_dir, entry)
+          # Use naming format: {repo}-{skill} (e.g., superpowers-brainstorming)
+          link_name = "#{SUPERPOWERS_REPO_NAME}-#{entry}"
+          link_path = File.join(target_dir, link_name)
 
-          issues << "Missing or incorrect skill link for: #{entry}" unless skill_linked?(link_path, source_path)
+          issues << "Missing or incorrect skill link for: #{link_name}" unless skill_linked?(link_path, source_path)
           linked_count += 1 if skill_linked?(link_path, source_path)
         end
       end

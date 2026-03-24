@@ -80,7 +80,7 @@ module Vibe
           5. Verify     — run tests/commands to confirm the fix
 
         Trigger: any test/build/lint failure, or when stuck >15 min.
-        Docs: ~/.claude/skills/systematic-debugging/
+        Docs: ~/.config/claude/skills/systematic-debugging/
       SUMMARY
     end
 

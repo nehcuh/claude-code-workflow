@@ -11,7 +11,7 @@ module Vibe
     attr_reader :output_dir, :templates
 
     def initialize(output_dir: nil)
-      @output_dir = output_dir || File.expand_path('~/.claude/skills/personal')
+      @output_dir = output_dir || File.expand_path('~/.config/claude/skills/personal')
       @templates = load_templates
       FileUtils.mkdir_p(@output_dir)
     end

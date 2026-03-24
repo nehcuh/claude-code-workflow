@@ -168,7 +168,7 @@ module Vibe
       manager.record_review
 
       puts "\n✨ Skill crafting complete!"
-      puts 'Skills saved to: ~/.claude/skills/personal/'
+      puts 'Skills saved to: ~/.config/claude/skills/personal/'
     end
 
     private
@@ -229,7 +229,7 @@ module Vibe
 
         Options for generate:
           --pattern=ID          Pattern ID to generate from
-          --output=DIR          Output directory (default: ~/.claude/skills/personal)
+          --output=DIR          Output directory (default: ~/.config/claude/skills/personal)
 
         Examples:
           vibe skill-craft                          # Interactive crafting session

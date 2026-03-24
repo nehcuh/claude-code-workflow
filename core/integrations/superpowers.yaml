@@ -28,7 +28,8 @@ installation_methods:
 detection:
   paths:
     - ~/.claude/plugins/superpowers
-    - ~/.claude/skills/superpowers-*
+    - ~/.config/claude/skills/superpowers-*
+    - ~/.config/opencode/skills/superpowers-*
     - ~/.config/skills/superpowers
     - ~/superpowers
 
