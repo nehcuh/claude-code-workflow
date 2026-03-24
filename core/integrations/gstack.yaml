@@ -8,6 +8,18 @@ author: Garry Tan (@garrytan)
 license: MIT
 
 installation_methods:
+  unified:
+    preferred: git_clone
+    commands:
+      - git clone https://github.com/garrytan/gstack.git ~/.config/skills/gstack
+      - cd ~/.config/skills/gstack && ./setup
+    requirements:
+      - Bun v1.0+ (for /browse browser binary)
+    notes: |
+      Unified storage location shared across all platforms (Claude Code, OpenCode, etc.)
+      Symlinks will be automatically created in platform-specific directories.
+      Project-level install: cp -Rf ~/.config/skills/gstack .claude/skills/gstack
+
   claude-code:
     preferred: git_clone
     commands:
@@ -16,16 +28,18 @@ installation_methods:
     requirements:
       - Bun v1.0+ (for /browse browser binary)
     notes: |
-      After install, add a gstack section to CLAUDE.md listing available skills.
-      Project-level install: cp -Rf ~/.claude/skills/gstack .claude/skills/gstack
+      Legacy installation method for Claude Code.
+      Consider using unified location (~/.config/skills/gstack) for cross-platform sharing.
 
   opencode:
     preferred: manual
     steps:
-      - Clone to ~/.config/opencode/skills/gstack
+      - Clone to ~/.config/skills/gstack (unified location)
       - Run ./setup to build browser binary
       - Reference skills in AGENTS.md
-    notes: OpenCode can load gstack skills via instruction references
+    notes: |
+      OpenCode can load gstack skills from unified location via symlinks.
+      Legacy path (~/.config/opencode/skills/gstack) is still supported.
 
   manual:
     steps:
@@ -36,8 +50,10 @@ installation_methods:
 
 detection:
   paths:
-    - ~/.claude/skills/gstack
-    - .claude/skills/gstack
+    - ~/.config/skills/gstack      # Unified storage location (preferred)
+    - ~/.claude/skills/gstack      # Claude Code symlink location
+    - ~/.config/opencode/skills/gstack  # OpenCode symlink location (legacy)
+    - .claude/skills/gstack        # Project-level location
   verification:
     method: check_skill_dir
     marker_files:

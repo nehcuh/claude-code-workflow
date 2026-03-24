@@ -267,8 +267,9 @@ module Vibe
     # --- gstack Detection ---
 
     GSTACK_DETECTION_PATHS = [
-      '~/.claude/skills/gstack',
-      '~/.config/opencode/skills/gstack'
+      '~/.config/skills/gstack',      # 统一存储位置（优先）
+      '~/.claude/skills/gstack',      # Claude Code 软链接位置
+      '~/.config/opencode/skills/gstack'  # OpenCode 软链接位置（兼容）
     ].freeze
 
     GSTACK_MARKER_FILES = %w[SKILL.md VERSION setup].freeze

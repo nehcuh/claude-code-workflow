@@ -17,15 +17,16 @@ module Vibe
     ].freeze
 
     GSTACK_PLATFORM_PATHS = {
-      'claude-code' => '~/.claude/skills/gstack',
-      'opencode' => '~/.config/opencode/skills/gstack'
+      'unified' => '~/.config/skills/gstack',      # 统一存储位置（优先）
+      'claude-code' => '~/.claude/skills/gstack',  # Claude Code 软链接位置
+      'opencode' => '~/.config/opencode/skills/gstack'  # OpenCode 软链接位置（兼容）
     }.freeze
 
     CLONE_TIMEOUT = 60
     MAX_RETRIES = 3
 
     def self.install_gstack(platform = nil)
-      platform ||= 'claude-code'
+      platform ||= 'unified'
 
       unless system('git', '--version', out: File::NULL, err: File::NULL)
         puts
@@ -37,7 +38,7 @@ module Vibe
       puts '   Installing gstack Skill Pack...'
 
       target_dir = File.expand_path(
-        GSTACK_PLATFORM_PATHS[platform] || GSTACK_PLATFORM_PATHS['claude-code']
+        GSTACK_PLATFORM_PATHS[platform] || GSTACK_PLATFORM_PATHS['unified']
       )
 
       if Dir.exist?(target_dir) && gstack_markers_present?(target_dir)
@@ -114,9 +115,9 @@ module Vibe
     end
 
     def self.verify_installation(platform = nil)
-      platform ||= 'claude-code'
+      platform ||= 'unified'
       target_dir = File.expand_path(
-        GSTACK_PLATFORM_PATHS[platform] || GSTACK_PLATFORM_PATHS['claude-code']
+        GSTACK_PLATFORM_PATHS[platform] || GSTACK_PLATFORM_PATHS['unified']
       )
 
       issues = []
