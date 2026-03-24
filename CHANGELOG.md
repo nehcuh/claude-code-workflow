@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Auto Memory Trigger System** (`vibe memory`) (2026-03-24)
+  - `lib/vibe/memory_trigger.rb` — automatic error capture and recording (280 lines)
+  - `lib/vibe/cli/memory_commands.rb` — CLI commands for memory management (190 lines)
+  - `test/unit/test_memory_trigger.rb` — unit tests (9 tests, 35 assertions, 100% pass)
+  - Auto-capture command execution errors with pattern deduplication
+  - Auto-numbering (P001, P002...) for project knowledge entries
+  - Configurable threshold (default: 2 occurrences before recording)
+  - Commands: `record`, `stats`, `enable`, `disable`, `status`
+  - Addresses P0 priority: enhance memory system value through automation
+
 ### Fixed
 - **grader: `determine_grade` Symbol/String type mismatch** — `linter` and `security` warning grades never triggered because `TYPES[type]` (String) was compared against `type` (Symbol) in the `case` statement; fix passes `TYPES[type]` to `determine_grade`, making warning paths reachable for the first time
 - **grader: `@language` instance variable coupling** — `write_temp_candidate` depended on hidden `@language` state set by `pass_at_k`; refactored to explicit parameter, eliminating the implicit coupling
