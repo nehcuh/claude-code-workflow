@@ -506,6 +506,8 @@ bin/vibe build warp --overlay my.yaml   # 或显式指定
 - `examples/node-nvm-overlay.yaml` — Node/nvm 项目偏好
 - `examples/project-overlay.yaml` — 严格审查流程示例
 
+**OpenCode 用户注意**：如果访问技能文件时遇到权限错误，请参阅 [外部目录权限配置](docs/project-overlays.md#opencode-external-directory-permission) 了解配置选项。
+
 ## 生成的配置文件
 
 `bin/vibe build` 为每个目标生成不同的配置文件：

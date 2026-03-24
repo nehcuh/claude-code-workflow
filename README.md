@@ -590,9 +590,11 @@ vibe apply claude-code
 vibe apply claude-code --overlay ./my-overlay.yaml
 ```
 
+**OpenCode users**: If you encounter permission errors when accessing skill files, see [External Directory Permission](docs/project-overlays.md#opencode-external-directory-permission) for configuration options.
+
 **Learn more:**
 - [Overlay Tutorial](docs/overlay-tutorial.md) - Complete guide with examples
-- [Project Overlays](docs/project-overlays.md) - Technical reference
+- [Project Overlays](docs/project-overlays.md) - Technical reference and OpenCode permission settings
 - [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 
 ### 3. Try the Workflow
