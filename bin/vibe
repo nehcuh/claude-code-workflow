@@ -29,6 +29,7 @@ require_relative '../lib/vibe/cli/toolchain_commands'
 require_relative '../lib/vibe/cli/security_commands'
 require_relative '../lib/vibe/cli/skill_craft_commands'
 require_relative '../lib/vibe/cli/memory_commands'
+require_relative '../lib/vibe/memory_autoload'
 require_relative '../lib/vibe/skill_manager'
 
 # Main CLI class for the vibe command-line tool.
@@ -53,8 +54,9 @@ class VibeCLI
   include Vibe::SecurityCommands
   include Vibe::SkillCraftCommands
   include Vibe::MemoryCommands
+  include Vibe::MemoryAutoload
 
-  attr_accessor :skip_integrations
+  attr_accessor :skip_integrations, :skip_memory_autoload
 
   SUPPORTED_TARGETS = Vibe::PlatformUtils::VALID_TARGETS \
     unless defined?(SUPPORTED_TARGETS)
@@ -153,6 +155,10 @@ class VibeCLI
         options[:force] = true
       end
 
+      opts.on('--skip-memory-autoload', 'Skip memory auto-load configuration prompt') do
+        @skip_memory_autoload = true
+      end
+
       opts.on('-h', '--help', 'Show help') do
         puts opts
         puts
@@ -222,6 +228,9 @@ class VibeCLI
 
     puts "Applied #{target} (#{profile_name})#{overlay_label(manifest)} " \
          "-> #{destination_root}"
+
+    # Memory auto-load configuration (project-level only)
+    configure_memory_autoload_for_project(destination_root, target) if project_level
 
     # Check for new skills after applying
     check_skills_after_apply(target)
@@ -526,7 +535,7 @@ class VibeCLI
     <<~TEXT
       Usage:
         vibe init --platform PLATFORM [--force|--verify|--suggest]
-        vibe apply PLATFORM [--profile PROFILE] [--overlay FILE] [--force]
+        vibe apply PLATFORM [--profile PROFILE] [--overlay FILE] [--force] [--skip-memory-autoload]
         vibe quickstart [--force]
         vibe onboard [--skip-deploy]
         vibe build TARGET [--profile PROFILE] [--output DIR] [--overlay FILE]
@@ -685,6 +694,34 @@ class VibeCLI
 
     puts "Applied #{target} (#{profile_name})#{overlay_label(manifest)} " \
          "-> #{destination_root}"
+
+    # Memory auto-load configuration (project-level only)
+    configure_memory_autoload_for_project(destination_root, target) if project_level
+  end
+
+  # Configure memory auto-load for project (used by run_use)
+  def configure_memory_autoload_for_project(destination_root, target)
+    return if @skip_memory_autoload
+
+    # Check if already configured
+    existing = existing_autoload_config(destination_root)
+    if existing && existing['enabled']
+      puts
+      puts '📋 记忆自动加载已配置'
+      puts "   平台: #{existing['platforms'].join(', ')}"
+      puts "   配置时间: #{existing['configured_at']}"
+      puts
+      puts '   提示: 使用 `vibe memory autoload --disable` 可禁用'
+      return
+    end
+
+    # Detect memory files
+    detection = detect_memory_files(destination_root)
+    return unless detection[:found]
+
+    # Interactive prompt and configuration
+    config = prompt_memory_autoload(detection, target, destination_root)
+    configure_memory_autoload(config, destination_root, target) if config[:enabled]
   end
 
   def run_inspect(argv)
@@ -902,6 +939,11 @@ class VibeCLI
       opts.on('--skip-integrations',
               'Disable automatic detection of external tools (Superpowers, RTK)') do
         @skip_integrations = true
+      end
+
+      opts.on('--skip-memory-autoload',
+              'Skip memory auto-load configuration prompt') do
+        @skip_memory_autoload = true
       end
 
       opts.on('-h', '--help', 'Show help') do

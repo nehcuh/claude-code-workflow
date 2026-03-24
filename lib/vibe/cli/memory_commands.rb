@@ -23,6 +23,8 @@ module Vibe
         run_memory_disable
       when 'status'
         run_memory_status
+      when 'autoload'
+        run_memory_autoload(argv)
       when nil, 'help', '--help', '-h'
         puts memory_usage
       else
@@ -129,7 +131,163 @@ module Vibe
       end
     end
 
+    # vibe memory autoload - Manage memory auto-load configuration
+    def run_memory_autoload(argv)
+      action = argv.shift
+
+      case action
+      when 'enable'
+        enable_memory_autoload
+      when 'disable'
+        disable_memory_autoload
+      when 'status', nil
+        show_memory_autoload_status
+      else
+        raise Vibe::ValidationError,
+              "Unknown autoload action: #{action}\n\n#{memory_autoload_usage}"
+      end
+    end
+
     private
+
+    def enable_memory_autoload
+      puts '📋 Enabling memory auto-load...'
+      puts
+
+      detection = detect_memory_files(Dir.pwd)
+      unless detection[:found]
+        puts '❌ No memory files found in this project'
+        puts '   Expected: memory/session.md, memory/project-knowledge.md, memory/overview.md'
+        exit 1
+      end
+
+      puts 'Detected memory files:'
+      detection[:files].each do |file|
+        size = File.size(File.join(Dir.pwd, file))
+        puts "  ✓ #{file} (#{format_bytes(size)})"
+      end
+      puts
+
+      puts 'Select platforms to enable:'
+      puts '  [1] Claude Code only'
+      puts '  [2] OpenCode only'
+      puts '  [3] Both platforms'
+      puts '  [0] Cancel'
+
+      choice = ask_choice('Enter choice (0-3)', %w[0 1 2 3])
+
+      if choice == '0'
+        puts 'Cancelled'
+        return
+      end
+
+      platforms = case choice
+                  when '1' then ['claude-code']
+                  when '2' then ['opencode']
+                  when '3' then %w[claude-code opencode]
+                  end
+
+      config = { enabled: true, platforms: platforms }
+      configure_memory_autoload(config, Dir.pwd, 'manual')
+
+      puts
+      puts '✅ Memory auto-load enabled for: ' + platforms.join(', ')
+    end
+
+    def disable_memory_autoload
+      config_path = File.join(Dir.pwd, '.vibe', 'config.yaml')
+
+      if File.exist?(config_path)
+        config = YAML.safe_load(File.read(config_path), permitted_classes: [Date, Time]) || {}
+        if config['memory_autoload']
+          config['memory_autoload']['enabled'] = false
+          File.write(config_path, YAML.dump(config))
+          puts '✅ Memory auto-load disabled'
+        else
+          puts '⚠️  Memory auto-load was not configured'
+        end
+      else
+        puts '⚠️  No configuration found'
+      end
+
+      # Also remove from Claude Code settings
+      settings_path = File.join(ENV['HOME'] || Dir.home, '.claude', 'settings.json')
+      if File.exist?(settings_path)
+        settings = JSON.parse(File.read(settings_path))
+        if settings['hooks'] && settings['hooks']['preCommand']
+          settings['hooks']['preCommand'].delete_if do |cmd|
+            cmd.include?('memory/session.md') ||
+              cmd.include?('memory/project-knowledge.md') ||
+              cmd.include?('memory/overview.md')
+          end
+          File.write(settings_path, JSON.pretty_generate(settings))
+          puts '   Removed from Claude Code settings'
+        end
+      end
+
+      # Remove from OpenCode configurations
+      remove_opencode_autoload(File.join(Dir.pwd, 'opencode.json'))
+      remove_opencode_autoload(File.join(ENV['HOME'] || Dir.home, '.config', 'opencode', 'opencode.json'))
+    end
+
+    def remove_opencode_autoload(opencode_json_path)
+      return unless File.exist?(opencode_json_path)
+
+      config = JSON.parse(File.read(opencode_json_path))
+      return unless config['instructions']
+
+      memory_instruction = '.vibe/opencode/memory-context.md'
+      if config['instructions'].include?(memory_instruction)
+        config['instructions'].delete(memory_instruction)
+        File.write(opencode_json_path, JSON.pretty_generate(config))
+        puts "   Removed from #{opencode_json_path}"
+      end
+    rescue StandardError => e
+      puts "   ⚠️  Failed to update #{opencode_json_path}: #{e.message}"
+    end
+
+    def show_memory_autoload_status
+      config = existing_autoload_config(Dir.pwd)
+
+      puts '📋 Memory Auto-Load Status'
+      puts
+
+      if config && config['enabled']
+        puts 'Status: ✅ Enabled'
+        puts "Platforms: #{config['platforms'].join(', ')}"
+        puts "Configured at: #{config['configured_at']}"
+      else
+        puts 'Status: ❌ Disabled'
+        puts
+        puts 'Run `vibe memory autoload enable` to enable'
+      end
+
+      detection = detect_memory_files(Dir.pwd)
+      if detection[:found]
+        puts
+        puts 'Memory files detected:'
+        detection[:files].each do |file|
+          size = File.size(File.join(Dir.pwd, file))
+          puts "  ✓ #{file} (#{format_bytes(size)})"
+        end
+      end
+    end
+
+    def memory_autoload_usage
+      <<~USAGE
+        Usage: vibe memory autoload <action>
+
+        Actions:
+          enable   Enable memory auto-load for this project
+          disable  Disable memory auto-load
+          status   Show current status
+
+        Examples:
+          vibe memory autoload enable
+          vibe memory autoload disable
+          vibe memory autoload status
+      USAGE
+    end
 
     def parse_memory_record_options(argv)
       options = {}
@@ -173,11 +331,13 @@ module Vibe
           enable    Enable auto memory trigger
           disable   Disable auto memory trigger
           status    Show current status
+          autoload  Manage memory auto-load configuration
 
         Examples:
           vibe memory record --problem "Test failed" --solution "Fix assertion"
           vibe memory stats
           vibe memory enable
+          vibe memory autoload enable
       USAGE
     end
   end
