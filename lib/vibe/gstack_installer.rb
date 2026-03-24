@@ -26,7 +26,8 @@ module Vibe
     MAX_RETRIES = 3
 
     def self.install_gstack(platform = nil)
-      platform ||= 'unified'
+      # 始终使用统一存储位置，然后通过软链接共享
+      target_dir = File.expand_path(GSTACK_PLATFORM_PATHS['unified'])
 
       unless system('git', '--version', out: File::NULL, err: File::NULL)
         puts
@@ -37,12 +38,10 @@ module Vibe
       puts
       puts '   Installing gstack Skill Pack...'
 
-      target_dir = File.expand_path(
-        GSTACK_PLATFORM_PATHS[platform] || GSTACK_PLATFORM_PATHS['unified']
-      )
-
+      # 检查统一位置是否已安装
       if Dir.exist?(target_dir) && gstack_markers_present?(target_dir)
         puts "   ✓ gstack already installed at #{target_dir}"
+        create_platform_symlinks(target_dir)
         return run_setup(target_dir)
       end
 
@@ -72,6 +71,7 @@ module Vibe
 
       puts "   ✓ Cloned successfully from #{used_url}"
 
+      create_platform_symlinks(target_dir)
       run_setup(target_dir)
     rescue StandardError => e
       puts "   ❌ Installation failed: #{e.message}"
@@ -85,6 +85,24 @@ module Vibe
       unless File.exist?(setup_script)
         puts '   ⚠️  setup script not found, skipping post-install'
         puts '   ✅ gstack cloned but /browse may not work without running setup'
+        return true
+      end
+
+      # 预检查 Bun 环境
+      bun_installed = check_bun_installed
+      unless bun_installed
+        puts
+        puts '   ⚠️  Bun is not installed.'
+        puts '   gstack skills (review, ship, etc.) will work fine without Bun.'
+        puts '   However, browser-based skills (/browse, /qa) require Bun v1.0+.'
+        puts
+        puts '   To install Bun:'
+        puts '   • macOS/Linux: curl -fsSL https://bun.sh/install | bash'
+        puts '   • Windows: winget install Oven-sh.Bun'
+        puts '   • Or visit: https://bun.sh'
+        puts
+        puts "   After installing Bun, run: cd #{target_dir} && ./setup"
+        puts
         return true
       end
 
@@ -218,6 +236,71 @@ module Vibe
 
     def self.gstack_markers_present?(dir)
       %w[SKILL.md VERSION setup].all? { |f| File.exist?(File.join(dir, f)) }
+    end
+
+    # 检查 Bun 是否已安装（v1.0+）
+    def self.check_bun_installed
+      _stdout, _stderr, status = Open3.capture3('bun', '--version')
+      return false unless status.success?
+
+      version = _stdout.strip
+      return false if version.nil? || version.empty?
+
+      # 解析版本号，确保 >= 1.0.0
+      begin
+        major = version.to_s.match(/v?(\d+)\./)&.captures&.first&.to_i
+        major && major >= 1
+      rescue StandardError
+        false
+      end
+    end
+
+    # 为各平台创建软链接到统一存储位置
+    def self.create_platform_symlinks(source_dir)
+      puts
+      puts '   Creating platform symlinks...'
+
+      # 需要创建软链接的平台路径（排除 unified 自身）
+      symlink_paths = {
+        'claude-code' => GSTACK_PLATFORM_PATHS['claude-code'],
+        'opencode' => GSTACK_PLATFORM_PATHS['opencode']
+      }
+
+      symlink_paths.each do |platform, path|
+        symlink_path = File.expand_path(path)
+        
+        # 如果已经是正确的软链接，跳过
+        if File.symlink?(symlink_path) && File.readlink(symlink_path) == source_dir
+          puts "   ✓ #{platform} symlink already correct"
+          next
+        end
+
+        # 如果存在但不是软链接，跳过并警告
+        if File.exist?(symlink_path) && !File.symlink?(symlink_path)
+          puts "   ⚠️  #{platform} path exists but is not a symlink (#{symlink_path})"
+          next
+        end
+
+        # 如果存在旧的错误软链接，删除它
+        if File.symlink?(symlink_path)
+          puts "   → Updating #{platform} symlink"
+          FileUtils.rm(symlink_path)
+        else
+          puts "   → Creating #{platform} symlink"
+        end
+
+        # 创建父目录
+        parent_dir = File.dirname(symlink_path)
+        FileUtils.mkdir_p(parent_dir) unless Dir.exist?(parent_dir)
+
+        # 创建软链接
+        begin
+          FileUtils.ln_s(source_dir, symlink_path)
+          puts "   ✓ #{platform}: #{symlink_path}"
+        rescue StandardError => e
+          puts "   ⚠️  Failed to create #{platform} symlink: #{e.message}"
+        end
+      end
     end
   end
 end

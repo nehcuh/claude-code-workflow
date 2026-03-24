@@ -3,6 +3,17 @@
 ## Session Handoff
 
 <!-- handoff:start -->
+### 2026-03-24 gstack 安装器 Bugfix — ✅ 已修复
+
+- **问题**: 用户重新 init 时 gstack 安装到 `~/.config/opencode/skills/gstack` 而非统一路径 `~/.config/skills/gstack`
+- **修复**: lib/vibe/gstack_installer.rb
+  - 强制使用 unified 路径作为物理存储
+  - 自动创建平台软链接（Claude Code、OpenCode）
+  - 添加 Bun 环境预检查，未安装时给出友好指引
+- **测试**: 15 runs, 29 assertions, 0 failures
+- **教训**: P009（安装器路径问题）、P010（AI 会话结束指令识别）
+- **下一步**: 用户验证修复效果，测试重新 init 流程
+
 ### 2026-03-24 Modern CLI Tools Detection — ✅ 已合并到 main
 
 - **完成**: 4 阶段完整实现 + 评审修复，已合并到 main 分支
@@ -16,10 +27,6 @@
 - **Commits**: f9cca44, 7c95bea, 5e2b05d, 7e69fed, a32d807（修复）
 - **评审评分**: 9.4/10 ⭐⭐⭐⭐⭐
 - **下一步**: 继续 Q2 路线图其他 Phase（Token 优化 / RIPER/Parry）
-
-### 2026-03-23 Modern CLI Tools Detection — PRD + 设计评审
-- **完成**: PRD（826行）、实现计划（1000行）、评审请求文档
-- **GLM-5 评审**: 通过，3 必须修复已更新到计划
 <!-- handoff:end -->
 
 
@@ -30,4 +37,3 @@
 - **教训**: 功能开发必须同步更新 7 处文档（已记录到 MEMORY.md）
 - **下一步**: 从 docs/roadmap-2026-q2.md 选择 Phase 2（Token 优化）或 Phase 6（RIPER/Parry）开始
 - **生态研究**: 已分析 everything-claude-code，结论保存在 memory/ecosystem-research.md
-
