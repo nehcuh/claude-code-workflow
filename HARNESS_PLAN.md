@@ -112,5 +112,25 @@ Harness Engineering 的三大核心维度：
 
 ## 相关资源
 
-- [OpenAI Harness Engineering](https://openai.com/index/harness-engineering/)
-- [InfoQ 深度解析](https://www.infoq.com/news/2026/02/openai-harness-engineering-codex/)
+### 核心理念来源
+
+- **[OpenAI Harness Engineering](https://openai.com/index/harness-engineering/)** — OpenAI 官方实践报告（2026年2月）
+  - 基于 5 个月、100 万行代码的 Codex Agent 实验
+  - 三大核心维度：Context Engineering / Architectural Constraints / Entropy Management
+
+- **[InfoQ 深度解析](https://www.infoq.com/news/2026/02/openai-harness-engineering-codex/)** — 中文技术细节解读
+
+### 关键概念定义
+
+| 概念 | 定义 | 来源 |
+|------|------|------|
+| **渐进式披露** (Progressive Disclosure) | 按需提供上下文，避免信息过载 | UI/UX 设计原则 → Harness Engineering |
+| **机械约束** (Mechanical Enforcement) | 用工具和自动化替代人工审查 | Harness Engineering 核心原则 |
+| **熵管理** (Entropy Management) | 持续清理技术债务和模式漂移 | 软件工程 + Harness Engineering |
+| **约束前置** (Shift-Left) | 在开发早期而非后期发现问题 | DevOps 最佳实践 |
+
+### 设计模式参考
+
+- **Adapter Pattern** — 用于 target/ 目录的多平台适配
+- **Configuration as Code** — core/ 目录的 YAML 配置即代码
+- **Overlay Pattern** — .vibe/overlay.yaml 的增量配置机制

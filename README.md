@@ -911,6 +911,16 @@ Route by capability first, then map it to the active provider profile:
 
 System optimization happens on Sundays. On other days, if you try to tweak your workflow instead of shipping, Claude will intercept and remind you to focus on output. Configurable to any cadence you prefer.
 
+### Harness Engineering
+
+This workflow implements [OpenAI's Harness Engineering](https://openai.com/index/harness-engineering/) methodology (Feb 2026) — a systematic approach to managing AI agent workflows through three core dimensions:
+
+- **Context Engineering**: Progressive disclosure keeps CLAUDE.md under 150 lines; deep content lives in `docs/claude/` and is loaded on-demand via explicit `read` commands
+- **Architectural Constraints**: Mechanical enforcement via `scripts/verify-harness.sh` — line count limits, dead link detection, and pre-commit hooks prevent documentation drift
+- **Entropy Management**: `scripts/entropy-scan.sh` implements TTL-based garbage collection for technical debt, preventing accumulation of outdated patterns
+
+The key insight: don't optimize the model, optimize the harness that guides it. Local constraints (pre-commit hooks) > global policies (CI checks) > conventions (documentation).
+
 ## Customization Guide
 
 ### Portable-first workflow
