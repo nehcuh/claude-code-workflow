@@ -68,40 +68,88 @@ module Vibe
     end
 
     def render_target_entrypoint_md(target_name, manifest, extra_sections: nil)
-      sp_info = verify_superpowers
-      rtk_info = verify_rtk
-      integrations = render_integrations_section(target_name, sp_info, rtk_info)
+      integrations_ref = render_integrations_reference(target_name)
 
       <<~MD
-        # Vibe workflow for #{target_name}
+        # #{target_name} Project Config
 
-        Generated from the portable `core/` spec with profile `#{manifest['profile']}`.
-        #{integrations}
+        > Harness Engineering: Progressive Disclosure Mode
+
+        ## ⚠️ CRITICAL AGENT INSTRUCTION
+
+        **Do NOT guess or hallucinate rules.** When you need information from any category below, you **MUST** use the `read` tool to fetch the file contents before proceeding.
+
+        ## Quick Navigation
+
+        | Need | Go To |
+        |------|-------|
+        | Skill selection | `read #{config_dir(target_name)}/skills/routing.md` |
+        | Safety rules | `read #{config_dir(target_name)}/safety.md` |
+        | Behavior policies | `read #{config_dir(target_name)}/behavior-policies.md` |
+        | Task routing | `read #{config_dir(target_name)}/task-routing.md` |
+
+        ## Policy Hierarchy (Override Order)
+
+        When rules conflict, follow this priority:
+
+        1. **Project-specific docs** — Highest priority (if exists)
+        2. **`#{config_dir(target_name)}/`** — Global baseline policies (fallback)
+
+        ## Critical Rules (P0)
+
+        #{bullet_policy_summary(filtered_policies(manifest, %w[always_on routing safety])).lines.first(4).join.chomp}
+
+        ## Skill Priority (When Conflict)
+
+        ```
+        gstack (short) > superpowers (full) > builtin
+        ```
+
+        ## Optional Integrations
+
+        #{integrations_ref}
+
+        ## Reference
+
+        See `#{config_dir(target_name)}/` for full policy docs.
         Applied overlay: #{overlay_sentence(manifest)}
-
-        #{target_entrypoint_intent(target_name)}
-
-        ## Non-negotiable rules
-
-        #{bullet_policy_summary(filtered_policies(manifest, %w[always_on routing safety]))}
-
-        ## Capability routing
-
-        #{bullet_mapping(manifest['profile_mapping'])}
-
-        ## Mandatory portable skills
-
-        #{bullet_skill_summary(mandatory_skills(manifest))}
-
-        #{extra_sections}
-
-        ## Safety floor
-
-        #{bullet_target_actions(manifest)}
       MD
     end
 
     private
+
+    def config_dir(target_name)
+      case target_name
+      when 'OpenCode'
+        '.vibe/opencode'
+      else
+        '.vibe/claude-code'
+      end
+    end
+
+    def render_integrations_reference(target_name)
+      sp_info = verify_superpowers
+      rtk_info = verify_rtk
+
+      lines = []
+
+      # Superpowers reference
+      if sp_info[:installed]
+        lines << "- **Superpowers**: ✅ Installed (`#{sp_info[:location]}`)"
+      else
+        lines << "- **Superpowers**: ❌ Not installed — `vibe install superpowers` to enable"
+      end
+
+      # RTK reference
+      if rtk_info[:installed]
+        hook_note = rtk_info[:hook_configured] ? 'hook ✅' : 'run `rtk init --global`'
+        lines << "- **RTK**: ✅ Installed (v#{rtk_info[:version] || 'unknown'}, #{hook_note})"
+      else
+        lines << "- **RTK**: ❌ Not installed — `brew install rtk`"
+      end
+
+      lines.join("\n")
+    end
 
     def render_claude_project_md(manifest)
       config_dir = platform_config_dir('claude-code')
