@@ -3,6 +3,17 @@
 ## Session Handoff
 
 <!-- handoff:start -->
+### 2026-03-27 preCommand hook 格式 Bug 修复 — ✅ 已修复
+
+- **问题**: Claude Code 启动时报错 `Invalid key in record`
+- **根因**: `lib/vibe/memory_autoload.rb:217` 将字符串直接推入 preCommand 数组，但 Claude Code 要求对象格式 `{"command": "..."}`
+- **修复**:
+  - 推入对象: `{ 'command' => memory_command }`
+  - 删除逻辑兼容新旧格式（向后兼容）
+- **文件**: `lib/vibe/memory_autoload.rb` (+8/-7 行)
+- **记录**: P012（技术陷阱已记录到 project-knowledge.md）
+- **状态**: ✅ 代码已修复，待提交
+
 ### 2026-03-25 Scene-driven skill routing — ✅ 已完成
 
 - **功能**: gstack 和 superpowers 技能包的场景驱动路由系统

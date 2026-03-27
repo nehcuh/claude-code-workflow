@@ -207,14 +207,15 @@ module Vibe
 
       # Remove existing memory commands to avoid duplicates
       settings['hooks']['preCommand'].delete_if do |cmd|
-        cmd.include?('memory/session.md') ||
-          cmd.include?('memory/project-knowledge.md') ||
-          cmd.include?('memory/overview.md') ||
-          cmd.include?('memory_autoload')
+        cmd_str = cmd.is_a?(Hash) ? cmd['command'] : cmd
+        cmd_str.include?('memory/session.md') ||
+          cmd_str.include?('memory/project-knowledge.md') ||
+          cmd_str.include?('memory/overview.md') ||
+          cmd_str.include?('memory_autoload')
       end
 
-      # Add new command
-      settings['hooks']['preCommand'] << memory_command
+      # Add new command (as object with 'command' key, not string)
+      settings['hooks']['preCommand'] << { 'command' => memory_command }
 
       FileUtils.mkdir_p(File.dirname(settings_path))
       File.write(settings_path, JSON.pretty_generate(settings))
