@@ -29,6 +29,24 @@
 - **提交**: 678d9e6，5 文件，+841/-2 行，16 测试 50 断言全绿
 - **状态**: 已推送到 origin/main，功能可用
 - **下一步**: 验证功能在实际项目中的效果
+### 2026-03-27 Harness Engineering 实施 — ✅ 已完成
+
+- **背景**: 基于 OpenAI Harness Engineering 理念优化项目提示词管理架构
+- **核心改进**:
+  1. **渐进式上下文披露**: CLAUDE.md 从 83 行精简至 52 行，深层文档拆分至 `docs/claude/`
+  2. **机械约束**: `scripts/verify-harness.sh` 强制检查行数、死链、目录结构
+  3. **约束前置**: `scripts/install-hooks.sh` 绑定 pre-commit hook，本地阻断违规提交
+  4. **熵管理**: `scripts/entropy-scan.sh` 实现 TTL 技术债务监控（90 天过期告警）
+- **关键文件**:
+  - `CLAUDE.md` — 精简导航 + 显式 Agent 指令（`read` 命令格式）
+  - `docs/claude/skills/routing.md` — 技能选择指南
+  - `docs/claude/safety.md` — 安全策略 + Golden Principles
+  - `golden-principles.yaml` — 可机械执行的规则定义
+  - `.github/workflows/harness-check.yml` — CI 自动验证
+- **验证结果**: 所有检查通过，pre-commit hook 工作正常
+- **分支**: develop
+- **下一步**: 实际使用验证后合并到 main
+
 <!-- handoff:end -->
 
 ## Project Overview
