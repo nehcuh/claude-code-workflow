@@ -196,7 +196,7 @@ module Vibe
           files.each do |name, (path, lines)|
             next unless File.exist?(path);
             content = File.readlines(path).first(lines).join;
-            puts "=== #{name.upcase} ===";
+            puts "=== \#{name.upcase} ===";
             puts content;
             puts
           end
