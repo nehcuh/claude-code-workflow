@@ -4,8 +4,13 @@
 
 <!-- Format: - [ ] [DATE] Description -->
 
-- [ ] [2026-03-27] Harness Engineering 初始实施 — 验证阶段进行中
 - [ ] [2026-03-27] 混合文件扩展名：同时存在 .yaml 和 .yml 文件（由 entropy-scan.sh 发现）
+
+## Resolved Issues
+
+<!-- Format: - [x] [DATE] Description → Resolution [RESOLVED_DATE] -->
+
+- [x] [2026-03-27] Harness Engineering 初始实施 — 验证阶段进行中 → 已完成并合并到 main [2026-03-27]
 
 ## 验证记录
 
