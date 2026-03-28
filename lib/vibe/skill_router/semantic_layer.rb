@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../defaults'
+
 module Vibe
   class SkillRouter
     # Layer 3: Enhanced semantic matching
@@ -93,9 +95,9 @@ module Vibe
 
       def semantic_score_to_confidence(score)
         case score
-        when 0.7..1.0 then :high
-        when 0.5...0.7 then :medium
-        when 0.3...0.5 then :low
+        when Defaults::SEMANTIC_HIGH..1.0 then :high
+        when Defaults::SEMANTIC_MIN_SCORE...Defaults::SEMANTIC_HIGH then :medium
+        when Defaults::SEMANTIC_LOW...Defaults::SEMANTIC_MIN_SCORE then :low
         else :very_low
         end
       end

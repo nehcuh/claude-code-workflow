@@ -70,7 +70,7 @@ module Vibe
         # Character-level similarity for typos
         if score < Defaults::SEMANTIC_MIN_SCORE
           char_score = character_similarity(input_downcase, candidate_downcase)
-          score = [score, char_score * 0.7].max
+          score = [score, char_score * Defaults::CHAR_SIMILARITY_WEIGHT].max
         end
 
         { candidate: candidate, score: score, match_type: :fuzzy }

@@ -6,6 +6,7 @@ require 'timeout'
 require 'rbconfig'
 require_relative 'user_interaction'
 require_relative 'platform_utils'
+require_relative 'defaults'
 
 module Vibe
   # Installer for the Superpowers skill pack (clones repo and links skills).
@@ -21,7 +22,7 @@ module Vibe
     SUPERPOWERS_DEFAULT_INSTALL_DIR = File.expand_path('~/.config/skills/superpowers')
 
     # Clone configuration
-    CLONE_TIMEOUT = 60 # seconds
+    CLONE_TIMEOUT = Defaults::CLONE_TIMEOUT
     MAX_RETRIES = 3
 
     # target_dir: the skills directory where individual skill symlinks are created.

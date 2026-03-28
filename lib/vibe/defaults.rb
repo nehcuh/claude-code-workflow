@@ -5,12 +5,21 @@ module Vibe
   # Individual modules may override these via constructor config.
   module Defaults
     # --- Confidence thresholds ---
-    CONFIDENCE_HIGH   = 0.8
-    CONFIDENCE_MEDIUM = 0.6
-    CONFIDENCE_LOW    = 0.4
+    CONFIDENCE_HIGH     = 0.8
+    CONFIDENCE_MEDIUM   = 0.6
+    CONFIDENCE_LOW      = 0.4
+    CONFIDENCE_VERY_HIGH = 0.9
+    CONFIDENCE_DEFAULT  = 0.5
 
     # --- Semantic matching ---
-    SEMANTIC_MIN_SCORE = 0.5
+    SEMANTIC_MIN_SCORE  = 0.5
+    SEMANTIC_HIGH       = 0.7
+    SEMANTIC_LOW        = 0.3
+    CHAR_SIMILARITY_WEIGHT = 0.7
+
+    # --- Scenario matching ---
+    SCENARIO_VERY_HIGH  = 0.8
+    SCENARIO_MEDIUM     = 0.4
 
     # --- Pattern analysis ---
     MIN_OCCURRENCES       = 3

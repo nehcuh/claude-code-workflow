@@ -5,6 +5,7 @@ require 'securerandom'
 require 'time'
 require 'fileutils'
 require_relative 'utils'
+require_relative 'defaults'
 
 module Vibe
   # Manages instinct learning system - automatic pattern extraction from sessions
@@ -85,7 +86,7 @@ module Vibe
       instinct = {
         'id' => SecureRandom.uuid,
         'pattern' => attributes[:pattern] || attributes['pattern'],
-        'confidence' => attributes[:confidence] || attributes['confidence'] || 0.5,
+        'confidence' => attributes[:confidence] || attributes['confidence'] || Defaults::CONFIDENCE_DEFAULT,
         'source_sessions' => attributes[:source_sessions] ||
                              attributes['source_sessions'] || [],
         'usage_count' => 0,
@@ -282,7 +283,7 @@ module Vibe
     # @param filters [Hash] Optional filters
     # @return [String] Formatted context string
     def load_to_context(filters = {})
-      filters[:min_confidence] ||= 0.7
+      filters[:min_confidence] ||= Defaults::MIN_SUCCESS_RATE
       filters[:status] ||= 'active'
       filters[:sort_by] ||= :confidence
 

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../defaults'
+
 module Vibe
   class SkillRouter
     # Layer 2: Scenario-based matching
@@ -110,9 +112,9 @@ module Vibe
 
       def score_to_confidence(score)
         case score
-        when 0.8..1.0 then :very_high
-        when 0.6...0.8 then :high
-        when 0.4...0.6 then :medium
+        when Defaults::SCENARIO_VERY_HIGH..1.0 then :very_high
+        when Defaults::CONFIDENCE_MEDIUM...Defaults::SCENARIO_VERY_HIGH then :high
+        when Defaults::SCENARIO_MEDIUM...Defaults::CONFIDENCE_MEDIUM then :medium
         when 0.3...0.4 then :low
         else :very_low
         end
