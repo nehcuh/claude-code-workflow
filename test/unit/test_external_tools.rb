@@ -86,7 +86,7 @@ class TestExternalTools < Minitest::Test
   end
 
   def test_module_has_required_methods
-    instance_methods = Vibe::ExternalTools.instance_methods(false)
+    instance_methods = Vibe::ExternalTools.instance_methods
 
     required_methods = %i[cmd_exist? load_integration_config list_integrations
                           detect_superpowers]
