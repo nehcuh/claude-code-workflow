@@ -3,60 +3,26 @@
 ## Session Handoff
 
 <!-- handoff:start -->
+### 2026-03-28 VibeSOP 全面评审 + 修复 — ✅ 10 commits
+
+- **评审发现**: 测试无法运行(21%覆盖率)、3 个 500+ 行大类、43 个碎片文档、硬编码常量分散
+- **修复清单**:
+  1. 清理 git 状态（删除 11 个废弃模块，提交新模块和修改）
+  2. 修复测试套件（6 个 failure/error → 全绿）
+  3. 拆分 3 个大类为 18 个子模块（SkillRouter/DocRendering/ExternalTools）
+  4. 删除 17 个过程性文档（-7026 行）
+  5. 提取硬编码常量到 `lib/vibe/defaults.rb`（6+ 模块引用）
+  6. 补全遗漏常量迁移（superpowers_installer, skill_router 子模块）
+  7. 新增 6 个测试文件（+249 tests, 72% coverage）
+- **关键决策**: 后台 agent 改坏测试文件时，用 `git checkout HEAD -- <file>` 恢复
+- **陷阱记录**: P013（agent API 不匹配）、P014（并行文件覆盖）、P015（git checkout 恢复）
+- **最终状态**: 1424 tests green, 71.96% line, 54.55% branch, clean git
+
 ### 2026-03-27 preCommand hook 格式 Bug 修复 — ✅ 已修复
 
 - **问题**: Claude Code 启动时报错 `Invalid key in record`
-- **根因**: `lib/vibe/memory_autoload.rb:217` 将字符串直接推入 preCommand 数组，但 Claude Code 要求对象格式 `{"command": "..."}`
-- **修复**:
-  - 推入对象: `{ 'command' => memory_command }`
-  - 删除逻辑兼容新旧格式（向后兼容）
-- **文件**: `lib/vibe/memory_autoload.rb` (+8/-7 行)
-- **记录**: P012（技术陷阱已记录到 project-knowledge.md）
-- **状态**: ✅ 代码已修复，待提交
-
-### 2026-03-25 Scene-driven skill routing — ✅ 已完成
-
-- **功能**: gstack 和 superpowers 技能包的场景驱动路由系统
-- **实现**:
-  - 创建 `.vibe/skill-routing.yaml` 定义 8 个冲突场景的路由规则
-  - 文档化 15+ 个独有技能（gstack 的 /qa, /ship, /guard 等）
-  - 更新 `CLAUDE.md` 技能选择指南，明确命名约定：
-    - gstack: `/short-names` (/review, /office-hours)
-    - superpowers: `/full-names` (/brainstorming, /test-driven-development)
-  - 更新 `core/skills/registry.yaml` 添加冲突解决策略
-- **架构**: 统一存储 `~/.config/skills/` + 软链接多平台适配
-- **提交**: 3e71224..3e71224，已推送到 origin/main
-- **下一步**: 实现安装后自动触发技能适配
-
-### 2026-03-24 记忆自动加载功能 — ✅ 已合并
-
-- **功能**: Claude Code 和 OpenCode 自动加载项目记忆文件
-- **实现**:
-  - MemoryAutoload 模块：检测记忆文件、交互式配置
-  - `vibe memory autoload` 命令（enable/disable/status）
-  - Claude Code: preCommand hook 自动读取 memory/*.md
-  - OpenCode: 生成 .vibe/opencode/memory-context.md 并注入 instructions
-- **代码审查**: 修复 File.expand_path('~') 测试隔离问题（P011）
-- **提交**: 678d9e6，5 文件，+841/-2 行，16 测试 50 断言全绿
-- **状态**: 已推送到 origin/main，功能可用
-- **下一步**: 验证功能在实际项目中的效果
-### 2026-03-27 Harness Engineering 实施 — ✅ 已完成
-
-- **背景**: 基于 OpenAI Harness Engineering 理念优化项目提示词管理架构
-- **核心改进**:
-  1. **渐进式上下文披露**: CLAUDE.md 从 83 行精简至 52 行，深层文档拆分至 `docs/claude/`
-  2. **机械约束**: `scripts/verify-harness.sh` 强制检查行数、死链、目录结构
-  3. **约束前置**: `scripts/install-hooks.sh` 绑定 pre-commit hook，本地阻断违规提交
-  4. **熵管理**: `scripts/entropy-scan.sh` 实现 TTL 技术债务监控（90 天过期告警）
-- **关键文件**:
-  - `CLAUDE.md` — 精简导航 + 显式 Agent 指令（`read` 命令格式）
-  - `docs/claude/skills/routing.md` — 技能选择指南
-  - `docs/claude/safety.md` — 安全策略 + Golden Principles
-  - `golden-principles.yaml` — 可机械执行的规则定义
-  - `.github/workflows/harness-check.yml` — CI 自动验证
-- **验证结果**: 所有检查通过，pre-commit hook 工作正常
-- **状态**: ✅ 已合并到 main
-- **下一步**: 持续监控 entropy-scan.sh 输出，清理技术债务
+- **根因**: memory_autoload.rb:217 将字符串推入 preCommand 数组，需对象格式
+- **状态**: 已修复并提交
 
 <!-- handoff:end -->
 
