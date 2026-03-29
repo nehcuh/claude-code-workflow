@@ -10,14 +10,40 @@
 
 **When uncertain which skill to use, leverage AI-powered routing:**
 
+### MANDATORY Workflow (必须遵循)
+
+**Step 1**: 调用路由获取推荐
 ```bash
 vibe route "<user_request>"
 ```
 
-**Example:**
+**Step 2**: 读取推荐的技能文件 ⚠️ 关键步骤
+```markdown
+read skills/<matched-skill>/SKILL.md
+```
+
+**Step 3**: 按照技能的步骤执行
+- 不要跳过技能定义
+- 严格按照技能说明的流程执行
+
+**Step 4**: 完成后运行验证
 ```bash
+# 根据技能要求运行相应的验证命令
+```
+
+### Example
+```bash
+# Step 1: 获取推荐
 vibe route "帮我评审当前项目，包括架构和实现"
 # Output: 🔥 Matched skill: riper-workflow (95% confidence)
+
+# Step 2: 读取技能定义 (MANDATORY)
+read skills/riper-workflow/SKILL.md
+
+# Step 3: 按照 RIPER 流程执行
+# Research → Innovate → Plan → Execute → Review
+
+# Step 4: 运行验证
 ```
 
 **Why use AI routing?**
