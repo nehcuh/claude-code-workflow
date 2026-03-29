@@ -9,16 +9,13 @@
 # 3. API call count
 # 4. Cost per request
 
-require 'bundler/inline'
 require 'benchmark'
 require 'json'
+require 'tmpdir'
+require_relative '../lib/vibe/semantic_matcher'
 
 # Add lib to load path
 $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
-
-require_relative '../lib/vibe/skill_router'
-require_relative '../lib/vibe/cache_manager'
-require_relative '../lib/vibe/llm_client'
 
 class SkillRouterBenchmark
   def initialize
