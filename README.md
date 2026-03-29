@@ -27,14 +27,16 @@ claude
 # - "评审这段代码"
 # - "我要重构这个函数"
 # ✨ AI 会使用 5 层路由系统自动选择最合适的技能！
-# 🚀 新增：Claude Haiku 语义理解，准确率提升 36%
+# 🚀 多提供商支持：Claude Haiku / OpenAI GPT，准确率提升 36%
 ```
 
 **🎯 你刚刚体验了什么？**
-- ✅ **AI 驱动的技能路由** 🚀 — Claude Haiku 语义理解，5 层智能路由
+- ✅ **AI 驱动的技能路由** 🚀 — 多提供商支持，5 层智能路由
+  - 支持 Anthropic Claude 和 OpenAI GPT
   - 准确率提升 36% (70% → 95%)
   - 多级缓存 (70%+ 命中率)
   - 成本可控 (~$0.11/月)
+  - [查看多提供商架构 →](docs/architecture/multi-provider-architecture.md)
 - ✅ **结构化配置** — 自动加载项目规则
 - ✅ **开箱即用** — 无需预先学习
 
@@ -69,10 +71,12 @@ claude
 
 **5 分钟**：完成上面的 "Try in 5 Minutes"
 **15 分钟**：理解三大核心功能
-- **🚀 AI 驱动的技能路由**（新）：Claude Haiku 语义理解，5 层智能路由
+- **🚀 AI 驱动的技能路由**（新）：多提供商支持，5 层智能路由
+  - 支持 Anthropic Claude 和 OpenAI GPT
   - 准确率提升 36% (70% → 95%)
   - 多级缓存，性能优化
   - 自动回退，高可靠性
+  - [多提供商架构 →](docs/architecture/multi-provider-architecture.md)
 - **记忆系统**：记录错误和解决方案，避免重复踩坑
 - **检查点系统**：危险操作前自动快照
 
@@ -208,7 +212,7 @@ vibe --version   # Show version
 
 | Layer | Technology | Accuracy | Latency | Purpose |
 |-------|-----------|----------|---------|---------|
-| **0: AI Triage** | Claude Haiku + Multi-level Cache | 95% | ~50-150ms | Semantic understanding with 70%+ cache hit rate |
+| **0: AI Triage** | Multi-Provider (Claude/OpenAI) + Cache | 95% | ~50-150ms | Semantic understanding with 70%+ cache hit rate |
 | **1: Explicit** | Pattern matching | 100% | <1ms | User-specified skill overrides |
 | **2: Scenario** | Predefined patterns | 85% | <5ms | Common development scenarios |
 | **3: Semantic** | TF-IDF + Cosine similarity | 75% | <10ms | Intent-based matching |
@@ -226,12 +230,14 @@ vibe --version   # Show version
 
 - **Portable Core** (`core/`): Provider-neutral workflow semantics. Add a new AI platform by writing an adapter, not rewriting rules.
 - **Overlay System**: Project-specific customizations in `.vibe/overlay.yaml`. Keep your tweaks while upgrading the base.
-- **AI-Powered Skill Routing**: 🚀 **NEW** — 5-layer intelligent routing system using Claude Haiku for semantic understanding
+- **AI-Powered Skill Routing**: 🚀 **NEW** — 5-layer intelligent routing system with multi-provider support
   - **Layer 0**: AI semantic triage with multi-level caching (70%+ hit rate)
+  - **Multi-Provider**: Support for Anthropic Claude and OpenAI GPT models
   - **Layer 1-4**: Algorithm-based fallback (explicit → scenario → semantic → fuzzy)
   - **Performance**: +36% accuracy improvement (70% → 95%), P95 latency <150ms
   - **Cost**: ~$0.11/month (10K requests) with intelligent caching
   - [Learn more → AI Routing Architecture](docs/architecture/ai-powered-skill-routing.md)
+  - [Multi-Provider Support → Multi-Provider Architecture](docs/architecture/multi-provider-architecture.md)
 
 > **📖 Philosophy**: Read [PRINCIPLES.md](PRINCIPLES.md) — Production-First, Structure > Prompting, Memory > Intelligence, Verification > Confidence, Portable > Specific.
 
@@ -351,7 +357,8 @@ $ vibe route "帮我评审代码"
 **How it works:**
 
 1. **Layer 0: AI Semantic Triage** (NEW)
-   - Claude Haiku analyzes your request semantically
+   - Multi-provider support: Anthropic Claude or OpenAI GPT
+   - Auto-detects provider from environment or OpenCode config
    - Multi-level caching: Memory (70%+ hit) → File → Redis
    - Context-aware matching (file type, error count, recent files)
    - **95% accuracy** with sub-150ms P95 latency
