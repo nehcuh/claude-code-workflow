@@ -27,7 +27,8 @@ require_relative '../lib/vibe/cli/security_commands'
 require_relative '../lib/vibe/cli/skill_craft_commands'
 require_relative '../lib/vibe/cli/memory_commands'
 require_relative '../lib/vibe/memory_autoload'
-require_relative '../lib/vibe/skill_manager'
+require_relative '../lib/vibe/experiment_manager'
+
 require_relative '../lib/vibe/skill_router_commands'
 
 # Main CLI class for the vibe command-line tool.
@@ -79,6 +80,8 @@ class VibeCLI
       'toolchain' => :run_toolchain_command,
       'scan' => :run_scan_command,
       'skill-craft' => :run_skill_craft_command,
+      'experiment' => :run_experiment,
+
       'tools' => :run_tools_command,
       'memory' => :run_memory_command,
       'route' => :cmd_route
@@ -863,7 +866,47 @@ class VibeCLI
              suggest_only: suggest_only, dry_run: dry_run)
   end
 
-  def run_tools_command(argv)
+  def run_experiment(argv)
+    subcommand = argv.shift
+
+    when %w[help --help -h].include?(subcommand)
+      puts "Usage: vibe experiment <start|results|apply|clean>"
+      puts "  start    Start an experiment loop"
+      puts "  results  View experiment results"
+      puts "  apply   Apply best changes to main branch"
+      puts "  clean   Remove worktree and experiment files"
+      exit
+    end
+
+    case subcommand
+    when 'start'
+      run_experiment_start(remaining)
+    when 'results'
+      run_experiment_results(remaining)
+    when 'apply'
+      run_experiment_apply(remaining)
+    when 'clean'
+      run_experiment_clean(remaining)
+    else
+      raise Vibe::ValidationError, "Unknown experiment subcommand: #{subcommand}"
+    end
+  end
+
+  def run_experiment_start(argv)
+    config_path = argv.shift || '.vibe/experiment.yaml'
+    config_path = File.expand_path(config_path || '.vibe/experiment.yaml') if argv.empty?
+      config_path = File.join(Dir.pwd, '.vibe', 'experiment.yaml')
+    end
+    manager = Vibe::ExperimentManager.new(config_path)
+    info = manager.start
+    puts "Experiment started: #{info[:tag]}"
+    puts "  Branch: #{info[:branch]}"
+    puts "  Results: #{manager.results_path}"
+    puts "  Beliefs: #{manager.beliefs_path}"
+    puts "\nAgent should now read experiment.yaml and begin the loop."
+  end
+
+end
     subcommand = argv.first
 
     case subcommand
