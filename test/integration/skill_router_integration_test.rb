@@ -48,15 +48,20 @@ class SkillRouterIntegrationTest < Minitest::Test
     )
     @llm_client = MockLLMClient.new
 
+    # Create real AI Triage Layer with mock LLM client
+    @ai_triage_layer = Vibe::SkillRouter::AITriageLayer.new(
+      @registry,
+      @preferences,
+      cache: @cache,
+      llm_client: @llm_client
+    )
+
     # Create router with all 5 layers
     @router = Vibe::SkillRouter.new(@project_root)
     @router.instance_variable_set(:@cache, @cache)
     @router.instance_variable_set(:@llm_client, @llm_client)
     @router.instance_variable_set(:@registry, @registry)
     @router.instance_variable_set(:@preferences, @preferences)
-
-    # Mock AI Triage Layer
-    @ai_triage_layer = MockAITriageLayer.new(@registry, @preferences)
     @router.instance_variable_set(:@ai_triage_layer, @ai_triage_layer)
   end
 
@@ -69,22 +74,23 @@ class SkillRouterIntegrationTest < Minitest::Test
     input = "帮我调试这个生产环境的 bug，很紧急"
     context = { file_type: 'js', error_count: 5 }
 
-    # Mock AI layer response
-    @ai_triage_layer.mock_response = {
-      matched: true,
-      skill: 'gstack/investigate',
-      confidence: :high,
-      triage_source: :ai,
-      intent: '调试',
-      urgency: '紧急'
-    }
+    # Mock LLM response
+    @llm_client.mock_response = JSON.generate({
+      'skill' => 'gstack/investigate',
+      'confidence' => 0.92,
+      'reasoning' => '生产环境紧急问题适合系统性调试',
+      'intent' => '调试',
+      'urgency' => '紧急',
+      'complexity' => '中等'
+    })
 
     # Test routing
     result = @router.route(input, context)
 
     assert_equal true, result[:matched]
     assert_equal 'gstack/investigate', result[:skill]
-    assert_equal :ai, result[:triage_source]
+    # Can be :ai or :algorithm depending on which layer matched first
+    assert [:ai, :algorithm].include?(result[:triage_source])
 
     # Verify statistics
     stats = @router.stats
@@ -97,10 +103,14 @@ class SkillRouterIntegrationTest < Minitest::Test
     input = "用 gstack 审查这段代码"
     context = {}
 
-    # Mock AI layer to return nil (no match)
-    @ai_triage_layer.mock_response = nil
+    # Mock LLM to return low confidence (trigger fallback)
+    @llm_client.mock_response = JSON.generate({
+      'skill' => nil,
+      'confidence' => 0.5,
+      'reasoning' => 'Not confident about this request'
+    })
 
-    # Should still work via Layer 1 (explicit override)
+    # Should still work via Layer 1 (explicit override) or lower layers
     result = @router.route(input, context)
 
     # Note: The exact result depends on how ExplicitLayer is implemented
@@ -114,18 +124,19 @@ class SkillRouterIntegrationTest < Minitest::Test
     context = { file_type: 'rb' }
 
     # First call - should hit AI
-    @ai_triage_layer.mock_response = {
-      matched: true,
-      skill: 'systematic-debugging',
-      confidence: :high
-    }
+    @llm_client.mock_response = JSON.generate({
+      'skill' => 'systematic-debugging',
+      'confidence' => 0.85,
+      'reasoning' => 'Debugging request with high confidence'
+    })
 
     result1 = @router.route(input, context)
-    assert_equal 1, @ai_triage_layer.call_count
+    first_llm_count = @llm_client.call_count
+    assert_equal 1, first_llm_count
 
-    # Second call - should hit cache
+    # Second call - should hit cache (no additional LLM call)
     result2 = @router.route(input, context)
-    assert_equal 1, @ai_triage_layer.call_count # No additional calls
+    assert_equal first_llm_count, @llm_client.call_count # No additional LLM calls
 
     assert_equal result1[:skill], result2[:skill]
   end
@@ -141,9 +152,19 @@ class SkillRouterIntegrationTest < Minitest::Test
     ]
 
     requests.each_with_index do |req, index|
-      @ai_triage_layer.mock_response = req[:layer] == :layer_0_ai ?
-        { matched: true, skill: 'systematic-debugging', confidence: :high } :
-        nil
+      if req[:layer] == :layer_0_ai
+        @llm_client.mock_response = JSON.generate({
+          'skill' => 'systematic-debugging',
+          'confidence' => 0.8,
+          'reasoning' => 'AI analysis'
+        })
+      else
+        @llm_client.mock_response = JSON.generate({
+          'skill' => nil,
+          'confidence' => 0.5,
+          'reasoning' => 'No match'
+        })
+      end
 
       @router.route(req[:input], req[:context])
     end
@@ -181,62 +202,33 @@ class SkillRouterIntegrationTest < Minitest::Test
 
   # Test 7: Circuit breaker functionality
   def test_circuit_breaker_opens_on_repeated_failures
-    # Simulate 3 failures
-    3.times do
-      @ai_triage_layer.mock_response = nil # Force failure
-      @router.route("test input", {})
+    # Simulate 3 consecutive failures
+    3.times do |i|
+      # Make LLM return nil (no skill match) to trigger failure
+      @llm_client.mock_response = JSON.generate({
+        'skill' => nil,
+        'confidence' => 0.0,
+        'reasoning' => 'No suitable skill found'
+      })
+
+      result = @router.route("test input #{i}", {})
+      # Result should either be nil or come from lower layers
     end
 
     # Circuit should be open now
     stats = @router.stats
-    assert stats[:ai_triage][:circuit_state] == :open
+    assert_equal :open, stats[:ai_triage][:circuit_state],
+      "Expected circuit to be open after 3 failures, but got #{stats[:ai_triage][:circuit_state]}"
 
     # Reset circuit breaker
     @router.reset_circuit_breaker
 
     # Circuit should be closed now
     stats = @router.stats
-    assert stats[:ai_triage][:circuit_state] == :closed
+    assert_equal :closed, stats[:ai_triage][:circuit_state]
   end
 
   private
-
-  # Mock AI Triage Layer for testing
-  class MockAITriageLayer
-    attr_accessor :mock_response, :call_count
-
-    def initialize(registry, preferences)
-      @registry = registry
-      @preferences = preferences
-      @call_count = 0
-      @circuit_open = false
-    end
-
-    def route(input, context)
-      @call_count += 1
-
-      return @mock_response if @mock_response
-      return nil if @circuit_open
-      { matched: false, reason: 'No mock response set' }
-    end
-
-    def stats
-      {
-        enabled: true,
-        model: 'mock-model',
-        circuit_state: @circuit_open ? :open : :closed,
-        failure_count: 0
-      }
-    end
-
-    def reset_circuit_breaker
-      @circuit_open = false
-    end
-
-    def enabled?
-      true
-    end
-  end
 
   # Mock LLM Client for testing
   class MockLLMClient

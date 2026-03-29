@@ -80,11 +80,18 @@ module Vibe
             ai_semantic_analysis(input, context)
           end
 
-          return nil unless ai_result
+          # Record failure if AI returned nil
+          unless ai_result
+            record_failure
+            return nil
+          end
 
           # Step 4: Match skill based on AI analysis
           matched_skill = match_skill_from_analysis(ai_result, context)
-          return nil unless matched_skill
+          unless matched_skill
+            record_failure
+            return nil
+          end
 
           # Build and cache final result
           result = build_result(matched_skill, ai_result)
@@ -107,6 +114,16 @@ module Vibe
       # Check if AI triage is enabled
       def enabled?
         @enabled
+      end
+
+      # Enable AI triage
+      def enable
+        @enabled = true
+      end
+
+      # Disable AI triage
+      def disable
+        @enabled = false
       end
 
       # Get statistics about AI triage performance

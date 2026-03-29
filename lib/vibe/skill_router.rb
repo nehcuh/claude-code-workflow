@@ -229,11 +229,11 @@ module Vibe
 
     # NEW: Enable/disable AI triage dynamically
     def enable_ai_triage
-      @ai_triage_layer.instance_variable_set(:@enabled, true)
+      @ai_triage_layer.enable if @ai_triage_layer.respond_to?(:enable)
     end
 
     def disable_ai_triage
-      @ai_triage_layer.instance_variable_set(:@enabled, false)
+      @ai_triage_layer.disable if @ai_triage_layer.respond_to?(:disable)
     end
 
     # NEW: Clear AI triage cache
