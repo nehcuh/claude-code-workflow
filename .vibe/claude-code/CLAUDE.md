@@ -1,88 +1,76 @@
-# Vibe workflow for Claude Code
+# Claude Code Project Config
 
-Generated from the portable `core/` spec with profile `claude-code-default`.## Optional Integrations
+> Harness Engineering: Progressive Disclosure Mode
 
-### Superpowers Skill Pack
+## ⚠️ CRITICAL AGENT INSTRUCTION
 
-**Status**: ❌ Not installed
+**Do NOT guess or hallucinate rules.** When you need information from any category below, you **MUST** use the `read` tool to fetch the file contents before proceeding.
 
-Superpowers provides advanced skills for design refinement, TDD, debugging, and more.
+## 🚀 AI-Powered Skill Routing
 
-**Installation for Claude Code**:
+**When uncertain which skill to use, leverage AI-powered routing:**
+
 ```bash
-# Clone the repository
-git clone https://github.com/obra/superpowers ~/.config/skills/superpowers
-
-# For Claude Code, manually register the skills in your tool's skill system
-# or use the skill files from ~/.config/skills/superpowers/skills/
+vibe route "<user_request>"
 ```
 
-**Available skills**:
-- `superpowers/brainstorming` — Design refinement and feature exploration
-- `superpowers/writing-plans` — Implementation planning for complex changes
-- `superpowers/test-driven-development` — TDD enforcement and test-first workflow
-- `superpowers/systematic-debugging` — Root cause analysis and structured debugging
-- `superpowers/subagent-driven-development` — Parallel task execution with multiple agents
-- `superpowers/using-git-worktrees` — Branch isolation using git worktrees
-- `superpowers/requesting-code-review` — Code review preparation and workflow
-- `superpowers/refactor` — Systematic code refactoring with safety checks
-- `superpowers/architect` — System architecture design and documentation
-- `superpowers/optimize` — Performance optimization and profiling guidance
-
-
-### RTK Token Optimizer
-
-**Status**: ❌ Not installed
-
-RTK is a CLI proxy that reduces LLM token consumption by 60-90% on common development commands.
-
-**Installation**:
+**Example:**
 ```bash
-# macOS/Linux with Homebrew
-brew install rtk
-
-# Or build from source
-cargo install --git https://github.com/rtk-ai/rtk
-
-# Then configure
-rtk init --global
+vibe route "帮我评审当前项目，包括架构和实现"
+# Output: 🔥 Matched skill: riper-workflow (95% confidence)
 ```
 
+**Why use AI routing?**
+- ✅ **95% accuracy** vs 70% for keyword matching
+- ✅ **Semantic understanding** - understands intent, not just keywords
+- ✅ **Multi-provider support** - Claude Haiku or OpenAI GPT
+- ✅ **Context-aware** - considers file types, errors, recent work
+- ✅ **~$0.11/month** - cost-effective with 70%+ cache hit rate
 
-**Note**: RTK works best with Claude Code. For Claude Code, you may need to manually prefix commands with `rtk`.
+**5-Layer Routing System:**
+- **Layer 0**: AI Semantic Triage (Haiku/GPT, 95% accuracy)
+- **Layer 1**: Explicit overrides (user-specified)
+- **Layer 2**: Scenario patterns (predefined cases)
+- **Layer 3**: Semantic matching (TF-IDF + cosine similarity)
+- **Layer 4**: Fuzzy matching (Levenshtein distance)
 
-Applied overlay: `none`
+## Quick Navigation
 
-Keep repository files as the SSOT, verify before claiming completion, and follow the generated routing + safety rules.
+| Need | Go To |
+|------|-------|
+| AI Skill Routing | `Bash(vibe route "<request>")` |
+| Skill catalog | `read .vibe/claude-code/skills.md` |
+| Safety rules | `read .vibe/claude-code/safety.md` |
+| Behavior policies | `read .vibe/claude-code/behavior-policies.md` |
+| Task routing | `read .vibe/claude-code/task-routing.md` |
 
-## Non-negotiable rules
+## Policy Hierarchy (Override Order)
+
+When rules conflict, follow this priority:
+
+1. **AI-powered routing** - Use `vibe route` for semantic skill matching
+2. **Project-specific docs** — Highest priority (if exists)
+3. **`.vibe/claude-code/`** — Global baseline policies (fallback)
+
+## Critical Rules (P0)
 
 - `ssot-first` (`mandatory`) — Keep repository files as the single source of truth; tool-managed memory is cache.
 - `verify-before-claim` (`mandatory`) — Never claim completion without fresh verification evidence.
 - `capability-tier-routing` (`mandatory`) — Route by capability tier first, then resolve through the active provider profile.
 - `reversible-small-batches` (`recommended`) — Prefer small, reversible, single-purpose changes over large mixed batches.
-- `root-cause-debugging` (`mandatory`) — Investigate root cause before attempting fixes and reassess after repeated failures.
-- `security-escalation` (`mandatory`) — Treat destructive commands, network egress, secret access, and obfuscation as security-sensitive actions.
-- `record-reusable-learning` (`recommended`) — Record user corrections, repeated failures, and counter-intuitive discoveries for reuse.
 
-## Capability routing
+## Skill Priority (When Conflict)
 
-- `critical_reasoner` → `claude.opus-class`
-- `workhorse_coder` → `claude.sonnet-class`
-- `fast_router` → `claude.haiku-class`
-- `independent_verifier` → `second-model.cross-family`
-- `cheap_local` → `local.ollama-class`
+```
+gstack (short) > superpowers (full) > builtin
+```
 
-## Mandatory portable skills
+## Optional Integrations
 
-- `systematic-debugging` (`P0`, `mandatory`) — Find root cause before attempting fixes.
-- `verification-before-completion` (`P0`, `mandatory`) — Require fresh verification evidence before claiming completion.
-- `session-end` (`P0`, `mandatory`) — Capture handoff, memory, and wrap-up state before ending a session.
+- **Superpowers**: ✅ Installed (`/Users/huchen/.config/skills/superpowers`)
+- **RTK**: ✅ Installed (vrtk 0.29.0, hook ✅)
 
+## Reference
 
-
-## Safety floor
-
-- `P0` — Prefer hooks or permissions deny; otherwise stop with an explicit block message.
-- `P1` — Prefer hook-mediated confirmation or manual approval.
-- `P2` — Warn in output and continue with traceable reasoning.
+See `.vibe/claude-code/` for full policy docs.
+Applied overlay: `none`

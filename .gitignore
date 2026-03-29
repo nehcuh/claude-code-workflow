@@ -43,7 +43,14 @@ settings.json
 
 # Development intermediate files
 /test-workspace/
-/memory/
+
+# Memory system - keep knowledge assets, ignore temp files
+/memory/.error_cache.yaml
+/memory/.memory-index.json
+/memory/checkpoints/
+/memory/checkpoints.yaml
+
+# Review files
 /PROJECT_REVIEW.md
 /VIBE_CODING_SOP.md
 .env

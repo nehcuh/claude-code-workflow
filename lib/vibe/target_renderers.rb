@@ -79,11 +79,40 @@ module Vibe
 
         **Do NOT guess or hallucinate rules.** When you need information from any category below, you **MUST** use the `read` tool to fetch the file contents before proceeding.
 
+        ## 🚀 AI-Powered Skill Routing
+
+        **When uncertain which skill to use, leverage AI-powered routing:**
+
+        \`\`\`bash
+        vibe route "<user_request>"
+        \`\`\`
+
+        **Example:**
+        \`\`\`bash
+        vibe route "帮我评审当前项目，包括架构和实现"
+        # Output: 🔥 Matched skill: riper-workflow (95% confidence)
+        \`\`\`
+
+        **Why use AI routing?**
+        - ✅ **95% accuracy** vs 70% for keyword matching
+        - ✅ **Semantic understanding** - understands intent, not just keywords
+        - ✅ **Multi-provider support** - Claude Haiku or OpenAI GPT
+        - ✅ **Context-aware** - considers file types, errors, recent work
+        - ✅ **~$0.11/month** - cost-effective with 70%+ cache hit rate
+
+        **5-Layer Routing System:**
+        - **Layer 0**: AI Semantic Triage (Haiku/GPT, 95% accuracy)
+        - **Layer 1**: Explicit overrides (user-specified)
+        - **Layer 2**: Scenario patterns (predefined cases)
+        - **Layer 3**: Semantic matching (TF-IDF + cosine similarity)
+        - **Layer 4**: Fuzzy matching (Levenshtein distance)
+
         ## Quick Navigation
 
         | Need | Go To |
         |------|-------|
-        | Skill selection | `read #{config_dir(target_name)}/skills/routing.md` |
+        | AI Skill Routing | `Bash(vibe route "<request>")` |
+        | Skill catalog | `read #{config_dir(target_name)}/skills.md` |
         | Safety rules | `read #{config_dir(target_name)}/safety.md` |
         | Behavior policies | `read #{config_dir(target_name)}/behavior-policies.md` |
         | Task routing | `read #{config_dir(target_name)}/task-routing.md` |
@@ -92,8 +121,9 @@ module Vibe
 
         When rules conflict, follow this priority:
 
-        1. **Project-specific docs** — Highest priority (if exists)
-        2. **`#{config_dir(target_name)}/`** — Global baseline policies (fallback)
+        1. **AI-powered routing** - Use `vibe route` for semantic skill matching
+        2. **Project-specific docs** — Highest priority (if exists)
+        3. **`#{config_dir(target_name)}/`** — Global baseline policies (fallback)
 
         ## Critical Rules (P0)
 

@@ -31,6 +31,10 @@ module Vibe
       ANTHROPIC_BASE_URL = 'https://api.anthropic.com'
       OPENAI_BASE_URL = 'https://api.openai.com'
 
+      # Local model configuration
+      LOCAL_MODEL_URL = 'http://localhost:11434/v1'  # Default Ollama endpoint
+      LOCAL_MODEL_NAME = 'llama3.2'                   # Default local model
+
       class << self
         # Create provider instance from environment variables
         #
@@ -190,6 +194,38 @@ module Vibe
 
           available = available_providers.join(', ')
           raise ArgumentError, "No LLM provider available. Configure one of: #{available}"
+        end
+
+        # Create local model provider (Ollama, LM Studio, vLLM, etc.)
+        #
+        # Uses OpenAI-compatible API with configurable endpoint.
+        # Common local model endpoints:
+        # - Ollama: http://localhost:11434/v1
+        # - LM Studio: http://localhost:1234/v1
+        # - vLLM: http://localhost:8000/v1
+        # - Oobabooga: http://localhost:5000/v1
+        #
+        # @param url [String] API base URL (optional, uses env or default)
+        # @param api_key [String] API key (optional, often not needed for local)
+        # @param model [String] Model name (optional, for reference only)
+        # @return [LLMProvider::OpenAIProvider] Provider instance configured for local model
+        def create_local_provider(url: nil, api_key: nil, model: nil)
+          url ||= ENV.fetch('LOCAL_MODEL_URL', LOCAL_MODEL_URL)
+          api_key ||= ENV.fetch('LOCAL_MODEL_API_KEY', 'local') # Dummy key for local
+          model ||= ENV.fetch('LOCAL_MODEL_NAME', LOCAL_MODEL_NAME)
+
+          OpenAIProvider.new(
+            api_key: api_key,
+            base_url: url
+          )
+        end
+
+        # Check if local model is configured and available
+        #
+        # @return [Boolean] true if local model URL is configured
+        def local_model_available?
+          !ENV.fetch('LOCAL_MODEL_URL', nil).nil? ||
+          !ENV.fetch('VIBE_LOCAL_MODEL_URL', nil).nil?
         end
 
         # Get recommended provider for AI routing

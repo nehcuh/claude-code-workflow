@@ -182,7 +182,8 @@ module Vibe
         port = uri.port
 
         @connection_pool[host] ||= Net::HTTP.new(host, port)
-        @connection_pool[host].use_ssl = true
+        # Auto-detect SSL from URI scheme (supports local models via http://)
+        @connection_pool[host].use_ssl = (uri.scheme == 'https')
         @connection_pool[host].open_timeout = @timeout
         @connection_pool[host].read_timeout = @timeout
 

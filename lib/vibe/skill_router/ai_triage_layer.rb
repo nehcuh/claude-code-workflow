@@ -148,12 +148,18 @@ module Vibe
         cache_stats = @cache.stats
         provider_stats = @llm_provider&.stats || {}
 
+        # Detect if using local model
+        local_url = ENV.fetch('LOCAL_MODEL_URL', nil) || ENV.fetch('VIBE_LOCAL_MODEL_URL', nil)
+        is_local = local_url && provider_stats[:base_url]&.include?(local_url.gsub('/v1', ''))
+
         {
           enabled: @enabled,
           disabled_reason: @disabled_reason,
           model: @triage_model,
-          provider: provider_stats[:provider_name] || 'unknown',
+          provider: is_local ? 'Local' : (provider_stats[:provider_name] || 'unknown'),
           provider_configured: provider_stats[:configured] || false,
+          base_url: provider_stats[:base_url],
+          is_local_model: is_local,
           circuit_state: circuit_open? ? :open : :closed,
           failure_count: @failure_count,
           cache_stats: cache_stats
@@ -610,14 +616,20 @@ module Vibe
       #
       # @return [LLMProvider::Base] Provider instance
       def create_provider_from_config
-        # Try to detect from OpenCode config first
+        # Priority 1: Check for local model configuration
+        local_url = ENV.fetch('LOCAL_MODEL_URL', nil) || ENV.fetch('VIBE_LOCAL_MODEL_URL', nil)
+        if local_url
+          return LLMProvider::Factory.create_local_provider(url: local_url)
+        end
+
+        # Priority 2: Try to detect from OpenCode config
         opencode_provider = LLMProvider::Factory.detect_opencode_provider
 
         if opencode_provider
           # Use provider specified in OpenCode config
           LLMProvider::Factory.create(provider: opencode_provider)
         else
-          # Auto-detect from environment variables
+          # Priority 3: Auto-detect from environment variables
           # Prefer Anthropic for AI routing, fallback to OpenAI
           LLMProvider::Factory.create_from_env('anthropic')
         end
@@ -637,6 +649,11 @@ module Vibe
       def detect_triage_model
         env_model = ENV.fetch('VIBE_TRIAGE_MODEL', nil)
         return env_model if env_model
+
+        # Check for local model configuration
+        local_model = ENV.fetch('LOCAL_MODEL_NAME', nil) || ENV.fetch('VIBE_LOCAL_MODEL_NAME', nil)
+        local_url = ENV.fetch('LOCAL_MODEL_URL', nil) || ENV.fetch('VIBE_LOCAL_MODEL_URL', nil)
+        return local_model if local_model && local_url
 
         # Auto-detect based on provider
         if @llm_provider&.provider_name == 'OpenAI'
