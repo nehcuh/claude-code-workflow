@@ -8,6 +8,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Autonomous Experiment System** (2026-03-29)
+  - `lib/vibe/experiment_manager.rb` — 核心基础设施 (178 lines)
+  - `skills/autonomous-experiment/SKILL.md` — builtin skill
+  - `vibe experiment <start|results|apply|clean>` 命令
+  - Git worktree 隔离、TSV 结果记录、beliefs 持久化
+  - 多维 rubric 评估、stale experiment 恢复
+  - 21 unit + integration tests
+  - Windows 路径兼容性增强
+- **Bug 修复 + Instinct Skills 移植** (2026-03-29)
+  - 修复 `skills list` TypeError (YAML string/symbol key 混合)
+  - 修复 `route "帮我评审代码"` 无匹配 (缺少"评审"关键词)
+  - 修复 `skills check` NoMethodError (过期引用)
+  - Instinct Skills 从文档落地为独立 skills (`/learn`, `/learn-eval`, `/instinct-status`, `/export`, `/import`, `/evolve`)
+- **VibeSOP 全面评审 + 修复** (2026-03-28)
+  - 测试套件全绿 (1445 tests, 71.96% coverage)
+  - 拆分 3 个大类为 18 个子模块
+  - 删除 17 个过程性文档 (-7026 行)
+  - 提取硬编码常量到 `lib/vibe/defaults.rb`
+
+### Fixed
+- **path_safety: Windows compatibility** — 添加 `norm_sep()`, `root_path?()`, SystemDrive 支持
+- **checkpoint_manager: 冗余路径展开** — 简化 `File.expand_path()` 调用
+- **platform_utils: 路径处理** — 统一使用 `File.join` 而非平台特定逻辑
+
+### Added
 - **Auto Memory Trigger System** (`vibe memory`) (2026-03-24)
   - `lib/vibe/memory_trigger.rb` — automatic error capture and recording (280 lines)
   - `lib/vibe/cli/memory_commands.rb` — CLI commands for memory management (190 lines)

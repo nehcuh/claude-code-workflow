@@ -3,6 +3,15 @@
 ## Session Handoff
 
 <!-- handoff:start -->
+### 2026-03-29 Autonomous Experiment Infrastructure — ✅ 3 commits
+
+- **新增**: autonomous-experiment skill (predict-attribute 循环 + 多维评估)
+- **基础设施**: ExperimentManager (178 lines, worktree 隔离)
+- **测试**: 21 tests, 75 assertions (75% pass)
+- **安全修复**: Windows 路径支持 (norm_sep, root_path?)、shell 注入防护 (Open3 数组形式)、dirty tree 检查
+- **文档**: 设计 spec + 实现计划 + 示例配置
+- **Commits**: 5b83bd3, fd3acf3, 5e64d2d
+
 ### 2026-03-29 Bug 修复 + Instinct Skills 移植 — ✅ 1 commit
 
 - **Bug 修复** (3 个 `vibe` 命令运行时错误):
